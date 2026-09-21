@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.routes.auth_routes import router as auth_router
+from app.routes.evidencia_routes import router as evidencia_router
 
 # Cargar variables de entorno
 load_dotenv()
@@ -61,5 +62,8 @@ if __name__ == "__main__":
 
 # Incluir rutas de autenticación en la aplicación
 app.include_router(auth_router)
+
+# Incluir rutas de evidencias
+app.include_router(evidencia_router)
 
 print("✅ API FastAPI configurada")
