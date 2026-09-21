@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from app.routes.auth_routes import router as auth_router
 from app.routes.evidencia_routes import router as evidencia_router
 from app.routes.coordinador_routes import router as coordinador_router
+from app.routes.instructor_routes import router as instructor_router
 
 # Cargar variables de entorno
 load_dotenv()
@@ -64,3 +65,4 @@ if __name__ == "__main__":
 app.include_router(auth_router)
 app.include_router(evidencia_router)
 app.include_router(coordinador_router)
+app.include_router(instructor_router)
