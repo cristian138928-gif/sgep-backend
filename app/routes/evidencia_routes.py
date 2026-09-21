@@ -4,7 +4,7 @@ Rutas de evidencias: upload, listado, evaluación.
 Protegidas con JWT middleware.
 """
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -37,10 +37,10 @@ UPLOAD_DIR = "uploads"
     status_code=status.HTTP_201_CREATED
 )
 async def upload_evidencia(
-    titulo: str,
-    tipo_formato: str,
+    titulo: str = Form(...),
+    tipo_formato: str = Form(...),
     file: UploadFile = File(...),
-    fecha_deadline: str = None,
+    fecha_deadline: str = Form(None),
     db: AsyncSession = Depends(get_db),
     usuario: UsuarioBase = Depends(get_current_user)
 ):
