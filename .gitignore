@@ -38,3 +38,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Test DB
+test.db
+
+# Uploads (archivos subidos por usuarios)
+uploads/
+
+# Archivos generados
+__pycache__/
+*.db
