@@ -10,7 +10,13 @@ from sqlalchemy import select
 from datetime import datetime
 from typing import List, Optional
 
-from app.models.usuario import Evidencia, Retroalimentacion, Aprendiz, Instructor
+from app.models.usuario import (
+    Evidencia,
+    Retroalimentacion,
+    Aprendiz,
+    Instructor,
+    UsuarioBase,
+)
 
 
 class EvidenciaService:
@@ -128,6 +134,30 @@ class EvidenciaService:
             )
         
         return evidencia
+
+    @staticmethod
+    def verificar_acceso(usuario: UsuarioBase, evidencia: Evidencia) -> None:
+        """
+        Control de acceso a una evidencia (RBAC + propiedad).
+
+        Args:
+            usuario: Usuario autenticado (JWT)
+            evidencia: Evidencia solicitada
+
+        Raises:
+            403: Sin permiso sobre la evidencia
+        """
+        # EXPLICACIÓN: coordinador ve todo; aprendiz solo lo suyo; instructor evalúa
+        if usuario.rol == "coordinador":
+            return
+        if usuario.rol == "aprendiz" and evidencia.id_aprendiz == usuario.id_usuario:
+            return
+        if usuario.rol == "instructor":
+            return
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes acceso a esta evidencia",
+        )
 
     @staticmethod
     async def evaluar_evidencia(

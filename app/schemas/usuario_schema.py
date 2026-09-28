@@ -130,4 +130,5 @@ class AprendizResponseSchema(BaseModel):
             "fecha_creacion": "2025-09-18T10:30:00"
         }
 
-print("✅ Esquemas de autenticación configurados")
+# EXPLICACIÓN: ASCII-only porque las consolas cp1252 no codifican emojis (UnicodeEncodeError)
+print("[OK] Esquemas de autenticacion configurados")

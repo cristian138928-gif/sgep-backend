@@ -5,6 +5,9 @@ Protegidas con JWT middleware.
 """
 
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi.responses import FileResponse
+from pathlib import Path
+import re
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -75,11 +78,17 @@ async def upload_evidencia(
             detail="Solo los aprendices pueden subir evidencias"
         )
 
-    # Validar que sea PDF
-    if not file.filename.endswith(".pdf"):
+    # EXPLICACIÓN: Path(...).name descarta directorios -> neutraliza "../../x.pdf" (RNF01)
+    nombre_archivo = Path(file.filename or "").name
+    # EXPLICACIÓN: Rechazamos rutas vacías, sin extensión o con caracteres de traversal
+    if (
+        not nombre_archivo.lower().endswith(".pdf")
+        or len(nombre_archivo) <= 4
+        or not re.fullmatch(r"[\w\-. ]+", nombre_archivo)
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Solo se permiten archivos PDF"
+            detail="Nombre de archivo inválido: solo se permiten PDF"
         )
 
     # EXPLICACIÓN: Validar tamaño máximo del archivo
@@ -95,8 +104,8 @@ async def upload_evidencia(
     user_dir = os.path.join(UPLOAD_DIR, str(usuario.id_usuario))
     os.makedirs(user_dir, exist_ok=True)
 
-    # Guardar archivo
-    file_path = os.path.join(user_dir, file.filename)
+    # Guardar archivo (usamos siempre el nombre sanitizado, nunca el del cliente)
+    file_path = os.path.join(user_dir, nombre_archivo)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
@@ -168,6 +177,8 @@ async def evidencia_detail(
         id_evidencia: ID de la evidencia
     """
     evidencia = await EvidenciaService.obtener_evidencia_por_id(db, id_evidencia)
+    # EXPLICACIÓN: Misma regla que descarga: sin propiedad/rol no hay metadatos (RNF01)
+    EvidenciaService.verificar_acceso(usuario, evidencia)
     return evidencia
 
 
@@ -229,3 +240,49 @@ async def retroalimentacion_detail(
             detail="Esta evidencia aún no tiene retroalimentación"
         )
     return retro
+
+
+@router.get("/{id_evidencia}/descarga")
+async def descargar_evidencia(
+    id_evidencia: int,
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(get_current_user),
+):
+    """
+    ENDPOINT: GET /api/v1/evidencias/{id_evidencia}/descarga
+
+    Descarga el PDF de una evidencia con autorización (RNF01).
+
+    Args:
+        id_evidencia: ID de la evidencia
+        db: Sesión de BD
+        usuario: Usuario autenticado (JWT)
+
+    Returns:
+        200: Archivo PDF
+
+    Raises:
+        401: No autenticado
+        403: Sin acceso a la evidencia
+        404: Evidencia o archivo inexistente / ruta inválida
+    """
+    evidencia = await EvidenciaService.obtener_evidencia_por_id(db, id_evidencia)
+
+    # EXPLICACIÓN: Primero autorización (rol + propiedad), después la ruta
+    EvidenciaService.verificar_acceso(usuario, evidencia)
+
+    ruta = Path(evidencia.ruta_archivo_pdf).resolve()
+    uploads_root = Path(UPLOAD_DIR).resolve()
+
+    # EXPLICACIÓN: is_relative_to bloquea traversal fuera de uploads/ (RNF01)
+    if not ruta.is_relative_to(uploads_root) or not ruta.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Archivo no encontrado",
+        )
+
+    return FileResponse(
+        ruta,
+        media_type="application/pdf",
+        filename=ruta.name,
+    )
