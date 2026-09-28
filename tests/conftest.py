@@ -94,3 +94,86 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     async with TestSessionLocal() as session:
         yield session
+
+
+# ====================================
+# HELPERS CENTRALIZADOS
+# ====================================
+
+async def crear_coordinador_token(db_session) -> str:
+    """Crea coordinador y retorna JWT."""
+    from app.models.usuario import Coordinador
+    from app.services.auth_service import AuthService
+
+    coord = Coordinador(
+        nombre_completo="Coordinador Test",
+        correo_institucional="coordinador@test.com",
+        numero_documento="1099999999",
+        tipo_documento="CC",
+        rol="coordinador",
+        departamento="Coordinacion Academica"
+    )
+    coord.establecer_contrasena("CoordPass123!")
+    db_session.add(coord)
+    await db_session.commit()
+    await db_session.refresh(coord)
+    return AuthService.crear_token_acceso(
+        data={"sub": coord.correo_institucional, "id": coord.id_usuario}
+    )
+
+
+async def crear_aprendiz(db_session, email="aprendiz1@test.com", ficha="1111111"):
+    """Crea un aprendiz en BD."""
+    from app.models.usuario import Aprendiz
+
+    aprendiz = Aprendiz(
+        nombre_completo="Aprendiz Test",
+        correo_institucional=email,
+        numero_documento="10" + str(hash(email))[:8],
+        tipo_documento="CC",
+        rol="aprendiz",
+        numero_ficha=ficha,
+        programa="ADSO"
+    )
+    aprendiz.establecer_contrasena("AprendizPass123!")
+    db_session.add(aprendiz)
+    await db_session.commit()
+    await db_session.refresh(aprendiz)
+    return aprendiz
+
+
+async def crear_instructor(db_session, email="instructor@test.com"):
+    """Crea instructor en BD."""
+    from app.models.usuario import Instructor
+
+    inst = Instructor(
+        nombre_completo="Instructor Test",
+        correo_institucional=email,
+        numero_documento="10" + str(hash(email))[:8],
+        tipo_documento="CC",
+        rol="instructor",
+        centro_formacion="Centro Salud",
+        especialidad="Software"
+    )
+    inst.establecer_contrasena("InstructorPass123!")
+    db_session.add(inst)
+    await db_session.commit()
+    await db_session.refresh(inst)
+    return inst
+
+
+async def crear_evidencia(db_session, id_aprendiz, titulo="Test", estado="Pendiente"):
+    """Crea una evidencia en BD."""
+    from app.models.usuario import Evidencia
+
+    evidencia = Evidencia(
+        id_aprendiz=id_aprendiz,
+        titulo=titulo,
+        tipo_formato="Bitacora",
+        ruta_archivo_pdf="/test/test.pdf",
+        estado=estado
+    )
+    db_session.add(evidencia)
+    await db_session.commit()
+    await db_session.refresh(evidencia)
+    return evidencia

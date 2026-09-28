@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
-from app.schemas.usuario_schema import RegistroAprendizSchema, LoginSchema, TokenSchema
+from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema, TokenSchema
 from app.services.auth_service import AuthService
 
 # EXPLICACIÓN: APIRouter agrupa las rutas bajo un prefijo común
@@ -52,6 +52,58 @@ async def registro(
     # EXPLICACIÓN: Retornamos los datos del usuario y el token
     return {
         "mensaje": "Aprendiz registrado exitosamente",
+        "id_usuario": usuario.id_usuario,
+        "nombre": usuario.nombre_completo,
+        "email": usuario.correo_institucional,
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+
+@router.post("/registro-instructor", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def registro_instructor(
+    datos: RegistroInstructorSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    ENDPOINT: POST /api/v1/auth/registro-instructor
+
+    Registra un nuevo instructor en el sistema.
+    """
+    usuario = await AuthService.registrar_instructor(db, datos)
+
+    token = AuthService.crear_token_acceso(
+        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
+    )
+
+    return {
+        "mensaje": "Instructor registrado exitosamente",
+        "id_usuario": usuario.id_usuario,
+        "nombre": usuario.nombre_completo,
+        "email": usuario.correo_institucional,
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+
+@router.post("/registro-coordinador", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def registro_coordinador(
+    datos: RegistroCoordinadorSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    ENDPOINT: POST /api/v1/auth/registro-coordinador
+
+    Registra un nuevo coordinador en el sistema.
+    """
+    usuario = await AuthService.registrar_coordinador(db, datos)
+
+    token = AuthService.crear_token_acceso(
+        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
+    )
+
+    return {
+        "mensaje": "Coordinador registrado exitosamente",
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,

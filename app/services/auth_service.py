@@ -7,13 +7,13 @@ Responsabilidad:Registrar y autenticar usuarios, gestionar JWT.
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from jose import jwt
 from dotenv import load_dotenv
 import os
 
-from app.models.usuario import UsuarioBase, Aprendiz
-from app.schemas.usuario_schema import RegistroAprendizSchema, LoginSchema
+from app.models.usuario import UsuarioBase, Aprendiz, Instructor, Coordinador
+from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema
 
 load_dotenv()
 
@@ -95,6 +95,95 @@ class AuthService:
         return nuevo_aprendiz
 
     @staticmethod
+    async def registrar_instructor(db: AsyncSession, datos: RegistroInstructorSchema) -> Instructor:
+        """
+        Registra un nuevo instructor.
+        """
+        # Verificar email único
+        stmt_email = select(UsuarioBase).where(
+            UsuarioBase.correo_institucional == datos.correo_institucional
+        )
+        resultado_email = await db.execute(stmt_email)
+        if resultado_email.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El correo institucional ya está registrado"
+            )
+
+        # Verificar documento único
+        stmt_doc = select(UsuarioBase).where(
+            UsuarioBase.numero_documento == datos.numero_documento
+        )
+        resultado_doc = await db.execute(stmt_doc)
+        if resultado_doc.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El número de documento ya está registrado"
+            )
+
+        # Crear Instructor
+        nuevo_instructor = Instructor(
+            nombre_completo=datos.nombre_completo,
+            correo_institucional=datos.correo_institucional,
+            numero_documento=datos.numero_documento,
+            tipo_documento="CC",
+            centro_formacion=datos.centro_formacion,
+            especialidad=datos.especialidad,
+            rol="instructor"
+        )
+        nuevo_instructor.establecer_contrasena(datos.contraseña)
+
+        db.add(nuevo_instructor)
+        await db.commit()
+        await db.refresh(nuevo_instructor)
+
+        return nuevo_instructor
+
+    @staticmethod
+    async def registrar_coordinador(db: AsyncSession, datos: RegistroCoordinadorSchema) -> Coordinador:
+        """
+        Registra un nuevo coordinador.
+        """
+        # Verificar email único
+        stmt_email = select(UsuarioBase).where(
+            UsuarioBase.correo_institucional == datos.correo_institucional
+        )
+        resultado_email = await db.execute(stmt_email)
+        if resultado_email.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El correo institucional ya está registrado"
+            )
+
+        # Verificar documento único
+        stmt_doc = select(UsuarioBase).where(
+            UsuarioBase.numero_documento == datos.numero_documento
+        )
+        resultado_doc = await db.execute(stmt_doc)
+        if resultado_doc.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="El número de documento ya está registrado"
+            )
+
+        # Crear Coordinador
+        nuevo_coordinador = Coordinador(
+            nombre_completo=datos.nombre_completo,
+            correo_institucional=datos.correo_institucional,
+            numero_documento=datos.numero_documento,
+            tipo_documento="CC",
+            departamento=datos.departamento,
+            rol="coordinador"
+        )
+        nuevo_coordinador.establecer_contrasena(datos.contraseña)
+
+        db.add(nuevo_coordinador)
+        await db.commit()
+        await db.refresh(nuevo_coordinador)
+
+        return nuevo_coordinador
+
+    @staticmethod
     async def login(db: AsyncSession, credenciales: LoginSchema) -> UsuarioBase:
         """
         Autentica usuario por email y contraseña.
@@ -138,9 +227,9 @@ class AuthService:
         to_encode = data.copy()
 
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

@@ -4,6 +4,7 @@ Punto de entrada de la API SGEP.
 Configura FastAPI, middleware, y rutas.
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -11,9 +12,15 @@ from app.routes.auth_routes import router as auth_router
 from app.routes.evidencia_routes import router as evidencia_router
 from app.routes.coordinador_routes import router as coordinador_router
 from app.routes.instructor_routes import router as instructor_router
+from app.routes.asignacion_routes import router as asignacion_router
+from app.routes.retroalimentacion_routes import router as retroalimentacion_router
+from app.routes.aprendiz_routes import router as aprendiz_router
 
 # Cargar variables de entorno
 load_dotenv()
+
+# EXPLICACIÓN: Obtener orígenes permitidos desde variable de entorno
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 
 # Crear aplicacion FastAPI
 app = FastAPI(
@@ -27,7 +34,7 @@ app = FastAPI(
 # CORS: Permitir solicitudes desde frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En produccion: especifico
+    allow_origins=ALLOWED_ORIGINS,  # EXPLICACIÓN: Usamos variable de entorno para seguridad
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,3 +73,6 @@ app.include_router(auth_router)
 app.include_router(evidencia_router)
 app.include_router(coordinador_router)
 app.include_router(instructor_router)
+app.include_router(asignacion_router)
+app.include_router(retroalimentacion_router)
+app.include_router(aprendiz_router)

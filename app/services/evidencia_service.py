@@ -7,7 +7,6 @@ Responsabilidad: Gestión completa de evidencias (CRUD + evaluación).
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from datetime import datetime
 from typing import List, Optional
 
@@ -178,6 +177,13 @@ class EvidenciaService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Evidencia no encontrada"
+            )
+
+        # EXPLICACIÓN: Validar que la evidencia no haya sido evaluada previamente
+        if evidencia.estado != "Pendiente":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Esta evidencia ya fue evaluada"
             )
 
         # Verificar instructor

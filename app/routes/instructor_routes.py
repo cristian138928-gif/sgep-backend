@@ -6,17 +6,18 @@ Evaluacion de evidencias, historial, estadisticas personales.
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
 
 from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase
-from app.schemas.evidencia_schema import EvidenciaResponseSchema
+from app.schemas.evidencia_schema import (
+    EvidenciaResponseSchema,
+    EvaluarEvidenciaSchema,
+    RetroalimentacionResponseSchema,
+)
 from app.schemas.instructor_schema import (
     EstadisticasInstructorSchema,
     InstructorPerfilSchema,
-    EvaluarEvidenciaSchema,
-    RetroalimentacionResponseSchema,
 )
 from app.schemas.coordinador_schema import PaginacionSchema
 from app.services.instructor_service import InstructorService
@@ -54,12 +55,7 @@ async def mi_perfil(
     
     Obtiene el perfil del instructor autenticado.
     """
-    from sqlalchemy import select
-    from app.models.usuario import Instructor
-
-    stmt = select(Instructor).where(Instructor.id_usuario == usuario.id_usuario)
-    resultado = await db.execute(stmt)
-    instructor = resultado.scalars().first()
+    instructor = await InstructorService.obtener_perfil(db, usuario.id_usuario)
 
     return {
         "id_usuario": instructor.id_usuario,

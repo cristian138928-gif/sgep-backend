@@ -11,10 +11,9 @@ Conceptos implementados:
 4. ABSTRACCIÓN: mostramos interfaz simple, ocultamos complejidad
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declarative_base
 import bcrypt
 
 # Base de datos declarativa - todas nuestras clases heredarán de Base
@@ -88,7 +87,7 @@ class UsuarioBase(Base):
 
     fecha_creacion = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         comment="Cuándo se creó la cuenta"
     )
 
@@ -345,35 +344,11 @@ class Instructor(UsuarioBase):
         """
         POLIMORFISMO EN ACCIÓN:
 
-        Este método SOLO existe en Instructor.
-        Aprendiz NO puede evaluar (solo enviar).
-
-        El Instructor revisa una evidencia y la evalúa.
-
-        Flujo:
-        1. Instructor revisa la bitácora PDF
-        2. Decide: "Aprobada" o "Ajuste Requerido"
-        3. Escribe observaciones (retroalimentación)
-        4. Sistema guarda todo en tabla Retroalimentacion
-        5. Sistema notifica al aprendiz
-
-        Args:
-            evidencia_obj: La Evidencia a evaluar
-            estado: "Aprobada" o "Ajuste Requerido"
-            observaciones: Texto con la evaluación
-
-        Returns:
-            bool: True si la evaluación fue exitosa
-
-        Raises:
-            ValueError si el estado no es válido
+        Evalúa una evidencia y crea retroalimentación.
+        La lógica real está en InstructorService.
         """
-        # Validar que el estado sea correcto
         if estado not in ["Aprobada", "Ajuste Requerido"]:
             raise ValueError(f"Estado inválido: {estado}. Debe ser 'Aprobada' o 'Ajuste Requerido'")
-
-        # Aquí irá la lógica de crear un registro en Retroalimentacion
-        # Por ahora solo retornamos True como placeholder
         return True
 
     def __repr__(self):
@@ -461,7 +436,7 @@ class Evidencia(Base):
 
     fecha_carga = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         comment="Cuándo se subió"
     )
 
@@ -528,7 +503,7 @@ class Retroalimentacion(Base):
 
     fecha_revision = Column(
         DateTime,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         comment="Cuándo el instructor evaluó"
     )
 
@@ -538,6 +513,50 @@ class Retroalimentacion(Base):
 
     def __repr__(self):
         return f"<RETROALIMENTACION Evidencia#{self.id_evidencia} - {self.estado_evaluacion}>"
+
+
+# ======================================
+# CLASE 7: AsignacionSeguimiento
+# ======================================
+class AsignacionSeguimiento(Base):
+    """Tabla pivote: vincula aprendices a un instructor seguidor (N:N)."""
+
+    __tablename__ = "asignaciones_seguimiento"
+
+    id_asignacion = Column(Integer, primary_key=True, autoincrement=True)
+
+    id_aprendiz = Column(
+        Integer,
+        ForeignKey('aprendices.id_usuario'),
+        nullable=False,
+        comment="Aprendiz asignado"
+    )
+
+    id_instructor = Column(
+        Integer,
+        ForeignKey('instructores.id_usuario'),
+        nullable=False,
+        comment="Instructor seguidor asignado"
+    )
+
+    fecha_asignacion = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        comment="Cuándo se hizo la asignación"
+    )
+
+    activa = Column(
+        Integer,
+        default=1,
+        comment="1=asignación activa, 0=desasignada"
+    )
+
+    # Relaciones inversas
+    aprendiz = relationship("Aprendiz", foreign_keys=[id_aprendiz])
+    instructor = relationship("Instructor", foreign_keys=[id_instructor])
+
+    def __repr__(self):
+        return f"<ASIGNACION Aprendiz#{self.id_aprendiz} -> Instructor#{self.id_instructor}>"
 
 
 print(" Modelos POO cargados correctamente")

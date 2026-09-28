@@ -9,8 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.auth_service import AuthService
-from app.schemas.usuario_schema import RegistroAprendizSchema, LoginSchema
-from app.models.usuario import UsuarioBase
+from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema
 
 
 # ====================================
@@ -195,3 +194,92 @@ async def test_endpoint_login_fallido(client: AsyncClient):
     )
 
     assert response.status_code == 401
+
+
+# ====================================
+# TESTS DE REGISTRO INSTRUCTOR
+# ====================================
+
+@pytest.mark.asyncio
+async def test_registrar_instructor_exitoso(db_session: AsyncSession):
+    """Test: Registro de instructor exitoso."""
+    datos = RegistroInstructorSchema(
+        nombre_completo="María García López",
+        correo_institucional="maria.garcia@test.com",
+        contraseña="InstructorPass123!",
+        numero_documento="1088888888",
+        centro_formacion="Centro de Salud",
+        especialidad="Enfermería"
+    )
+
+    resultado = await AuthService.registrar_instructor(db_session, datos)
+
+    assert resultado is not None
+    assert resultado.nombre_completo == "María García López"
+    assert resultado.rol == "instructor"
+    assert resultado.centro_formacion == "Centro de Salud"
+    assert resultado.especialidad == "Enfermería"
+
+
+@pytest.mark.asyncio
+async def test_endpoint_registro_instructor(client: AsyncClient):
+    """Test: POST /api/v1/auth/registro-instructor"""
+    response = await client.post(
+        "/api/v1/auth/registro-instructor",
+        json={
+            "nombre_completo": "Pedro Martínez",
+            "correo_institucional": "pedro.martinez@test.com",
+            "contraseña": "InstructorPass123!",
+            "numero_documento": "1099999999",
+            "centro_formacion": "Centro de Tecnología",
+            "especialidad": "Desarrollo de Software"
+        }
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert "access_token" in data
+    assert data["email"] == "pedro.martinez@test.com"
+
+
+# ====================================
+# TESTS DE REGISTRO COORDINADOR
+# ====================================
+
+@pytest.mark.asyncio
+async def test_registrar_coordinador_exitoso(db_session: AsyncSession):
+    """Test: Registro de coordinador exitoso."""
+    datos = RegistroCoordinadorSchema(
+        nombre_completo="Ana López García",
+        correo_institucional="ana.lopez@test.com",
+        contraseña="CoordPass123!",
+        numero_documento="1077777777",
+        departamento="Coordinación Académica"
+    )
+
+    resultado = await AuthService.registrar_coordinador(db_session, datos)
+
+    assert resultado is not None
+    assert resultado.nombre_completo == "Ana López García"
+    assert resultado.rol == "coordinador"
+    assert resultado.departamento == "Coordinación Académica"
+
+
+@pytest.mark.asyncio
+async def test_endpoint_registro_coordinador(client: AsyncClient):
+    """Test: POST /api/v1/auth/registro-coordinador"""
+    response = await client.post(
+        "/api/v1/auth/registro-coordinador",
+        json={
+            "nombre_completo": "Carlos Ruiz Martínez",
+            "correo_institucional": "carlos.ruiz@test.com",
+            "contraseña": "CoordPass123!",
+            "numero_documento": "1066666666",
+            "departamento": "Coordinación de Programa"
+        }
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert "access_token" in data
+    assert data["email"] == "carlos.ruiz@test.com"

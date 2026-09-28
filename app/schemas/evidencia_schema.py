@@ -102,3 +102,12 @@ class RetroalimentacionResponseSchema(BaseModel):
             "estado_evaluacion": "Aprobada",
             "fecha_revision": "2025-09-19T14:30:00"
         }
+
+
+class RetroalimentacionCreateSchema(BaseModel):
+    """Request para crear retroalimentación independiente (POST)."""
+    id_evidencia: int
+    observaciones: str = Field(..., min_length=10, max_length=1000)
+    estado_evaluacion: Optional[str] = Field(
+        None, pattern="^(Aprobada|Ajuste Requerido)$"
+    )

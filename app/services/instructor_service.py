@@ -7,12 +7,10 @@ Responsabilidad: Evaluar evidencias, ver historial, estadisticas personales.
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from typing import List, Optional
-from datetime import datetime
 import math
 
 from app.models.usuario import (
-    UsuarioBase, Instructor, Aprendiz, Evidencia, Retroalimentacion
+    Instructor, Evidencia, Retroalimentacion
 )
 
 

@@ -1,12 +1,10 @@
 # app/schemas/instructor_schema.py
 """
 Esquemas Pydantic para dashboard del instructor.
-Response models para evaluaciones y estadisticas.
+Response models para perfil y estadisticas.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional
-from datetime import datetime
+from pydantic import BaseModel
 
 
 class EstadisticasInstructorSchema(BaseModel):
@@ -32,31 +30,6 @@ class InstructorPerfilSchema(BaseModel):
     correo_institucional: str
     centro_formacion: str
     especialidad: str
-
-    class Config:
-        from_attributes = True
-
-
-class EvaluarEvidenciaSchema(BaseModel):
-    """Schema para evaluar evidencia."""
-    estado: str = Field(..., pattern="^(Aprobada|Ajuste Requerido)$")
-    observaciones: str = Field(..., min_length=10, max_length=1000)
-
-    class Config:
-        example = {
-            "estado": "Aprobada",
-            "observaciones": "Buena bitacora, cumple con los requisitos minimos."
-        }
-
-
-class RetroalimentacionResponseSchema(BaseModel):
-    """Respuesta de retroalimentacion."""
-    id_retroalimentacion: int
-    id_evidencia: int
-    id_instructor: int
-    observaciones: str
-    estado_evaluacion: str
-    fecha_revision: datetime
 
     class Config:
         from_attributes = True

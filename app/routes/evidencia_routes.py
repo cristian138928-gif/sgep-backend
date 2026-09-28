@@ -10,14 +10,14 @@ from typing import List
 
 from app.database.connection import get_db
 from app.dependencies import get_current_user
-from app.models.usuario import UsuarioBase, Aprendiz, Instructor
+from app.models.usuario import UsuarioBase
 from app.schemas.evidencia_schema import (
-    EvidenciaCreateSchema,
     EvidenciaResponseSchema,
     EvaluarEvidenciaSchema,
     RetroalimentacionResponseSchema,
 )
 from app.services.evidencia_service import EvidenciaService
+from app.services.instructor_service import InstructorService
 import os
 import shutil
 
@@ -25,6 +25,9 @@ router = APIRouter(prefix="/api/v1/evidencias", tags=["Evidencias"])
 
 # EXPLICACIÓN: Directorio donde se guardan los PDFs subidos
 UPLOAD_DIR = "uploads"
+
+# EXPLICACIÓN: Límite de tamaño de archivo (10 MB)
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB en bytes
 
 
 # ====================================
@@ -78,6 +81,15 @@ async def upload_evidencia(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Solo se permiten archivos PDF"
         )
+
+    # EXPLICACIÓN: Validar tamaño máximo del archivo
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"El archivo excede el tamaño máximo de {MAX_FILE_SIZE // (1024 * 1024)} MB"
+        )
+    await file.seek(0)  # Reiniciar puntero después de leer
 
     # Crear directorio del aprendiz si no existe
     user_dir = os.path.join(UPLOAD_DIR, str(usuario.id_usuario))
@@ -185,7 +197,7 @@ async def evaluar_evidencia(
             detail="Solo los instructores pueden evaluar evidencias"
         )
 
-    retro = await EvidenciaService.evaluar_evidencia(
+    retro = await InstructorService.evaluar_evidencia(
         db=db,
         id_evidencia=id_evidencia,
         id_instructor=usuario.id_usuario,

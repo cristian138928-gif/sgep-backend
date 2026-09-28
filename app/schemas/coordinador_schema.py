@@ -5,8 +5,7 @@ Response models para estadisticas, supervision, paginacion.
 """
 
 from pydantic import BaseModel
-from typing import List, Optional, Generic, TypeVar
-from datetime import datetime
+from typing import List, Generic, TypeVar
 
 T = TypeVar("T")
 

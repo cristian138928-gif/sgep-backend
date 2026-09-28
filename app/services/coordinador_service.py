@@ -4,7 +4,6 @@ Servicio de Coordinador.
 Responsabilidad: Dashboard, estadisticas, supervision de evidencias.
 """
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
@@ -12,7 +11,7 @@ from datetime import datetime
 import math
 
 from app.models.usuario import (
-    UsuarioBase, Aprendiz, Evidencia, Retroalimentacion, Instructor
+    Aprendiz, Evidencia, Instructor
 )
 
 

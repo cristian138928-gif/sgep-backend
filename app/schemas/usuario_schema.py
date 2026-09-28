@@ -42,6 +42,30 @@ class RegistroAprendizSchema(BaseModel):
             "programa": "ADSO - Análisis y Desarrollo de Software"
         }
 
+
+# EXPLICACIÓN: Esquemas adicionales para registro de Instructor y Coordinador
+class RegistroInstructorSchema(BaseModel):
+    """
+    Validación para registro de instructor.
+    """
+    nombre_completo: str = Field(..., min_length=5, max_length=150)
+    correo_institucional: EmailStr
+    contraseña: str = Field(..., min_length=8, max_length=100)
+    numero_documento: str = Field(..., min_length=6, max_length=20)
+    centro_formacion: str = Field(..., min_length=5, max_length=150)
+    especialidad: str = Field(..., min_length=3, max_length=100)
+
+
+class RegistroCoordinadorSchema(BaseModel):
+    """
+    Validación para registro de coordinador.
+    """
+    nombre_completo: str = Field(..., min_length=5, max_length=150)
+    correo_institucional: EmailStr
+    contraseña: str = Field(..., min_length=8, max_length=100)
+    numero_documento: str = Field(..., min_length=6, max_length=20)
+    departamento: str = Field(..., min_length=5, max_length=100)
+
 # ====================================
 # ESQUEMAS DE LOGIN
 # ====================================
