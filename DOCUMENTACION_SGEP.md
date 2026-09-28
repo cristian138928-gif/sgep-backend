@@ -48,4 +48,15 @@ v (genera)
 | - fecha_revision: datetime |
 +---------------------------------------------+
 | + guardar_comentario(): void |
-+---------------------------------------------+ 6. Matriz de Trazabilidad (Endpoints y Pruebas)RequisitoClase POOEndpoint FastAPICaso de PruebaEstadoRF01UsuarioBase / UsuarioPOST /api/v1/auth/loginCP-01: Login correcto/incorrectoAprobadoRF02Aprendiz / EvidenciaPOST /api/v1/evidencias/uploadCP-02: Carga de PDF válidoEn DesarrolloRF03Instructor / EvidenciaPUT /api/v1/evidencias/{id}/evaluarCP-03: Cambio de estado a AprobadoEn DesarrolloRF04RetroalimentacionPOST /api/v1/retroalimentacion/CP-04: Registro de comentariosDiseñadoRF06AprendizGET /api/v1/aprendiz/{id}/avanceCP-05: Cálculo de % de bitácorasEn Desarrollo7. Plan de Trabajo (Gantt - 16 Semanas)Semanas 1-4 (Análisis): Levantamiento de requerimientos, historias de usuario y casos de uso.Semanas 4-8 (Diseño): Diagrama de clases UML, diseño de base de datos PostgreSQL y prototipos UI.Semanas 8-12 (Desarrollo): Configuración Docker, FastAPI, ORM SQLAlchemy y endpoints REST.Semanas 11-14 (Pruebas): Pruebas unitarias API, pruebas de integración BD y carga de PDFs.Semanas 15-16 (Despliegue y Cierre): Despliegue en servidor, capacitación de usuarios y entrega final.
++---------------------------------------------+ 6. Matriz de Trazabilidad (Endpoints y Pruebas)
+| Requisito | Endpoint FastAPI | Caso de Prueba | Estado |
+|-----------|------------------|----------------|--------|
+| RF01 | POST /api/v1/auth/login | CP-01: Login correcto/incorrecto | **Aprobado** |
+| RF02 | POST /api/v1/evidencias/upload | CP-02: Carga de PDF válido | **Aprobado** |
+| RF03 | PUT /api/v1/evidencias/{id}/evaluar | CP-03: Cambio de estado a Aprobado | **Aprobado** |
+| RF04 | POST /api/v1/retroalimentacion/ | CP-04: Registro de comentarios | **Aprobado** |
+| RF05 | POST /api/v1/asignaciones/ | CP-05: Asignación de instructor | **Aprobado** |
+| RF06 | GET /api/v1/aprendiz/avance | CP-06: Cálculo de % de bitácoras | **Aprobado** |
+| RF07 | GET /api/v1/coordinador/estadisticas | CP-07: Dashboard consolidado | **Aprobado** |
+
+7. Plan de Trabajo (Gantt - 16 Semanas)Semanas 1-4 (Análisis): Levantamiento de requerimientos, historias de usuario y casos de uso.Semanas 4-8 (Diseño): Diagrama de clases UML, diseño de base de datos PostgreSQL y prototipos UI.Semanas 8-12 (Desarrollo): Configuración Docker, FastAPI, ORM SQLAlchemy y endpoints REST.Semanas 11-14 (Pruebas): Pruebas unitarias API, pruebas de integración BD y carga de PDFs.Semanas 15-16 (Despliegue y Cierre): Despliegue en servidor, capacitación de usuarios y entrega final.

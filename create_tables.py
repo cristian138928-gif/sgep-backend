@@ -7,19 +7,18 @@ Uso: uv run python create_tables.py
 """
 
 import asyncio
+import os
 from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
-import os
+
+# EXPLICACIÓN: Importamos Base arriba porque ruff exige imports al inicio (E402)
+from app.models.usuario import Base
 
 # EXPLICACIÓN: Cargamos las variables de entorno para obtener la URL de la BD
 load_dotenv()
 
 # EXPLICACIÓN: Obtenemos la URL de conexión desde .env
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-# EXPLICACIÓN: Importamos todos los modelos para que SQLAlchemy los conozca
-# y pueda crear las tablas correspondientes
-from app.models.usuario import Base, UsuarioBase, Aprendiz, Instructor, Coordinador, Evidencia, Retroalimentacion
 
 
 async def crear_tablas():

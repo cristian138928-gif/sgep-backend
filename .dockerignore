@@ -1,0 +1,13 @@
+# EXPLICACIÓN: Excluir archivos innecesarios para imagen ligera
+.git
+.gitignore
+.env
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+venv/
+.vscode/
+.idea/
+test.db
+*.md

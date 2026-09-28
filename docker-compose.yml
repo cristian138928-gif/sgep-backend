@@ -1,0 +1,41 @@
+# EXPLICACIÓN: Orquestación de servicios para desarrollo local
+version: '3.8'
+
+services:
+  # EXPLICACIÓN: Base de datos PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: sgep_db
+    environment:
+      POSTGRES_DB: sgep_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # EXPLICACIÓN: API FastAPI
+  api:
+    build: .
+    container_name: sgep_api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/sgep_db
+      SECRET_KEY: ${SECRET_KEY:-tu_clave_super_secura_minimo_32_caracteres_2024}
+      ALGORITHM: HS256
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads_data:

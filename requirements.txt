@@ -4,12 +4,16 @@ fastapi==0.111.0 # Una versión estable de FastAPI.
 uvicorn[standard]==0.29.0 # Servidor ASGI para FastAPI, incluyendo dependencias estándar.
 sqlalchemy==2.0.30 # ORM para interactuar con la base de datos.
 psycopg2-binary==2.9.9 # Adaptador para PostgreSQL.
-pydantic==2.7.1 # Para la validación de datos y configuración.
+asyncpg==0.29.0 # EXPLICACIÓN: Adaptador async para PostgreSQL.
+pydantic[email]==2.7.1 # EXPLICACIÓN: Incluye EmailStr para validación de emails.
 python-dotenv==1.0.1 # Para la gestión de variables de entorno.
-
-# EXPLICACIÓN: Herramientas de desarrollo para calidad de código y testing.
-# No son dependencias de producción, pero son esenciales para el desarrollo profesional.
-ruff==0.4.4 # Linter y formateador de código, para mantener un estilo consistente.
-pytest==8.2.0 # Framework para escribir y ejecutar tests.
+bcrypt==4.1.3 # EXPLICACIÓN: Hashing de contraseñas (import directo en models).
 python-jose[cryptography]==3.3.0 # Para la generación y validación de JWTs.
 passlib[bcrypt]==1.7.4 # Para el hashing seguro de contraseñas.
+
+# EXPLICACIÓN: Herramientas de desarrollo para calidad de código y testing.
+ruff==0.4.4 # Linter y formateador de código.
+pytest==8.2.0 # Framework para escribir y ejecutar tests.
+pytest-asyncio==0.23.0 # EXPLICACIÓN: Soporte para tests async en pytest.
+httpx==0.27.0 # EXPLICACIÓN: Cliente HTTP async para tests de endpoints.
+aiosqlite==0.20.0 # EXPLICACIÓN: SQLite async para tests (no depende de PostgreSQL).
