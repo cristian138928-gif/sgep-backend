@@ -4,17 +4,17 @@ Servicio de Evidencias.
 Responsabilidad: Gestión completa de evidencias (CRUD + evaluación).
 """
 
+from datetime import UTC, datetime
+
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime, timezone
-from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.usuario import (
-    Evidencia,
-    Retroalimentacion,
     Aprendiz,
+    Evidencia,
     Instructor,
+    Retroalimentacion,
     UsuarioBase,
 )
 
@@ -22,7 +22,7 @@ from app.models.usuario import (
 class EvidenciaService:
     """
     Servicio para gestionar evidencias.
-    
+
     Endpoints que soporta:
     - POST /evidencias/upload (subir PDF)
     - GET /evidencias/mis-evidencias (listar del aprendiz)
@@ -37,11 +37,11 @@ class EvidenciaService:
         titulo: str,
         tipo_formato: str,
         ruta_archivo: str,
-        fecha_deadline: Optional[datetime] = None
+        fecha_deadline: datetime | None = None
     ) -> Evidencia:
         """
         Crea una nueva evidencia.
-        
+
         Args:
             db: Sesión async
             id_aprendiz: ID del aprendiz que sube
@@ -49,10 +49,10 @@ class EvidenciaService:
             tipo_formato: Tipo (Bitácora, F023, etc.)
             ruta_archivo: Ruta donde se guardó el PDF
             fecha_deadline: Fecha límite (opcional)
-            
+
         Returns:
             Evidencia creada
-            
+
         Raises:
             404: Aprendiz no encontrado
         """
@@ -60,7 +60,7 @@ class EvidenciaService:
         stmt_aprendiz = select(Aprendiz).where(Aprendiz.id_usuario == id_aprendiz)
         resultado = await db.execute(stmt_aprendiz)
         aprendiz = resultado.scalars().first()
-        
+
         if not aprendiz:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -86,14 +86,14 @@ class EvidenciaService:
     async def obtener_evidencias_aprendiz(
         db: AsyncSession,
         id_aprendiz: int
-    ) -> List[Evidencia]:
+    ) -> list[Evidencia]:
         """
         Lista todas las evidencias de un aprendiz.
-        
+
         Args:
             db: Sesión async
             id_aprendiz: ID del aprendiz
-            
+
         Returns:
             Lista de evidencias ordenadas por fecha (más reciente primero)
         """
@@ -112,27 +112,27 @@ class EvidenciaService:
     ) -> Evidencia:
         """
         Obtiene una evidencia por su ID.
-        
+
         Args:
             db: Sesión async
             id_evidencia: ID de la evidencia
-            
+
         Returns:
             Evidencia encontrada
-            
+
         Raises:
             404: Evidencia no encontrada
         """
         stmt = select(Evidencia).where(Evidencia.id_evidencia == id_evidencia)
         resultado = await db.execute(stmt)
         evidencia = resultado.scalars().first()
-        
+
         if not evidencia:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Evidencia no encontrada"
             )
-        
+
         return evidencia
 
     @staticmethod
@@ -169,24 +169,24 @@ class EvidenciaService:
     ) -> Retroalimentacion:
         """
         Evalúa una evidencia (solo instructores).
-        
+
         Pasos:
         1. Verificar que la evidencia exista
         2. Verificar que el instructor exista
         3. Validar estado (Aprobada / Ajuste Requerido)
         4. Crear registro de Retroalimentacion
         5. Actualizar estado de la evidencia
-        
+
         Args:
             db: Sesión async
             id_evidencia: ID de la evidencia a evaluar
             id_instructor: ID del instructor que evalúa
             estado: "Aprobada" o "Ajuste Requerido"
             observaciones: Comentarios del instructor
-            
+
         Returns:
             Retroalimentacion creada
-            
+
         Raises:
             404: Evidencia o instructor no encontrado
             400: Estado inválido
@@ -202,7 +202,7 @@ class EvidenciaService:
         stmt_ev = select(Evidencia).where(Evidencia.id_evidencia == id_evidencia)
         resultado_ev = await db.execute(stmt_ev)
         evidencia = resultado_ev.scalars().first()
-        
+
         if not evidencia:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -220,7 +220,7 @@ class EvidenciaService:
         stmt_inst = select(Instructor).where(Instructor.id_usuario == id_instructor)
         resultado_inst = await db.execute(stmt_inst)
         instructor = resultado_inst.scalars().first()
-        
+
         if not instructor:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -248,14 +248,14 @@ class EvidenciaService:
     async def obtener_retroalimentacion(
         db: AsyncSession,
         id_evidencia: int
-    ) -> Optional[Retroalimentacion]:
+    ) -> Retroalimentacion | None:
         """
         Obtiene la retroalimentación de una evidencia.
-        
+
         Args:
             db: Sesión async
             id_evidencia: ID de la evidencia
-            
+
         Returns:
             Retroalimentacion o None si no tiene
         """
@@ -270,7 +270,7 @@ class EvidenciaService:
         db: AsyncSession,
         id_aprendiz: int,
         dias_anticipacion: int = 7,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Alertas de vencimiento de las evidencias pendientes de un aprendiz.
 
@@ -297,9 +297,9 @@ class EvidenciaService:
     @staticmethod
     async def obtener_alertas_rol(
         db: AsyncSession,
-        ids_aprendiz: Optional[List[int]],
+        ids_aprendiz: list[int] | None,
         dias_anticipacion: int = 7,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Alertas de vencimiento para instructor y coordinador.
 
@@ -336,7 +336,7 @@ class EvidenciaService:
         filtro_aprendiz,
         dias_anticipacion: int,
         incluir_aprendiz: bool,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Constructor único de alertas (evita duplicar la lógica de vencimiento).
 
@@ -350,7 +350,7 @@ class EvidenciaService:
             Lista de dicts ordenada por urgencia
         """
         # EXPLICACIÓN: Comparamos solo fechas => evita mezclar zonas horarias
-        hoy = datetime.now(timezone.utc).date()
+        hoy = datetime.now(UTC).date()
 
         stmt = (
             select(Evidencia, Aprendiz.nombre_completo)
@@ -363,7 +363,7 @@ class EvidenciaService:
         )
         filas = (await db.execute(stmt)).all()
 
-        alertas: List[dict] = []
+        alertas: list[dict] = []
         for evidencia, nombre_aprendiz in filas:
             dias_restantes = (evidencia.fecha_deadline.date() - hoy).days
 

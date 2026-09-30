@@ -5,16 +5,18 @@ Configura FastAPI, middleware, y rutas.
 """
 
 import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-from app.routes.auth_routes import router as auth_router
-from app.routes.evidencia_routes import router as evidencia_router
-from app.routes.coordinador_routes import router as coordinador_router
-from app.routes.instructor_routes import router as instructor_router
-from app.routes.asignacion_routes import router as asignacion_router
-from app.routes.retroalimentacion_routes import router as retroalimentacion_router
+
 from app.routes.aprendiz_routes import router as aprendiz_router
+from app.routes.asignacion_routes import router as asignacion_router
+from app.routes.auth_routes import router as auth_router
+from app.routes.coordinador_routes import router as coordinador_router
+from app.routes.evidencia_routes import router as evidencia_router
+from app.routes.instructor_routes import router as instructor_router
+from app.routes.retroalimentacion_routes import router as retroalimentacion_router
 
 # Cargar variables de entorno
 load_dotenv()

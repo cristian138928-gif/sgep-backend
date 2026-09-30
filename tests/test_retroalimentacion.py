@@ -6,9 +6,9 @@ Cubre: crear con/ sin cambio de estado, obtener por ID, por evidencia, seguridad
 
 import pytest
 from httpx import AsyncClient
-from app.models.usuario import Instructor, Aprendiz, Evidencia
-from app.services.auth_service import AuthService
 
+from app.models.usuario import Aprendiz, Evidencia, Instructor
+from app.services.auth_service import AuthService
 
 # ====================================
 # HELPERS
@@ -35,7 +35,9 @@ async def crear_instructor_token(db_session) -> tuple[str, Instructor]:
     return token, inst
 
 
-async def crear_aprendiz_con_evidencia(db_session, estado="Pendiente") -> tuple[Aprendiz, Evidencia]:
+async def crear_aprendiz_con_evidencia(
+    db_session, estado="Pendiente"
+) -> tuple[Aprendiz, Evidencia]:
     """Crea aprendiz + evidencia y retorna ambos."""
     ap = Aprendiz(
         nombre_completo="Aprendiz Retro",

@@ -5,10 +5,11 @@ SQLAlchemy Async + PostgreSQL
 """
 
 # Importar herramientas para conexiones asincrónicas
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 # Cargar variables de entorno (.env)
 load_dotenv()

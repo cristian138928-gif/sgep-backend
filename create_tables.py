@@ -8,8 +8,9 @@ Uso: uv run python create_tables.py
 
 import asyncio
 import os
-from sqlalchemy.ext.asyncio import create_async_engine
+
 from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # EXPLICACIÓN: Importamos Base arriba porque ruff exige imports al inicio (E402)
 from app.models.usuario import Base

@@ -4,10 +4,9 @@ Esquemas Pydantic para evidencias.
 Request/Response models para endpoints de evidencias.
 """
 
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
 
+from pydantic import BaseModel, Field
 
 # ====================================
 # ESQUEMAS DE REQUEST
@@ -16,7 +15,7 @@ from typing import Optional
 class EvidenciaCreateSchema(BaseModel):
     """
     Validación para crear evidencia (upload).
-    
+
     Campos:
     - titulo: Nombre de la bitácora
     - tipo_formato: Tipo de documento
@@ -24,7 +23,7 @@ class EvidenciaCreateSchema(BaseModel):
     """
     titulo: str = Field(..., min_length=3, max_length=200)
     tipo_formato: str = Field(..., min_length=2, max_length=50)
-    fecha_deadline: Optional[datetime] = None
+    fecha_deadline: datetime | None = None
 
     class Config:
         example = {
@@ -37,7 +36,7 @@ class EvidenciaCreateSchema(BaseModel):
 class EvaluarEvidenciaSchema(BaseModel):
     """
     Validación para evaluar evidencia (instructor).
-    
+
     Campos:
     - estado: Aprobada / Ajuste Requerido
     - observaciones: Comentarios del instructor
@@ -66,7 +65,7 @@ class EvidenciaResponseSchema(BaseModel):
     ruta_archivo_pdf: str
     estado: str
     fecha_carga: datetime
-    fecha_deadline: Optional[datetime]
+    fecha_deadline: datetime | None
 
     class Config:
         from_attributes = True
@@ -152,6 +151,6 @@ class RetroalimentacionCreateSchema(BaseModel):
     """Request para crear retroalimentación independiente (POST)."""
     id_evidencia: int
     observaciones: str = Field(..., min_length=10, max_length=1000)
-    estado_evaluacion: Optional[str] = Field(
+    estado_evaluacion: str | None = Field(
         None, pattern="^(Aprobada|Ajuste Requerido)$"
     )

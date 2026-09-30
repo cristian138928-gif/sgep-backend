@@ -8,7 +8,13 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
-from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema, TokenSchema
+from app.schemas.usuario_schema import (
+    LoginSchema,
+    RegistroAprendizSchema,
+    RegistroCoordinadorSchema,
+    RegistroInstructorSchema,
+    TokenSchema,
+)
 from app.services.auth_service import AuthService
 
 # EXPLICACIÓN: APIRouter agrupa las rutas bajo un prefijo común

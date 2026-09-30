@@ -1,0 +1,44 @@
+# ============================================================
+# SGEP - Configuración única del proyecto (ruff + pytest + coverage)
+# EXPLICACIÓN: Un solo archivo evita que las 3 herramientas
+# usen configuraciones distintas o defaults silenciosos.
+# ============================================================
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["venv", "__pycache__"]
+
+[tool.ruff.lint]
+# E/W: errores y estilo base | F: pyflakes | I: orden de imports
+# UP: sintaxis moderna (3.12) | B: bugs comunes | SIM: simplificaciones
+# C4: comprensiones | RET: returns | PIE: misc | PTH: pathlib
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RET", "PIE", "PTH"]
+ignore = [
+    "B008",  # EXPLICACIÓN: FastAPI inyecta con Depends() en defaults (patrón del framework)
+    "RET501",  # EXPLICACIÓN: retornar None explícito es ruido en funciones void
+]
+
+[tool.ruff.lint.per-file-ignores]
+# EXPLICACIÓN: tests priorizan legibilidad sobre pureza de returns/imports
+"tests/*" = ["RET"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+# EXPLICACIÓN: sysmon (3.12+) ve la reanudación tras await; settrace la pierde (coveragepy#1082)
+core = "sysmon"
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

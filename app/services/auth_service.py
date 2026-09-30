@@ -4,16 +4,22 @@ Servicio de Autenticación.
 Responsabilidad:Registrar y autenticar usuarios, gestionar JWT.
 """
 
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import timedelta, datetime, timezone
-from jose import jwt
-from dotenv import load_dotenv
 import os
+from datetime import UTC, datetime, timedelta
 
-from app.models.usuario import UsuarioBase, Aprendiz, Instructor, Coordinador
-from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema
+from dotenv import load_dotenv
+from fastapi import HTTPException, status
+from jose import jwt
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.usuario import Aprendiz, Coordinador, Instructor, UsuarioBase
+from app.schemas.usuario_schema import (
+    LoginSchema,
+    RegistroAprendizSchema,
+    RegistroCoordinadorSchema,
+    RegistroInstructorSchema,
+)
 
 load_dotenv()
 
@@ -25,7 +31,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 horas
 class AuthService:
     """
     Servicio de autenticación.
-    
+
     Patrón utilizado: Service Layer
     - Separa lógica de negocio de las rutas
     - Facilita testing (mocking de servicios)
@@ -36,21 +42,21 @@ class AuthService:
     async def registrar_aprendiz(db: AsyncSession, datos: RegistroAprendizSchema) -> Aprendiz:
         """
         Registra un nuevo aprendiz.
-        
+
         Pasos:
         1. Verificar que email no exista
         2. Verificar que documento no exista
         3. Crear instancia Aprendiz
         4. Hashear contraseña
         5. Guardar en BD
-        
+
         Args:
             db: Sesión async de SQLAlchemy
             datos: Esquema de validación de registro
-            
+
         Returns:
             Aprendiz: Objeto creado
-            
+
         Raises:
             HTTPException 409: Email o documento ya existe
         """
@@ -140,7 +146,9 @@ class AuthService:
         return nuevo_instructor
 
     @staticmethod
-    async def registrar_coordinador(db: AsyncSession, datos: RegistroCoordinadorSchema) -> Coordinador:
+    async def registrar_coordinador(
+        db: AsyncSession, datos: RegistroCoordinadorSchema
+    ) -> Coordinador:
         """
         Registra un nuevo coordinador.
         """
@@ -187,14 +195,14 @@ class AuthService:
     async def login(db: AsyncSession, credenciales: LoginSchema) -> UsuarioBase:
         """
         Autentica usuario por email y contraseña.
-        
+
         Args:
             db: Sesión async
             credenciales: Email + contraseña
-            
+
         Returns:
             UsuarioBase: Usuario autenticado
-            
+
         Raises:
             HTTPException 401: Credenciales inválidas
         """
@@ -216,21 +224,20 @@ class AuthService:
     def crear_token_acceso(data: dict, expires_delta: timedelta = None) -> str:
         """
         Genera JWT token.
-        
+
         Args:
             data: Datos a codificar (sub, id, etc.)
             expires_delta: Tiempo de expiración custom
-            
+
         Returns:
             str: Token JWT codificado
         """
         to_encode = data.copy()
 
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

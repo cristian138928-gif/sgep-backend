@@ -4,20 +4,19 @@ Servicio de Instructor.
 Responsabilidad: Evaluar evidencias, ver historial, estadisticas personales.
 """
 
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 import math
 
-from app.models.usuario import (
-    Instructor, Evidencia, Retroalimentacion
-)
+from fastapi import HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.usuario import Evidencia, Instructor, Retroalimentacion
 
 
 class InstructorService:
     """
     Servicio para el dashboard del instructor.
-    
+
     Funcionalidades:
     - Ver evidencias pendientes de evaluar
     - Evaluar evidencia (aprobar / ajuste)
@@ -34,7 +33,7 @@ class InstructorService:
     ) -> dict:
         """
         Lista evidencias pendientes de evaluacion.
-        
+
         Returns:
             dict con items paginados y metadata
         """
@@ -72,17 +71,17 @@ class InstructorService:
     ) -> Retroalimentacion:
         """
         Evalua una evidencia y crea retroalimentacion.
-        
+
         Args:
             db: Sesion async
             id_evidencia: ID de la evidencia
             id_instructor: ID del instructor que evalua
             estado: "Aprobada" o "Ajuste Requerido"
             observaciones: Comentarios del instructor
-            
+
         Returns:
             Retroalimentacion creada
-            
+
         Raises:
             404: Evidencia o instructor no encontrado
             400: Estado invalido
@@ -99,7 +98,7 @@ class InstructorService:
         stmt_ev = select(Evidencia).where(Evidencia.id_evidencia == id_evidencia)
         resultado_ev = await db.execute(stmt_ev)
         evidencia = resultado_ev.scalars().first()
-        
+
         if not evidencia:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -117,7 +116,7 @@ class InstructorService:
         stmt_inst = select(Instructor).where(Instructor.id_usuario == id_instructor)
         resultado_inst = await db.execute(stmt_inst)
         instructor = resultado_inst.scalars().first()
-        
+
         if not instructor:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -150,7 +149,7 @@ class InstructorService:
     ) -> dict:
         """
         Historial de evaluaciones del instructor.
-        
+
         Returns:
             dict con items paginados y metadata
         """
@@ -167,7 +166,11 @@ class InstructorService:
         total_pages = math.ceil(total / page_size) if total > 0 else 1
 
         offset = (page - 1) * page_size
-        stmt = stmt.order_by(Retroalimentacion.fecha_revision.desc()).offset(offset).limit(page_size)
+        stmt = (
+            stmt.order_by(Retroalimentacion.fecha_revision.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
 
         resultado = await db.execute(stmt)
         items = resultado.scalars().all()
@@ -184,7 +187,7 @@ class InstructorService:
     async def obtener_estadisticas(db: AsyncSession, id_instructor: int) -> dict:
         """
         Estadisticas personales del instructor.
-        
+
         Returns:
             dict con total_evaluadas, aprobadas, ajustes, pendientes
         """
@@ -225,18 +228,18 @@ class InstructorService:
     async def obtener_perfil(db: AsyncSession, id_instructor: int) -> Instructor:
         """
         Obtiene el perfil del instructor.
-        
+
         Returns:
             Instructor con sus datos
         """
         stmt = select(Instructor).where(Instructor.id_usuario == id_instructor)
         resultado = await db.execute(stmt)
         instructor = resultado.scalars().first()
-        
+
         if not instructor:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Instructor no encontrado"
             )
-        
+
         return instructor

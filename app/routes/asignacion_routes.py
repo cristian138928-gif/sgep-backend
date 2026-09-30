@@ -52,6 +52,7 @@ async def crear_asignacion(
     )
     # Enriquecer respuesta con nombres
     from sqlalchemy import select
+
     from app.models.usuario import Aprendiz, Instructor
 
     stmt_ap = select(Aprendiz).where(Aprendiz.id_usuario == datos.id_aprendiz)

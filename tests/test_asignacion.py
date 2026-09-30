@@ -6,9 +6,9 @@ Cubre: crear, desasignar, listar, seguridad.
 
 import pytest
 from httpx import AsyncClient
-from app.models.usuario import Coordinador, Aprendiz, Instructor
-from app.services.auth_service import AuthService
 
+from app.models.usuario import Aprendiz, Coordinador, Instructor
+from app.services.auth_service import AuthService
 
 # ====================================
 # HELPERS

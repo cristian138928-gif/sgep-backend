@@ -12,7 +12,6 @@ from httpx import AsyncClient
 from app.models.usuario import Aprendiz, Coordinador, Evidencia, Instructor
 from app.services.auth_service import AuthService
 
-
 # ====================================
 # HELPERS
 # ====================================

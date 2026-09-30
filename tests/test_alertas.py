@@ -4,14 +4,13 @@ Tests del endpoint GET /api/v1/aprendiz/alertas.
 Cubre: vencidas, por vencer, ventana de días, estados y RBAC.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
 
 from app.models.usuario import Aprendiz, Coordinador, Evidencia
 from app.services.auth_service import AuthService
-
 
 # ====================================
 # HELPERS
@@ -56,7 +55,7 @@ async def crear_evidencia_bd(
         tipo_formato="Bitacora",
         ruta_archivo_pdf="uploads/alerta.pdf",
         estado=estado,
-        fecha_deadline=datetime.now(timezone.utc) + timedelta(days=dias_limite),
+        fecha_deadline=datetime.now(UTC) + timedelta(days=dias_limite),
     )
     db_session.add(evidencia)
     await db_session.commit()

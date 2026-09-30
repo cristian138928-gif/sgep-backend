@@ -4,15 +4,14 @@ Rutas del dashboard de aprendiz.
 Consulta de avance, evidencias propias.
 """
 
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.database.connection import get_db
 from app.dependencies import get_current_user
-from app.models.usuario import UsuarioBase, Aprendiz, Evidencia
+from app.models.usuario import Aprendiz, Evidencia, UsuarioBase
 from app.schemas.coordinador_schema import AvanceAprendizSchema
 from app.schemas.evidencia_schema import AlertaVencimientoSchema
 from app.services.evidencia_service import EvidenciaService
@@ -77,7 +76,7 @@ async def mi_avance(
     }
 
 
-@router.get("/alertas", response_model=List[AlertaVencimientoSchema])
+@router.get("/alertas", response_model=list[AlertaVencimientoSchema])
 async def mis_alertas(
     dias: int = Query(7, ge=0, le=90, description="Días de anticipación"),
     db: AsyncSession = Depends(get_db),

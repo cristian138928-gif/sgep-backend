@@ -7,7 +7,6 @@ Cubre: perfil, estadisticas, evaluar, historial.
 import pytest
 from httpx import AsyncClient
 
-
 # ====================================
 # HELPERS
 # ====================================
@@ -126,9 +125,10 @@ async def test_estadisticas_con_evaluaciones(client: AsyncClient, db_session):
     ev = await crear_evidencia_pendiente(db_session, aprendiz.id_usuario)
 
     # Decodificar token para obtener ID
-    from jose import jwt
-    from dotenv import load_dotenv
     import os
+
+    from dotenv import load_dotenv
+    from jose import jwt
     load_dotenv()
     payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
     instructor_id_num = payload["id"]

@@ -4,9 +4,9 @@ Esquemas Pydantic para asignacion de seguimiento.
 Vincula aprendices con un instructor seguidor.
 """
 
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel
 
 
 class AsignacionCreateSchema(BaseModel):
@@ -35,8 +35,8 @@ class AprendizAsignadoSchema(BaseModel):
     nombre_completo: str
     numero_ficha: str
     programa: str
-    id_instructor_asignado: Optional[int] = None
-    nombre_instructor: Optional[str] = None
+    id_instructor_asignado: int | None = None
+    nombre_instructor: str | None = None
 
     class Config:
         from_attributes = True

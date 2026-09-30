@@ -4,15 +4,16 @@ Configuración de pytest para tests de SGEP.
 Configura BD de prueba async con SQLite.
 """
 
-import pytest
 import asyncio
-from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from collections.abc import AsyncGenerator
 
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from app.database.connection import get_db
 from app.main import app
 from app.models.usuario import Base
-from app.database.connection import get_db
 
 # EXPLICACIÓN: SQLite async para tests (no depende de PostgreSQL)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -48,9 +49,9 @@ async def setup_database():
     """
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield
-    
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -72,7 +73,7 @@ app.dependency_overrides[get_db] = override_get_db
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """
     Cliente HTTP asíncrono para tests de endpoints.
-    
+
     Uso:
         async def test_mi_endpoint(client):
             response = await client.get("/api/v1/...")
@@ -87,7 +88,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Sesión de BD para tests de servicios.
-    
+
     Uso:
         async def test_mi_servicio(db_session):
             resultado = await AuthService.registrar_aprendiz(db_session, ...)

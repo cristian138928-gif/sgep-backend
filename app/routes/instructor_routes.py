@@ -4,27 +4,27 @@ Rutas del dashboard de instructor.
 Evaluacion de evidencias, historial, estadisticas personales.
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
-from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase
+from app.schemas.coordinador_schema import PaginacionSchema
 from app.schemas.evidencia_schema import (
-    EvidenciaResponseSchema,
-    EvaluarEvidenciaSchema,
-    RetroalimentacionResponseSchema,
     AlertaVencimientoRolSchema,
+    EvaluarEvidenciaSchema,
+    EvidenciaResponseSchema,
+    RetroalimentacionResponseSchema,
 )
 from app.schemas.instructor_schema import (
     EstadisticasInstructorSchema,
     InstructorPerfilSchema,
 )
-from app.schemas.coordinador_schema import PaginacionSchema
-from app.services.instructor_service import InstructorService
 from app.services.asignacion_service import AsignacionService
 from app.services.evidencia_service import EvidenciaService
+from app.services.instructor_service import InstructorService
 
 router = APIRouter(prefix="/api/v1/instructor", tags=["Instructor"])
 
@@ -56,7 +56,7 @@ async def mi_perfil(
 ):
     """
     ENDPOINT: GET /api/v1/instructor/perfil
-    
+
     Obtiene el perfil del instructor autenticado.
     """
     instructor = await InstructorService.obtener_perfil(db, usuario.id_usuario)
@@ -77,12 +77,11 @@ async def estadisticas(
 ):
     """
     ENDPOINT: GET /api/v1/instructor/estadisticas
-    
+
     Estadisticas personales del instructor.
     Incluye: total evaluadas, aprobadas, ajustes, pendientes.
     """
-    stats = await InstructorService.obtener_estadisticas(db, usuario.id_usuario)
-    return stats
+    return await InstructorService.obtener_estadisticas(db, usuario.id_usuario)
 
 
 @router.get(
@@ -97,13 +96,12 @@ async def evidencias_pendientes(
 ):
     """
     ENDPOINT: GET /api/v1/instructor/evidencias-pendientes
-    
+
     Lista evidencias pendientes de evaluacion (paginadas).
     """
-    resultado = await InstructorService.obtener_evidencias_pendientes(
+    return await InstructorService.obtener_evidencias_pendientes(
         db, page=page, page_size=page_size
     )
-    return resultado
 
 
 @router.put(
@@ -118,21 +116,20 @@ async def evaluar(
 ):
     """
     ENDPOINT: PUT /api/v1/instructor/evaluar/{id_evidencia}
-    
+
     Evalua una evidencia y crea retroalimentacion.
-    
+
     Estados validos:
     - "Aprobada": Evidencia cumple requisitos
     - "Ajuste Requerido": Necesita correcciones
     """
-    retro = await InstructorService.evaluar_evidencia(
+    return await InstructorService.evaluar_evidencia(
         db=db,
         id_evidencia=id_evidencia,
         id_instructor=usuario.id_usuario,
         estado=datos.estado,
         observaciones=datos.observaciones
     )
-    return retro
 
 
 @router.get(
@@ -147,16 +144,15 @@ async def historial(
 ):
     """
     ENDPOINT: GET /api/v1/instructor/historial
-    
+
     Historial de evaluaciones del instructor (paginado).
     """
-    resultado = await InstructorService.obtener_historial_evaluaciones(
+    return await InstructorService.obtener_historial_evaluaciones(
         db, usuario.id_usuario, page=page, page_size=page_size
     )
-    return resultado
 
 
-@router.get("/alertas", response_model=List[AlertaVencimientoRolSchema])
+@router.get("/alertas", response_model=list[AlertaVencimientoRolSchema])
 async def mis_alertas(
     dias: int = Query(7, ge=0, le=90, description="Dias de anticipacion"),
     db: AsyncSession = Depends(get_db),

@@ -11,10 +11,11 @@ Conceptos implementados:
 4. ABSTRACCIÓN: mostramos interfaz simple, ocultamos complejidad
 """
 
-from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship, declarative_base
+from datetime import UTC, datetime
+
 import bcrypt
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import declarative_base, relationship
 
 # Base de datos declarativa - todas nuestras clases heredarán de Base
 Base = declarative_base()
@@ -87,7 +88,7 @@ class UsuarioBase(Base):
 
     fecha_creacion = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         comment="Cuándo se creó la cuenta"
     )
 
@@ -436,7 +437,7 @@ class Evidencia(Base):
 
     fecha_carga = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         comment="Cuándo se subió"
     )
 
@@ -503,7 +504,7 @@ class Retroalimentacion(Base):
 
     fecha_revision = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         comment="Cuándo el instructor evaluó"
     )
 
@@ -541,7 +542,7 @@ class AsignacionSeguimiento(Base):
 
     fecha_asignacion = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         comment="Cuándo se hizo la asignación"
     )
 

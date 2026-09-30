@@ -4,21 +4,19 @@ Servicio de Coordinador.
 Responsabilidad: Dashboard, estadisticas, supervision de evidencias.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import List, Optional
-from datetime import datetime
 import math
+from datetime import datetime
 
-from app.models.usuario import (
-    Aprendiz, Evidencia, Instructor
-)
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.usuario import Aprendiz, Evidencia, Instructor
 
 
 class CoordinadorService:
     """
     Servicio para el dashboard del coordinador.
-    
+
     Funcionalidades:
     - Estadisticas generales
     - Listado paginado de evidencias con filtros
@@ -30,7 +28,7 @@ class CoordinadorService:
     async def obtener_estadisticas(db: AsyncSession) -> dict:
         """
         Obtiene estadisticas generales del sistema.
-        
+
         Returns:
             dict con contadores y porcentaje de aprobacion
         """
@@ -82,15 +80,15 @@ class CoordinadorService:
         db: AsyncSession,
         page: int = 1,
         page_size: int = 10,
-        estado: Optional[str] = None,
-        id_aprendiz: Optional[int] = None,
-        fecha_desde: Optional[datetime] = None,
-        fecha_hasta: Optional[datetime] = None,
-        tipo_formato: Optional[str] = None
+        estado: str | None = None,
+        id_aprendiz: int | None = None,
+        fecha_desde: datetime | None = None,
+        fecha_hasta: datetime | None = None,
+        tipo_formato: str | None = None
     ) -> dict:
         """
         Lista evidencias con paginacion y filtros avanzados.
-        
+
         Args:
             db: Sesion async
             page: Numero de pagina (default 1)
@@ -100,13 +98,13 @@ class CoordinadorService:
             fecha_desde: Fecha inicio de carga
             fecha_hasta: Fecha fin de carga
             tipo_formato: Filtrar por tipo (Bitacora, F023, etc.)
-            
+
         Returns:
             dict con items, total, page, page_size, total_pages
         """
         # Limitar page_size a maximo 50
         page_size = min(page_size, 50)
-        
+
         # Construir query base
         stmt = select(Evidencia)
         count_stmt = select(func.count(Evidencia.id_evidencia))
@@ -151,22 +149,22 @@ class CoordinadorService:
     @staticmethod
     async def obtener_avance_aprendices(
         db: AsyncSession,
-        programa: Optional[str] = None
-    ) -> List[dict]:
+        programa: str | None = None
+    ) -> list[dict]:
         """
         Obtiene el avance de cada aprendiz.
-        
+
         Args:
             db: Sesion async
             programa: Filtrar por programa (opcional)
-            
+
         Returns:
             Lista de dicts con informacion del aprendiz y su avance
         """
         stmt = select(Aprendiz)
         if programa:
             stmt = stmt.where(Aprendiz.programa.contains(programa))
-        
+
         resultado = await db.execute(stmt)
         aprendices = resultado.scalars().all()
 
@@ -199,7 +197,7 @@ class CoordinadorService:
         return avances
 
     @staticmethod
-    async def obtener_instructores(db: AsyncSession) -> List[Instructor]:
+    async def obtener_instructores(db: AsyncSession) -> list[Instructor]:
         """Lista todos los instructores del sistema."""
         stmt = select(Instructor)
         resultado = await db.execute(stmt)
@@ -209,7 +207,7 @@ class CoordinadorService:
     async def exportar_evidencias_csv(db: AsyncSession) -> str:
         """
         Exporta todas las evidencias como CSV.
-        
+
         Returns:
             str con contenido CSV
         """
@@ -219,11 +217,20 @@ class CoordinadorService:
 
         # Header CSV
         csv_lines = ["id,titulo,tipo_formato,estado,fecha_carga,fecha_deadline,aprendiz_id"]
-        
+
         for ev in evidencias:
-            fecha_carga = ev.fecha_carga.strftime("%Y-%m-%d %H:%M") if ev.fecha_carga else ""
-            fecha_deadline = ev.fecha_deadline.strftime("%Y-%m-%d %H:%M") if ev.fecha_deadline else ""
-            line = f"{ev.id_evidencia},{ev.titulo},{ev.tipo_formato},{ev.estado},{fecha_carga},{fecha_deadline},{ev.id_aprendiz}"
+            fecha_carga = (
+                ev.fecha_carga.strftime("%Y-%m-%d %H:%M") if ev.fecha_carga else ""
+            )
+            fecha_deadline = (
+                ev.fecha_deadline.strftime("%Y-%m-%d %H:%M")
+                if ev.fecha_deadline
+                else ""
+            )
+            line = (
+                f"{ev.id_evidencia},{ev.titulo},{ev.tipo_formato},"
+                f"{ev.estado},{fecha_carga},{fecha_deadline},{ev.id_aprendiz}"
+            )
             csv_lines.append(line)
 
         return "\n".join(csv_lines)

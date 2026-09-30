@@ -4,14 +4,12 @@ Servicio de Retroalimentacion independiente.
 Permite crear comentarios/evaluaciones sin cambiar estado de la evidencia.
 """
 
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Optional
 
-from app.models.usuario import (
-    Evidencia, Retroalimentacion, Instructor
-)
+from fastapi import HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.usuario import Evidencia, Instructor, Retroalimentacion
 
 
 class RetroalimentacionService:
@@ -23,7 +21,7 @@ class RetroalimentacionService:
         id_evidencia: int,
         id_instructor: int,
         observaciones: str,
-        estado_evaluacion: Optional[str] = None
+        estado_evaluacion: str | None = None
     ) -> Retroalimentacion:
         """
         Crea una retroalimentacion para una evidencia.
@@ -68,7 +66,7 @@ class RetroalimentacionService:
     @staticmethod
     async def obtener_por_evidencia(
         db: AsyncSession, id_evidencia: int
-    ) -> Optional[Retroalimentacion]:
+    ) -> Retroalimentacion | None:
         """Obtiene la retroalimentacion de una evidencia."""
         stmt = select(Retroalimentacion).where(
             Retroalimentacion.id_evidencia == id_evidencia

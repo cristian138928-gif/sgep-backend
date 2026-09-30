@@ -51,14 +51,13 @@ async def crear_retroalimentacion(
     - Si se envia: actualiza el estado de la evidencia
     - Si no se envia: solo agrega comentario sin cambiar estado
     """
-    retro = await RetroalimentacionService.crear(
+    return await RetroalimentacionService.crear(
         db=db,
         id_evidencia=datos.id_evidencia,
         id_instructor=usuario.id_usuario,
         observaciones=datos.observaciones,
         estado_evaluacion=datos.estado_evaluacion
     )
-    return retro
 
 
 @router.get("/{id_retroalimentacion}", response_model=RetroalimentacionResponseSchema)

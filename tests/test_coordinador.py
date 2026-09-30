@@ -7,7 +7,6 @@ Cubre: estadisticas, paginacion, filtros, avance, exportar.
 import pytest
 from httpx import AsyncClient
 
-
 # ====================================
 # HELPERS
 # ====================================

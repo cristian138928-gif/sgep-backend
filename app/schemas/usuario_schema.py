@@ -4,8 +4,9 @@ Esquemas Pydantic: validación de datos para endpoints.
 Request/Response models para autenticación.
 """
 
-from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
 
 # ====================================
 # ESQUEMAS DE REGISTRO

@@ -26,6 +26,16 @@ uvicorn app.main:app --reload --port 8000
 docker-compose up --build
 ```
 
+## Calidad de Código
+
+Configuración única en `pyproject.toml` (ruff + pytest + coverage):
+
+```bash
+ruff check .            # lint (reglas E,F,W,I,UP,B,SIM,C4,RET,PIE,PTH)
+ruff check . --fix      # auto-fix seguro
+pytest --cov=app        # tests + cobertura (core=sysmon, Python 3.12+)
+```
+
 ## Endpoints Principales
 
 | Método | Ruta | Descripción | Rol |

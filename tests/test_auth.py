@@ -8,9 +8,13 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.schemas.usuario_schema import (
+    LoginSchema,
+    RegistroAprendizSchema,
+    RegistroCoordinadorSchema,
+    RegistroInstructorSchema,
+)
 from app.services.auth_service import AuthService
-from app.schemas.usuario_schema import RegistroAprendizSchema, RegistroInstructorSchema, RegistroCoordinadorSchema, LoginSchema
-
 
 # ====================================
 # TESTS DE SERVICIO (sin HTTP)

@@ -4,7 +4,7 @@ Tests de GET /instructor/alertas y GET /coordinador/alertas.
 Cubre: alcance por asignacion, vista global, RBAC y validacion.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -12,7 +12,6 @@ from httpx import AsyncClient
 from app.models.usuario import Aprendiz, Coordinador, Evidencia, Instructor
 from app.services.asignacion_service import AsignacionService
 from app.services.auth_service import AuthService
-
 
 # ====================================
 # HELPERS
@@ -91,7 +90,7 @@ async def crear_evidencia_bd(
         tipo_formato="Bitacora",
         ruta_archivo_pdf="uploads/roles.pdf",
         estado="Pendiente",
-        fecha_deadline=datetime.now(timezone.utc) + timedelta(days=dias_limite),
+        fecha_deadline=datetime.now(UTC) + timedelta(days=dias_limite),
     )
     db_session.add(evidencia)
     await db_session.commit()
@@ -205,8 +204,14 @@ async def test_coordinador_ventana_de_dias(client: AsyncClient, db_session):
     await crear_evidencia_bd(db_session, aprendiz.id_usuario, dias_limite=30)
 
     token = f"Bearer {await token_de(coordinador)}"
-    assert len((await client.get("/api/v1/coordinador/alertas", headers={"Authorization": token})).json()) == 0
-    assert len((await client.get("/api/v1/coordinador/alertas?dias=30", headers={"Authorization": token})).json()) == 1
+    sin_ventana = await client.get(
+        "/api/v1/coordinador/alertas", headers={"Authorization": token}
+    )
+    con_ventana = await client.get(
+        "/api/v1/coordinador/alertas?dias=30", headers={"Authorization": token}
+    )
+    assert len(sin_ventana.json()) == 0
+    assert len(con_ventana.json()) == 1
 
 
 # ====================================

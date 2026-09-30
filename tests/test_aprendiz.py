@@ -8,8 +8,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.auth_service import AuthService
 from app.schemas.usuario_schema import RegistroAprendizSchema
+from app.services.auth_service import AuthService
 
 
 @pytest.mark.asyncio

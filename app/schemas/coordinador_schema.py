@@ -4,15 +4,16 @@ Esquemas Pydantic para dashboard del coordinador.
 Response models para estadisticas, supervision, paginacion.
 """
 
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel
-from typing import List, Generic, TypeVar
 
 T = TypeVar("T")
 
 
 class PaginacionSchema(BaseModel, Generic[T]):
     """Respuesta paginada generica."""
-    items: List[T]
+    items: list[T]
     total: int
     page: int
     page_size: int

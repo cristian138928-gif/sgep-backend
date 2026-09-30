@@ -4,14 +4,12 @@ Servicio de Asignacion de Seguimiento.
 Vincula aprendices con un instructor seguidor.
 """
 
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from typing import List
 
-from app.models.usuario import (
-    AsignacionSeguimiento, Aprendiz, Instructor
-)
+from fastapi import HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.usuario import Aprendiz, AsignacionSeguimiento, Instructor
 
 
 class AsignacionService:
@@ -93,7 +91,7 @@ class AsignacionService:
     @staticmethod
     async def listar_aprendices_instructor(
         db: AsyncSession, id_instructor: int
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Lista todos los aprendices asignados a un instructor.
         """
