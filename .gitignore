@@ -33,6 +33,12 @@ Thumbs.db
 # Pytest
 .pytest_cache/
 
+# Coverage (artefactos regenerables)
+.coverage
+.coverage.*
+coverage.json
+htmlcov/
+
 # MyPy
 .mypy_cache/
 

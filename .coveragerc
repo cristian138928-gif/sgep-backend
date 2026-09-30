@@ -1,0 +1,7 @@
+# EXPLICACIÓN: sysmon (Python 3.12+) reemplaza a sys.settrace, que pierde las
+# líneas posteriores a un await cuando SQLAlchemy reanuda vía greenlet (coveragepy#1082).
+[run]
+core = sysmon
+
+[report]
+show_missing = True
