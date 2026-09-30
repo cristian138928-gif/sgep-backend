@@ -5,6 +5,7 @@ Evaluacion de evidencias, historial, estadisticas personales.
 """
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
@@ -14,6 +15,7 @@ from app.schemas.evidencia_schema import (
     EvidenciaResponseSchema,
     EvaluarEvidenciaSchema,
     RetroalimentacionResponseSchema,
+    AlertaVencimientoRolSchema,
 )
 from app.schemas.instructor_schema import (
     EstadisticasInstructorSchema,
@@ -21,6 +23,8 @@ from app.schemas.instructor_schema import (
 )
 from app.schemas.coordinador_schema import PaginacionSchema
 from app.services.instructor_service import InstructorService
+from app.services.asignacion_service import AsignacionService
+from app.services.evidencia_service import EvidenciaService
 
 router = APIRouter(prefix="/api/v1/instructor", tags=["Instructor"])
 
@@ -150,3 +154,34 @@ async def historial(
         db, usuario.id_usuario, page=page, page_size=page_size
     )
     return resultado
+
+
+@router.get("/alertas", response_model=List[AlertaVencimientoRolSchema])
+async def mis_alertas(
+    dias: int = Query(7, ge=0, le=90, description="Dias de anticipacion"),
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(verificar_instructor),
+):
+    """
+    ENDPOINT: GET /api/v1/instructor/alertas?dias=7
+
+    Vencimientos de las evidencias pendientes de los aprendices
+    asignados activamente a este instructor.
+
+    Args:
+        dias: Ventana de anticipacion (0-90), por defecto 7
+        db: Sesion de BD
+        usuario: Instructor autenticado (JWT)
+
+    Returns:
+        200: Alertas con nombre_aprendiz ordenadas por urgencia
+        403: Si el rol no es instructor
+    """
+    asignaciones = await AsignacionService.listar_aprendices_instructor(
+        db, usuario.id_usuario
+    )
+    return await EvidenciaService.obtener_alertas_rol(
+        db=db,
+        ids_aprendiz=[a["id_aprendiz"] for a in asignaciones],
+        dias_anticipacion=dias,
+    )

@@ -38,6 +38,8 @@ docker-compose up --build
 | GET | /api/v1/evidencias/mis-evidencias | Mis evidencias | Aprendiz |
 | GET | /api/v1/aprendiz/avance | Mi avance (%) | Aprendiz |
 | GET | /api/v1/aprendiz/alertas?dias=7 | Alertas vencimiento | Aprendiz |
+| GET | /api/v1/instructor/alertas?dias=7 | Vencimientos de sus aprendices | Instructor |
+| GET | /api/v1/coordinador/alertas?dias=7 | Vencimientos globales | Coordinador |
 | GET | /api/v1/evidencias/{id}/descarga | Descarga PDF seguro | Aprendiz/Instructor/Coord |
 | PUT | /api/v1/instructor/evaluar/{id} | Evaluar evidencia | Instructor |
 | GET | /api/v1/instructor/evidencias-pendientes | Pendientes | Instructor |
@@ -65,13 +67,14 @@ tests/
 ├── test_retroalimentacion.py # 11 tests
 ├── test_aprendiz.py     # 3 tests
 ├── test_descarga.py     # 8 tests
-└── test_alertas.py      # 9 tests
+├── test_alertas.py      # 9 tests
+└── test_alertas_roles.py # 9 tests
 ```
 
 ## Tests
 
 ```bash
-# Todos los tests (84)
+# Todos los tests (93)
 pytest tests/ -v
 
 # Solo auth

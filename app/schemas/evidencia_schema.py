@@ -128,6 +128,26 @@ class AlertaVencimientoSchema(BaseModel):
         }
 
 
+class AlertaVencimientoRolSchema(AlertaVencimientoSchema):
+    """
+    Alerta de vencimiento para instructor/coordinador.
+
+    Hereda de AlertaVencimientoSchema y añade el dueño de la evidencia,
+    porque estos roles supervisan a varios aprendices.
+    """
+    nombre_aprendiz: str
+
+    class Config:
+        example = {
+            "id_evidencia": 3,
+            "titulo": "Bitácora Semana 4",
+            "fecha_deadline": "2026-10-05T23:59:00",
+            "dias_restantes": -1,
+            "estado_alerta": "Vencida",
+            "nombre_aprendiz": "Cristian Muñoz",
+        }
+
+
 class RetroalimentacionCreateSchema(BaseModel):
     """Request para crear retroalimentación independiente (POST)."""
     id_evidencia: int

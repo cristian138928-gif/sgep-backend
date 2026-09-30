@@ -13,7 +13,10 @@ from datetime import datetime
 from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase
-from app.schemas.evidencia_schema import EvidenciaResponseSchema
+from app.schemas.evidencia_schema import (
+    EvidenciaResponseSchema,
+    AlertaVencimientoRolSchema,
+)
 from app.schemas.coordinador_schema import (
     EstadisticasSchema,
     AvanceAprendizSchema,
@@ -21,6 +24,7 @@ from app.schemas.coordinador_schema import (
     PaginacionSchema,
 )
 from app.services.coordinador_service import CoordinadorService
+from app.services.evidencia_service import EvidenciaService
 
 router = APIRouter(prefix="/api/v1/coordinador", tags=["Coordinador"])
 
@@ -153,4 +157,32 @@ async def exportar_evidencias(
         headers={
             "Content-Disposition": "attachment; filename=evidencias_sgep.csv"
         }
+    )
+
+
+@router.get("/alertas", response_model=List[AlertaVencimientoRolSchema])
+async def alertas_vencimiento(
+    dias: int = Query(7, ge=0, le=90, description="Dias de anticipacion"),
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(verificar_coordinador)
+):
+    """
+    ENDPOINT: GET /api/v1/coordinador/alertas?dias=7
+
+    Vencimientos de TODAS las evidencias pendientes del sistema
+    (vista global de seguimiento para la coordinacion).
+
+    Args:
+        dias: Ventana de anticipacion (0-90), por defecto 7
+        db: Sesion de BD
+        usuario: Coordinador autenticado (JWT)
+
+    Returns:
+        200: Alertas con nombre_aprendiz ordenadas por urgencia
+        403: Si el rol no es coordinador
+    """
+    return await EvidenciaService.obtener_alertas_rol(
+        db=db,
+        ids_aprendiz=None,  # EXPLICACIÓN: None => sin filtro, toda la BD
+        dias_anticipacion=dias,
     )

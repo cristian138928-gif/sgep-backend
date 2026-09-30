@@ -287,18 +287,84 @@ class EvidenciaService:
         Returns:
             Lista de dicts ordenada por urgencia (más crítica primero)
         """
+        return await EvidenciaService._construir_alertas(
+            db=db,
+            filtro_aprendiz=Evidencia.id_aprendiz == id_aprendiz,
+            dias_anticipacion=dias_anticipacion,
+            incluir_aprendiz=False,
+        )
+
+    @staticmethod
+    async def obtener_alertas_rol(
+        db: AsyncSession,
+        ids_aprendiz: Optional[List[int]],
+        dias_anticipacion: int = 7,
+    ) -> List[dict]:
+        """
+        Alertas de vencimiento para instructor y coordinador.
+
+        A diferencia de la vista del aprendiz, aquí la alerta incluye
+        nombre_aprendiz para saber de QUIÉN es la evidencia vencida.
+
+        Args:
+            db: Sesión async
+            ids_aprendiz: IDs autorizados; None => todo el sistema (coordinador)
+            dias_anticipacion: Ventana de anticipación en días
+
+        Returns:
+            Lista de dicts con nombre_aprendiz, ordenada por urgencia
+        """
+        # EXPLICACIÓN: lista vacía del instructor => sin asignaciones, sin alertas
+        if ids_aprendiz is not None and not ids_aprendiz:
+            return []
+
+        filtro = (
+            Evidencia.id_aprendiz.in_(ids_aprendiz)
+            if ids_aprendiz is not None
+            else True  # EXPLICACIÓN: True equivale a SIN filtro (coordinador)
+        )
+        return await EvidenciaService._construir_alertas(
+            db=db,
+            filtro_aprendiz=filtro,
+            dias_anticipacion=dias_anticipacion,
+            incluir_aprendiz=True,
+        )
+
+    @staticmethod
+    async def _construir_alertas(
+        db: AsyncSession,
+        filtro_aprendiz,
+        dias_anticipacion: int,
+        incluir_aprendiz: bool,
+    ) -> List[dict]:
+        """
+        Constructor único de alertas (evita duplicar la lógica de vencimiento).
+
+        Args:
+            db: Sesión async
+            filtro_aprendiz: Cláusula WHERE sobre Evidencia.id_aprendiz
+            dias_anticipacion: Ventana de anticipación en días
+            incluir_aprendiz: Agrega nombre_aprendiz a cada alerta
+
+        Returns:
+            Lista de dicts ordenada por urgencia
+        """
         # EXPLICACIÓN: Comparamos solo fechas => evita mezclar zonas horarias
         hoy = datetime.now(timezone.utc).date()
 
-        stmt = select(Evidencia).where(
-            Evidencia.id_aprendiz == id_aprendiz,
-            Evidencia.estado == "Pendiente",
-            Evidencia.fecha_deadline.is_not(None),
+        stmt = (
+            select(Evidencia, Aprendiz.nombre_completo)
+            .join(Aprendiz, Aprendiz.id_usuario == Evidencia.id_aprendiz)
+            .where(
+                filtro_aprendiz,
+                Evidencia.estado == "Pendiente",
+                Evidencia.fecha_deadline.is_not(None),
+            )
         )
-        evidencias = (await db.execute(stmt)).scalars().all()
+        filas = (await db.execute(stmt)).all()
 
         alertas: List[dict] = []
-        for evidencia in evidencias:
+        for evidencia, nombre_aprendiz in filas:
             dias_restantes = (evidencia.fecha_deadline.date() - hoy).days
 
             if dias_restantes < 0:
@@ -308,15 +374,16 @@ class EvidenciaService:
             else:
                 continue  # EXPLICACIÓN: Fuera de ventana => no es alerta
 
-            alertas.append(
-                {
-                    "id_evidencia": evidencia.id_evidencia,
-                    "titulo": evidencia.titulo,
-                    "fecha_deadline": evidencia.fecha_deadline,
-                    "dias_restantes": dias_restantes,
-                    "estado_alerta": estado_alerta,
-                }
-            )
+            alerta = {
+                "id_evidencia": evidencia.id_evidencia,
+                "titulo": evidencia.titulo,
+                "fecha_deadline": evidencia.fecha_deadline,
+                "dias_restantes": dias_restantes,
+                "estado_alerta": estado_alerta,
+            }
+            if incluir_aprendiz:
+                alerta["nombre_aprendiz"] = nombre_aprendiz
+            alertas.append(alerta)
 
         # EXPLICACIÓN: Orden por urgencia: las vencidas (negativas) primero
         alertas.sort(key=lambda alerta: alerta["dias_restantes"])
