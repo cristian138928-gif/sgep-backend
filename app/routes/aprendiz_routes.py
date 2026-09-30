@@ -4,7 +4,9 @@ Rutas del dashboard de aprendiz.
 Consulta de avance, evidencias propias.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -12,6 +14,8 @@ from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase, Aprendiz, Evidencia
 from app.schemas.coordinador_schema import AvanceAprendizSchema
+from app.schemas.evidencia_schema import AlertaVencimientoSchema
+from app.services.evidencia_service import EvidenciaService
 
 router = APIRouter(prefix="/api/v1/aprendiz", tags=["Aprendiz"])
 
@@ -71,3 +75,29 @@ async def mi_avance(
         "aprobadas": aprobadas,
         "porcentaje_avance": porcentaje
     }
+
+
+@router.get("/alertas", response_model=List[AlertaVencimientoSchema])
+async def mis_alertas(
+    dias: int = Query(7, ge=0, le=90, description="Días de anticipación"),
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(verificar_aprendiz),
+):
+    """
+    ENDPOINT: GET /api/v1/aprendiz/alertas?dias=7
+
+    Alertas de vencimiento de las evidencias pendientes del aprendiz.
+
+    Args:
+        dias: Ventana de anticipación (0-90), por defecto 7
+        db: Sesión de BD
+        usuario: Aprendiz autenticado (JWT)
+
+    Returns:
+        200: Lista de alertas ordenadas por urgencia
+    """
+    return await EvidenciaService.obtener_alertas_vencimiento(
+        db=db,
+        id_aprendiz=usuario.id_usuario,
+        dias_anticipacion=dias,
+    )

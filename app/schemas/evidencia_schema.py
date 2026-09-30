@@ -104,6 +104,30 @@ class RetroalimentacionResponseSchema(BaseModel):
         }
 
 
+class AlertaVencimientoSchema(BaseModel):
+    """
+    Alerta de vencimiento de una evidencia pendiente (RNF seguimiento).
+
+    Campos:
+    - dias_restantes: negativo => ya venció
+    - estado_alerta: "Vencida" | "Por vencer"
+    """
+    id_evidencia: int
+    titulo: str
+    fecha_deadline: datetime
+    dias_restantes: int
+    estado_alerta: str
+
+    class Config:
+        example = {
+            "id_evidencia": 3,
+            "titulo": "Bitácora Semana 4",
+            "fecha_deadline": "2026-10-05T23:59:00",
+            "dias_restantes": 2,
+            "estado_alerta": "Por vencer",
+        }
+
+
 class RetroalimentacionCreateSchema(BaseModel):
     """Request para crear retroalimentación independiente (POST)."""
     id_evidencia: int

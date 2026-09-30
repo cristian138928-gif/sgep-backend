@@ -7,7 +7,7 @@ Responsabilidad: Gestión completa de evidencias (CRUD + evaluación).
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from app.models.usuario import (
@@ -264,3 +264,60 @@ class EvidenciaService:
         )
         resultado = await db.execute(stmt)
         return resultado.scalars().first()
+
+    @staticmethod
+    async def obtener_alertas_vencimiento(
+        db: AsyncSession,
+        id_aprendiz: int,
+        dias_anticipacion: int = 7,
+    ) -> List[dict]:
+        """
+        Alertas de vencimiento de las evidencias pendientes de un aprendiz.
+
+        Reglas:
+        - Solo evidencias Pendiente con fecha_deadline definida.
+        - "Vencida": deadline ya pasó (dias_restantes < 0).
+        - "Por vencer": dentro de los próximos dias_anticipacion días.
+
+        Args:
+            db: Sesión async
+            id_aprendiz: ID del aprendiz consultado
+            dias_anticipacion: Ventana de anticipación en días
+
+        Returns:
+            Lista de dicts ordenada por urgencia (más crítica primero)
+        """
+        # EXPLICACIÓN: Comparamos solo fechas => evita mezclar zonas horarias
+        hoy = datetime.now(timezone.utc).date()
+
+        stmt = select(Evidencia).where(
+            Evidencia.id_aprendiz == id_aprendiz,
+            Evidencia.estado == "Pendiente",
+            Evidencia.fecha_deadline.is_not(None),
+        )
+        evidencias = (await db.execute(stmt)).scalars().all()
+
+        alertas: List[dict] = []
+        for evidencia in evidencias:
+            dias_restantes = (evidencia.fecha_deadline.date() - hoy).days
+
+            if dias_restantes < 0:
+                estado_alerta = "Vencida"
+            elif dias_restantes <= dias_anticipacion:
+                estado_alerta = "Por vencer"
+            else:
+                continue  # EXPLICACIÓN: Fuera de ventana => no es alerta
+
+            alertas.append(
+                {
+                    "id_evidencia": evidencia.id_evidencia,
+                    "titulo": evidencia.titulo,
+                    "fecha_deadline": evidencia.fecha_deadline,
+                    "dias_restantes": dias_restantes,
+                    "estado_alerta": estado_alerta,
+                }
+            )
+
+        # EXPLICACIÓN: Orden por urgencia: las vencidas (negativas) primero
+        alertas.sort(key=lambda alerta: alerta["dias_restantes"])
+        return alertas

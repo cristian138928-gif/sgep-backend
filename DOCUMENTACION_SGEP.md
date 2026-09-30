@@ -58,5 +58,7 @@ v (genera)
 | RF05 | POST /api/v1/asignaciones/ | CP-05: Asignación de instructor | **Aprobado** |
 | RF06 | GET /api/v1/aprendiz/avance | CP-06: Cálculo de % de bitácoras | **Aprobado** |
 | RF07 | GET /api/v1/coordinador/estadisticas | CP-07: Dashboard consolidado | **Aprobado** |
+| RNF01 | GET /api/v1/evidencias/{id}/descarga | CP-08: Descarga con RBAC y sanitizacion de upload | **Aprobado** |
+| RNF-Seguimiento | GET /api/v1/aprendiz/alertas?dias=7 | CP-09: Alertas Vencida / Por vencer | **Aprobado** |
 
 7. Plan de Trabajo (Gantt - 16 Semanas)Semanas 1-4 (Análisis): Levantamiento de requerimientos, historias de usuario y casos de uso.Semanas 4-8 (Diseño): Diagrama de clases UML, diseño de base de datos PostgreSQL y prototipos UI.Semanas 8-12 (Desarrollo): Configuración Docker, FastAPI, ORM SQLAlchemy y endpoints REST.Semanas 11-14 (Pruebas): Pruebas unitarias API, pruebas de integración BD y carga de PDFs.Semanas 15-16 (Despliegue y Cierre): Despliegue en servidor, capacitación de usuarios y entrega final.

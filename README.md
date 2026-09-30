@@ -37,6 +37,8 @@ docker-compose up --build
 | POST | /api/v1/evidencias/upload | Subir PDF | Aprendiz |
 | GET | /api/v1/evidencias/mis-evidencias | Mis evidencias | Aprendiz |
 | GET | /api/v1/aprendiz/avance | Mi avance (%) | Aprendiz |
+| GET | /api/v1/aprendiz/alertas?dias=7 | Alertas vencimiento | Aprendiz |
+| GET | /api/v1/evidencias/{id}/descarga | Descarga PDF seguro | Aprendiz/Instructor/Coord |
 | PUT | /api/v1/instructor/evaluar/{id} | Evaluar evidencia | Instructor |
 | GET | /api/v1/instructor/evidencias-pendientes | Pendientes | Instructor |
 | GET | /api/v1/coordinador/estadisticas | Dashboard | Coordinador |
@@ -57,17 +59,19 @@ tests/
 ├── conftest.py          # Fixtures + helpers
 ├── test_auth.py         # 12 tests
 ├── test_evidencias.py   # 4 tests
-├── test_instructor.py   # 10 tests
-├── test_coordinador.py  # 12 tests
+├── test_instructor.py   # 12 tests
+├── test_coordinador.py  # 13 tests
 ├── test_asignacion.py   # 12 tests
-├── test_retroalimentacion.py # 8 tests
-└── test_aprendiz.py     # 3 tests
+├── test_retroalimentacion.py # 11 tests
+├── test_aprendiz.py     # 3 tests
+├── test_descarga.py     # 8 tests
+└── test_alertas.py      # 9 tests
 ```
 
 ## Tests
 
 ```bash
-# Todos los tests (67)
+# Todos los tests (84)
 pytest tests/ -v
 
 # Solo auth
