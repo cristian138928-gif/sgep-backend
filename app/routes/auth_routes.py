@@ -10,11 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.connection import get_db
 from app.schemas.usuario_schema import (
     LoginSchema,
+    RefreshTokenSchema,
     RegistroAprendizSchema,
     RegistroCoordinadorSchema,
     RegistroInstructorSchema,
     TokenSchema,
 )
+from app.security.rate_limit import rate_limit_auth
 from app.services.auth_service import AuthService
 
 # EXPLICACIÓN: APIRouter agrupa las rutas bajo un prefijo común
@@ -29,7 +31,8 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
 @router.post("/registro", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def registro(
     datos: RegistroAprendizSchema,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
 ):
     """
     ENDPOINT: POST /api/v1/auth/registro
@@ -41,35 +44,31 @@ async def registro(
         db: Sesión de BD inyectada por FastAPI
 
     Returns:
-        201 Created: Aprendiz creado + token JWT
+        201 Created: Aprendiz creado + par de tokens JWT
 
     Raises:
         409: Email o documento ya existe
         422: Datos inválidos
+        429: Límite de intentos por IP superado
     """
     # EXPLICACIÓN: Delegamos la lógica al servicio AuthService
     usuario = await AuthService.registrar_aprendiz(db, datos)
 
-    # EXPLICACIÓN: Generamos el token JWT para el usuario creado
-    token = AuthService.crear_token_acceso(
-        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
-    )
-
-    # EXPLICACIÓN: Retornamos los datos del usuario y el token
+    # EXPLICACIÓN: Retornamos los datos del usuario y el par de tokens
     return {
         "mensaje": "Aprendiz registrado exitosamente",
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        "access_token": token,
-        "token_type": "bearer"
+        **AuthService.crear_par_tokens(usuario),
     }
 
 
 @router.post("/registro-instructor", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def registro_instructor(
     datos: RegistroInstructorSchema,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
 ):
     """
     ENDPOINT: POST /api/v1/auth/registro-instructor
@@ -78,24 +77,20 @@ async def registro_instructor(
     """
     usuario = await AuthService.registrar_instructor(db, datos)
 
-    token = AuthService.crear_token_acceso(
-        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
-    )
-
     return {
         "mensaje": "Instructor registrado exitosamente",
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        "access_token": token,
-        "token_type": "bearer"
+        **AuthService.crear_par_tokens(usuario),
     }
 
 
 @router.post("/registro-coordinador", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def registro_coordinador(
     datos: RegistroCoordinadorSchema,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
 ):
     """
     ENDPOINT: POST /api/v1/auth/registro-coordinador
@@ -104,50 +99,60 @@ async def registro_coordinador(
     """
     usuario = await AuthService.registrar_coordinador(db, datos)
 
-    token = AuthService.crear_token_acceso(
-        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
-    )
-
     return {
         "mensaje": "Coordinador registrado exitosamente",
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        "access_token": token,
-        "token_type": "bearer"
+        **AuthService.crear_par_tokens(usuario),
     }
 
 
 @router.post("/login", response_model=TokenSchema, status_code=status.HTTP_200_OK)
 async def login(
     credenciales: LoginSchema,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
 ):
     """
     ENDPOINT: POST /api/v1/auth/login
 
-    Autentica usuario y retorna JWT token.
+    Autentica usuario y retorna el par de JWT (access + refresh).
 
     Args:
         credenciales: Email + contraseña
         db: Sesión de BD
 
     Returns:
-        200 OK: Token JWT + tipo de token
+        200 OK: Par de tokens + tipo de token
 
     Raises:
         401: Email o contraseña incorrecta
+        429: Límite de intentos por IP superado
     """
     # EXPLICACIÓN: Delegamos la lógica al servicio AuthService
     usuario = await AuthService.login(db, credenciales)
 
-    # EXPLICACIÓN: Generamos el token JWT para el usuario autenticado
-    token = AuthService.crear_token_acceso(
-        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
-    )
+    return AuthService.crear_par_tokens(usuario)
 
-    # EXPLICACIÓN: Retornamos el token en el formato esperado
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+
+@router.post("/refresh", response_model=TokenSchema, status_code=status.HTTP_200_OK)
+async def refresh(
+    datos: RefreshTokenSchema,
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
+):
+    """
+    ENDPOINT: POST /api/v1/auth/refresh
+
+    Canjea un refresh token por un par nuevo (rotación).
+    El refresh token viejo sigue válido hasta su expiración (7 días).
+
+    Returns:
+        200 OK: Nuevo par de tokens
+
+    Raises:
+        401: Refresh token inválido, expirado o de tipo incorrecto
+        429: Límite de intentos por IP superado
+    """
+    return await AuthService.refrescar_acceso(db, datos.refresh_token)

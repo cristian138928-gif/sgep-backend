@@ -98,16 +98,30 @@ class LoginSchema(BaseModel):
 
 class TokenSchema(BaseModel):
     """
-    Respuesta de login/registro: JWT token.
+    Respuesta de login/registro: par de JWT (acceso + refresh).
     """
 
-    access_token: str  # El JWT en sí
+    access_token: str  # El JWT de acceso (type=access, 24h)
+    refresh_token: str  # EXPLICACIÓN: JWT de rotación (type=refresh, 7d)
     token_type: str = "bearer"  # Tipo de token (siempre "bearer")
 
     model_config = ConfigDict(
         json_schema_extra={"example": {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "token_type": "bearer"
+        }},
+    )
+
+
+class RefreshTokenSchema(BaseModel):
+    """Request para canjear un refresh token en POST /auth/refresh."""
+
+    refresh_token: str
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         }},
     )
 

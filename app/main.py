@@ -4,12 +4,10 @@ Punto de entrada de la API SGEP.
 Configura FastAPI, middleware, y rutas.
 """
 
-import os
-
-from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.routes.aprendiz_routes import router as aprendiz_router
 from app.routes.asignacion_routes import router as asignacion_router
 from app.routes.auth_routes import router as auth_router
@@ -18,11 +16,8 @@ from app.routes.evidencia_routes import router as evidencia_router
 from app.routes.instructor_routes import router as instructor_router
 from app.routes.retroalimentacion_routes import router as retroalimentacion_router
 
-# Cargar variables de entorno
-load_dotenv()
-
-# EXPLICACIÓN: Obtener orígenes permitidos desde variable de entorno
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+# EXPLICACIÓN: Orígenes desde settings (app.config valida .env al importar)
+ALLOWED_ORIGINS = settings.allowed_origins
 
 # Crear aplicacion FastAPI
 app = FastAPI(
@@ -41,6 +36,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def cabeceras_seguridad(request: Request, call_next):
+    """EXPLICACIÓN: Cabeceras mínimas OWASP (anti sniffing/clickjacking)."""
+    respuesta = await call_next(request)
+    respuesta.headers["X-Content-Type-Options"] = "nosniff"
+    respuesta.headers["X-Frame-Options"] = "DENY"
+    respuesta.headers["Referrer-Policy"] = "no-referrer"
+    return respuesta
 
 
 @app.get("/")

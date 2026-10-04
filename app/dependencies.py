@@ -4,23 +4,16 @@ Dependencias de FastAPI.
 Funciones reutilizables para inyección de dependencias (auth, BD, etc.)
 """
 
-import os
-
 import jwt
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database.connection import get_db
 from app.models.usuario import UsuarioBase
-
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 # EXPLICACIÓN: HTTPBearer extrae el token del header Authorization: Bearer <token>
 security = HTTPBearer()
@@ -35,8 +28,8 @@ async def get_current_user(
 
     Flujo:
     1. Extraer token del header Authorization
-    2. Decodificar JWT y obtener email (sub)
-    3. Buscar usuario en BD
+    2. Decodificar JWT y validar que sea de tipo access
+    3. Obtener email (sub) y buscar usuario en BD
     4. Retornar usuario o error 401
 
     Uso en endpoints:
@@ -66,8 +59,14 @@ async def get_current_user(
         token = credentials.credentials
 
         # EXPLICACIÓN: Decodificamos el JWT (PyJWT valida exp y firma automáticamente)
-        # payload contiene: {"sub": "email@email.com", "id": 1, "exp": ...}
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # payload contiene: {"sub": "email@email.com", "id": 1, "exp": ..., "type": ...}
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+
+        # EXPLICACIÓN: Un refresh token NO autoriza acceso a la API (claims de tipo)
+        if payload.get("type") != "access":
+            raise credentials_exception
 
         # EXPLICACIÓN: Obtenemos el email del subject
         email: str = payload.get("sub")

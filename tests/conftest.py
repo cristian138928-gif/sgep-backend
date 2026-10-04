@@ -15,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 # EXPLICACIÓN: BCRYPT_ROUNDS=4 en tests porque coste 12 tarda ~0.3s/hash y hay ~200 hashes
 os.environ["BCRYPT_ROUNDS"] = "4"
+# EXPLICACIÓN: Rate limit altísimo para que la suite no reciba 429 (los tests de
+# rate limiting bajan el límite con monkeypatch)
+os.environ["RATE_LIMIT_MAX"] = "1000000"
 
 from app.database.connection import get_db  # noqa: E402
 from app.main import app  # noqa: E402

@@ -5,17 +5,13 @@ SQLAlchemy Async + PostgreSQL
 """
 
 # Importar herramientas para conexiones asincrónicas
-import os
-
-from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-# Cargar variables de entorno (.env)
-load_dotenv()
+from app.config import settings
 
-# Obtener URL de conexión desde variables de entorno
-DATABASE_URL = os.getenv("DATABASE_URL")
+# EXPLICACIÓN: Una sola fuente de verdad (app.config) valida DATABASE_URL antes de usarla
+DATABASE_URL = settings.database_url
 
 # MOTOR ASINCRÓNICO:
 # - echo=False: No muestra SQL en consola (cambiar a True para debugging)

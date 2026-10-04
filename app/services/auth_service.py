@@ -4,15 +4,14 @@ Servicio de Autenticación.
 Responsabilidad:Registrar y autenticar usuarios, gestionar JWT.
 """
 
-import os
 from datetime import UTC, datetime, timedelta
 
-from dotenv import load_dotenv
 from fastapi import HTTPException, status
-from jwt import encode
+from jwt import PyJWTError, decode, encode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.usuario import Aprendiz, Coordinador, Instructor, UsuarioBase
 from app.schemas.usuario_schema import (
     LoginSchema,
@@ -21,11 +20,7 @@ from app.schemas.usuario_schema import (
     RegistroInstructorSchema,
 )
 
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 horas
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 
 class AuthService:
@@ -223,7 +218,7 @@ class AuthService:
     @staticmethod
     def crear_token_acceso(data: dict, expires_delta: timedelta = None) -> str:
         """
-        Genera JWT token.
+        Genera JWT de ACCESO (type=access, corta duración).
 
         Args:
             data: Datos a codificar (sub, id, etc.)
@@ -239,5 +234,75 @@ class AuthService:
         else:
             expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-        to_encode.update({"exp": expire})
-        return encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        # EXPLICACIÓN: El claim "type" separa access de refresh (impide usar uno como otro)
+        to_encode.update({"exp": expire, "type": "access"})
+        return encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+    @staticmethod
+    def crear_token_refresh(data: dict) -> str:
+        """
+        Genera JWT de REFRESH (type=refresh, larga duración).
+
+        EXPLICACIÓN: No da acceso a la API; solo sirve para canjear
+        un nuevo par de tokens en POST /auth/refresh.
+        """
+        to_encode = data.copy()
+        expire = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
+        to_encode.update({"exp": expire, "type": "refresh"})
+        return encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+    @staticmethod
+    def crear_par_tokens(usuario: UsuarioBase) -> dict[str, str]:
+        """Devuelve el par {access_token, refresh_token, token_type} de un usuario."""
+        datos = {"sub": usuario.correo_institucional, "id": usuario.id_usuario}
+        return {
+            "access_token": AuthService.crear_token_acceso(datos),
+            "refresh_token": AuthService.crear_token_refresh(datos),
+            "token_type": "bearer",
+        }
+
+    @staticmethod
+    async def refrescar_acceso(db: AsyncSession, refresh_token: str) -> dict[str, str]:
+        """
+        Canjea un refresh token por un par nuevo (rotación).
+
+        Args:
+            db: Sesión async
+            refresh_token: Token de tipo refresh
+
+        Returns:
+            dict: Nuevo par de tokens
+
+        Raises:
+            HTTPException 401: Token inválido, expirado, de tipo incorrecto
+                             o usuario eliminado
+        """
+        invalido = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token inválido o expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        try:
+            payload = decode(
+                refresh_token, settings.secret_key, algorithms=[settings.algorithm]
+            )
+        except PyJWTError:
+            raise invalido from None
+
+        # EXPLICACIÓN: Un access token intentando canjear → 401 (claims de tipo)
+        if payload.get("type") != "refresh":
+            raise invalido
+
+        email = payload.get("sub")
+        if email is None:
+            raise invalido
+
+        # EXPLICACIÓN: El usuario debe seguir existiendo (cuenta borrada = token muerto)
+        stmt = select(UsuarioBase).where(UsuarioBase.correo_institucional == email)
+        resultado = await db.execute(stmt)
+        usuario = resultado.scalars().first()
+        if usuario is None:
+            raise invalido
+
+        return AuthService.crear_par_tokens(usuario)
