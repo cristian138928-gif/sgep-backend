@@ -254,7 +254,12 @@ class AuthService:
     @staticmethod
     def crear_par_tokens(usuario: UsuarioBase) -> dict[str, str]:
         """Devuelve el par {access_token, refresh_token, token_type} de un usuario."""
-        datos = {"sub": usuario.correo_institucional, "id": usuario.id_usuario}
+        # EXPLICACIÓN: El claim "rol" permite guards de rutas en el SPA sin /me extra
+        datos = {
+            "sub": usuario.correo_institucional,
+            "id": usuario.id_usuario,
+            "rol": usuario.rol,
+        }
         return {
             "access_token": AuthService.crear_token_acceso(datos),
             "refresh_token": AuthService.crear_token_refresh(datos),

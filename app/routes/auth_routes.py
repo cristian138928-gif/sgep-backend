@@ -8,8 +8,11 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
+from app.dependencies import get_current_user
+from app.models.usuario import UsuarioBase
 from app.schemas.usuario_schema import (
     LoginSchema,
+    PerfilUsuarioSchema,
     RefreshTokenSchema,
     RegistroAprendizSchema,
     RegistroCoordinadorSchema,
@@ -156,3 +159,17 @@ async def refresh(
         429: Límite de intentos por IP superado
     """
     return await AuthService.refrescar_acceso(db, datos.refresh_token)
+
+
+@router.get("/me", response_model=PerfilUsuarioSchema, status_code=status.HTTP_200_OK)
+async def perfil_actual(usuario: UsuarioBase = Depends(get_current_user)):
+    """
+    ENDPOINT: GET /api/v1/auth/me
+
+    Perfil del usuario autenticado (nombre + rol) para el frontend.
+
+    Returns:
+        200: Perfil del usuario
+        401: Sin token o token inválido/expirado
+    """
+    return usuario

@@ -125,6 +125,25 @@ class RefreshTokenSchema(BaseModel):
         }},
     )
 
+
+class PerfilUsuarioSchema(BaseModel):
+    """Perfil del usuario autenticado (GET /auth/me) para el frontend."""
+
+    id_usuario: int
+    nombre_completo: str
+    correo_institucional: str
+    rol: str  # aprendiz | instructor | coordinador
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"example": {
+            "id_usuario": 1,
+            "nombre_completo": "Juan Pérez García",
+            "correo_institucional": "juan.perez@sena.edu.co",
+            "rol": "aprendiz"
+        }},
+    )
+
 class AprendizResponseSchema(BaseModel):
     """
     Respuesta de usuario aprendiz (para GET).

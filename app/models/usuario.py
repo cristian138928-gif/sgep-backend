@@ -88,7 +88,7 @@ class UsuarioBase(Base):
     )
 
     fecha_creacion = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         comment="Cuándo se creó la cuenta"
     )
@@ -235,13 +235,13 @@ class Aprendiz(UsuarioBase):
     )
 
     fecha_inicio_etapa = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True,
         comment="Cuándo inicia la etapa práctica"
     )
 
     fecha_fin_etapa = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True,
         comment="Cuándo termina la etapa práctica"
     )
@@ -439,13 +439,13 @@ class Evidencia(Base):
     )
 
     fecha_carga = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         comment="Cuándo se subió"
     )
 
     fecha_deadline = Column(
-        DateTime,
+        DateTime(timezone=True),
         nullable=True,
         comment="Fecha límite de entrega"
     )
@@ -506,7 +506,7 @@ class Retroalimentacion(Base):
     )
 
     fecha_revision = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         comment="Cuándo el instructor evaluó"
     )
@@ -544,7 +544,7 @@ class AsignacionSeguimiento(Base):
     )
 
     fecha_asignacion = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         comment="Cuándo se hizo la asignación"
     )
@@ -561,6 +561,67 @@ class AsignacionSeguimiento(Base):
 
     def __repr__(self):
         return f"<ASIGNACION Aprendiz#{self.id_aprendiz} -> Instructor#{self.id_instructor}>"
+
+
+# ======================================
+# CLASE 8: Notificacion
+# ======================================
+class Notificacion(Base):
+    """
+    Notificación IN-APP dirigida a un usuario.
+
+    EXPLICACIÓN: Es persistente (no efímera como el email) porque el usuario
+    debe poder verla al volver a entrar; `leida=0/1` da el badge de no leídas.
+    """
+
+    __tablename__ = "notificaciones"
+
+    id_notificacion = Column(Integer, primary_key=True, autoincrement=True)
+
+    id_usuario = Column(
+        Integer,
+        ForeignKey('usuarios.id_usuario'),
+        nullable=False,
+        index=True,
+        comment="Quién recibe la notificación"
+    )
+
+    id_evidencia = Column(
+        Integer,
+        ForeignKey('evidencias.id_evidencia'),
+        nullable=True,
+        comment="Evidencia relacionada (permite deduplicar alertas de vencimiento)"
+    )
+
+    mensaje = Column(
+        String(300),
+        nullable=False,
+        comment="Texto visible para el usuario"
+    )
+
+    tipo = Column(
+        String(30),
+        nullable=False,
+        comment="evaluacion | vencimiento | sistema"
+    )
+
+    leida = Column(
+        Integer,
+        default=0,
+        comment="0=no leída, 1=leída"
+    )
+
+    fecha_creacion = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        comment="Cuándo se creó"
+    )
+
+    # Relaciones
+    usuario = relationship("UsuarioBase")
+
+    def __repr__(self):
+        return f"<NOTIFICACION {self.tipo} -> Usuario#{self.id_usuario}>"
 
 
 print(" Modelos POO cargados correctamente")

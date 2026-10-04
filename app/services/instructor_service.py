@@ -6,11 +6,13 @@ Responsabilidad: Evaluar evidencias, ver historial, estadisticas personales.
 
 import math
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.usuario import Evidencia, Instructor, Retroalimentacion
+from app.models.usuario import Evidencia, Instructor, Retroalimentacion, UsuarioBase
+from app.services.email_service import email_evaluacion
+from app.services.notificacion_service import NotificacionService
 
 
 class InstructorService:
@@ -67,10 +69,11 @@ class InstructorService:
         id_evidencia: int,
         id_instructor: int,
         estado: str,
-        observaciones: str
+        observaciones: str,
+        background: BackgroundTasks | None = None,
     ) -> Retroalimentacion:
         """
-        Evalua una evidencia y crea retroalimentacion.
+        Evalua una evidencia, crea retroalimentacion y notifica al aprendiz.
 
         Args:
             db: Sesion async
@@ -78,6 +81,7 @@ class InstructorService:
             id_instructor: ID del instructor que evalua
             estado: "Aprobada" o "Ajuste Requerido"
             observaciones: Comentarios del instructor
+            background: Cola de FastAPI para el email (post-respuesta)
 
         Returns:
             Retroalimentacion creada
@@ -137,6 +141,33 @@ class InstructorService:
         db.add(nueva_retro)
         await db.commit()
         await db.refresh(nueva_retro)
+
+        # EXPLICACIÓN: Notificación in-app al dueño de la evidencia (RF04)
+        await NotificacionService.crear(
+            db,
+            id_usuario=evidencia.id_aprendiz,
+            mensaje=f"Tu evidencia '{evidencia.titulo}' fue {estado}",
+            tipo="evaluacion",
+            id_evidencia=id_evidencia,
+        )
+
+        # EXPLICACIÓN: Email asíncrono post-respuesta; no bloquea la evaluación
+        if background is not None:
+            dueno = (
+                await db.execute(
+                    select(UsuarioBase).where(
+                        UsuarioBase.id_usuario == evidencia.id_aprendiz
+                    )
+                )
+            ).scalars().first()
+            if dueno:
+                background.add_task(
+                    email_evaluacion,
+                    dueno.correo_institucional,
+                    evidencia.titulo,
+                    estado,
+                    observaciones,
+                )
 
         return nueva_retro
 

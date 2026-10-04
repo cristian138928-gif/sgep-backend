@@ -156,6 +156,27 @@ async def exportar_evidencias(
     )
 
 
+@router.get("/exportar-avance")
+async def exportar_avance(
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(verificar_coordinador)
+):
+    """
+    ENDPOINT: GET /api/v1/coordinador/exportar-avance
+
+    Consolidado de expedientes (RF07): avance por aprendiz en CSV.
+    """
+    csv_content = await CoordinadorService.exportar_avance_csv(db)
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": "attachment; filename=avance_aprendices_sgep.csv"
+        }
+    )
+
+
 @router.get("/alertas", response_model=list[AlertaVencimientoRolSchema])
 async def alertas_vencimiento(
     dias: int = Query(7, ge=0, le=90, description="Dias de anticipacion"),

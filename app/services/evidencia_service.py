@@ -353,7 +353,7 @@ class EvidenciaService:
         hoy = datetime.now(UTC).date()
 
         stmt = (
-            select(Evidencia, Aprendiz.nombre_completo)
+            select(Evidencia, Aprendiz.nombre_completo, Aprendiz.id_usuario)
             .join(Aprendiz, Aprendiz.id_usuario == Evidencia.id_aprendiz)
             .where(
                 filtro_aprendiz,
@@ -364,7 +364,7 @@ class EvidenciaService:
         filas = (await db.execute(stmt)).all()
 
         alertas: list[dict] = []
-        for evidencia, nombre_aprendiz in filas:
+        for evidencia, nombre_aprendiz, id_aprendiz in filas:
             dias_restantes = (evidencia.fecha_deadline.date() - hoy).days
 
             if dias_restantes < 0:
@@ -376,6 +376,7 @@ class EvidenciaService:
 
             alerta = {
                 "id_evidencia": evidencia.id_evidencia,
+                "id_aprendiz": id_aprendiz,  # EXPLICACIÓN: Destinatario de notificaciones
                 "titulo": evidencia.titulo,
                 "fecha_deadline": evidencia.fecha_deadline,
                 "dias_restantes": dias_restantes,

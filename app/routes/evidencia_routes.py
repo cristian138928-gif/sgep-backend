@@ -9,7 +9,16 @@ import re
 import shutil
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -110,11 +119,14 @@ async def upload_evidencia(
         shutil.copyfileobj(file.file, buffer)
 
     # Parsear fecha_deadline
-    from datetime import datetime
+    from datetime import UTC, datetime
     deadline = None
     if fecha_deadline:
         with contextlib.suppress(ValueError):
             deadline = datetime.fromisoformat(fecha_deadline)
+        # EXPLICACIÓN: columna timestamptz exige tz => fecha "2026-10-05" se asume UTC
+        if deadline is not None and deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=UTC)
 
     # Crear evidencia en BD
     return await EvidenciaService.crear_evidencia(
@@ -186,17 +198,19 @@ async def evidencia_detail(
 async def evaluar_evidencia(
     id_evidencia: int,
     datos: EvaluarEvidenciaSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     usuario: UsuarioBase = Depends(get_current_user)
 ):
     """
     ENDPOINT: PUT /api/v1/evidencias/{id_evidencia}/evaluar
 
-    Evalúa una evidencia (solo instructores).
+    Evalúa una evidencia (solo instructores) y notifica al aprendiz.
 
     Args:
         id_evidencia: ID de la evidencia
         datos: Estado + observaciones
+        background_tasks: Cola para el email post-respuesta
         usuario: Instructor autenticado
     """
     if usuario.rol != "instructor":
@@ -210,7 +224,8 @@ async def evaluar_evidencia(
         id_evidencia=id_evidencia,
         id_instructor=usuario.id_usuario,
         estado=datos.estado,
-        observaciones=datos.observaciones
+        observaciones=datos.observaciones,
+        background=background_tasks,
     )
 
 

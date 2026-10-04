@@ -1,0 +1,4 @@
+# EXPLICACIÓN: Artefactos de build y dependencias del SPA
+node_modules/
+dist/
+*.local

@@ -5,7 +5,7 @@ Evaluacion de evidencias, historial, estadisticas personales.
 """
 
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.connection import get_db
@@ -111,13 +111,15 @@ async def evidencias_pendientes(
 async def evaluar(
     id_evidencia: int,
     datos: EvaluarEvidenciaSchema,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     usuario: UsuarioBase = Depends(verificar_instructor)
 ):
     """
     ENDPOINT: PUT /api/v1/instructor/evaluar/{id_evidencia}
 
-    Evalua una evidencia y crea retroalimentacion.
+    Evalua una evidencia, crea retroalimentacion y notifica al aprendiz
+    (in-app + email en segundo plano).
 
     Estados validos:
     - "Aprobada": Evidencia cumple requisitos
@@ -128,7 +130,8 @@ async def evaluar(
         id_evidencia=id_evidencia,
         id_instructor=usuario.id_usuario,
         estado=datos.estado,
-        observaciones=datos.observaciones
+        observaciones=datos.observaciones,
+        background=background_tasks,
     )
 
 

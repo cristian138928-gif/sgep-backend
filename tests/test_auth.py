@@ -200,6 +200,47 @@ async def test_endpoint_login_fallido(client: AsyncClient):
     assert response.status_code == 401
 
 
+@pytest.mark.asyncio
+async def test_endpoint_me_devuelve_perfil(client: AsyncClient):
+    """Test: GET /api/v1/auth/me retorna nombre y rol del token."""
+    await client.post(
+        "/api/v1/auth/registro",
+        json={
+            "nombre_completo": "Sofia Ramirez",
+            "correo_institucional": "sofia.ramirez@test.com",
+            "contraseña": "SecurePass123!",
+            "numero_documento": "1022233344",
+            "numero_ficha": "6666666",
+            "programa": "ADSO"
+        }
+    )
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "correo_institucional": "sofia.ramirez@test.com",
+            "contraseña": "SecurePass123!"
+        }
+    )
+
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nombre_completo"] == "Sofia Ramirez"
+    assert data["rol"] == "aprendiz"
+    assert data["correo_institucional"] == "sofia.ramirez@test.com"
+
+
+@pytest.mark.asyncio
+async def test_endpoint_me_sin_token_401(client: AsyncClient):
+    """Test: GET /api/v1/auth/me sin token retorna 401."""
+    response = await client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+
+
 # ====================================
 # TESTS DE REGISTRO INSTRUCTOR
 # ====================================

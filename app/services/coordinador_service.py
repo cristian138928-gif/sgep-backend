@@ -4,6 +4,8 @@ Servicio de Coordinador.
 Responsabilidad: Dashboard, estadisticas, supervision de evidencias.
 """
 
+import csv
+import io
 import math
 from datetime import datetime
 
@@ -208,6 +210,9 @@ class CoordinadorService:
         """
         Exporta todas las evidencias como CSV.
 
+        EXPLICACIÓN: csv.writer hace el quoting de comas/comillas en títulos
+        (un f-string generaría columnas rotadas).
+
         Returns:
             str con contenido CSV
         """
@@ -215,8 +220,12 @@ class CoordinadorService:
         resultado = await db.execute(stmt)
         evidencias = resultado.scalars().all()
 
-        # Header CSV
-        csv_lines = ["id,titulo,tipo_formato,estado,fecha_carga,fecha_deadline,aprendiz_id"]
+        buffer = io.StringIO()
+        escritor = csv.writer(buffer)
+        escritor.writerow(
+            ["id", "titulo", "tipo_formato", "estado", "fecha_carga",
+             "fecha_deadline", "aprendiz_id"]
+        )
 
         for ev in evidencias:
             fecha_carga = (
@@ -227,10 +236,44 @@ class CoordinadorService:
                 if ev.fecha_deadline
                 else ""
             )
-            line = (
-                f"{ev.id_evidencia},{ev.titulo},{ev.tipo_formato},"
-                f"{ev.estado},{fecha_carga},{fecha_deadline},{ev.id_aprendiz}"
-            )
-            csv_lines.append(line)
+            escritor.writerow([
+                ev.id_evidencia,
+                ev.titulo,
+                ev.tipo_formato,
+                ev.estado,
+                fecha_carga,
+                fecha_deadline,
+                ev.id_aprendiz,
+            ])
 
-        return "\n".join(csv_lines)
+        return buffer.getvalue().strip()
+
+    @staticmethod
+    async def exportar_avance_csv(db: AsyncSession) -> str:
+        """
+        Consolidado de expedientes (RF07): avance por aprendiz en CSV.
+
+        Returns:
+            str con contenido CSV
+        """
+        avances = await CoordinadorService.obtener_avance_aprendices(db)
+
+        buffer = io.StringIO()
+        escritor = csv.writer(buffer)
+        escritor.writerow(
+            ["id_usuario", "nombre_completo", "numero_ficha", "programa",
+             "total_evidencias", "aprobadas", "porcentaje_avance"]
+        )
+
+        for fila in avances:
+            escritor.writerow([
+                fila["id_usuario"],
+                fila["nombre_completo"],
+                fila["numero_ficha"],
+                fila["programa"],
+                fila["total_evidencias"],
+                fila["aprobadas"],
+                fila["porcentaje_avance"],
+            ])
+
+        return buffer.getvalue().strip()

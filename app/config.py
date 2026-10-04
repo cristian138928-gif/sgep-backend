@@ -36,6 +36,13 @@ class Settings:
     rate_limit_enabled: bool
     rate_limit_max: int
     rate_limit_window_seconds: int
+    email_activo: bool
+    email_host: str
+    email_port: int
+    email_user: str
+    email_pass: str
+    email_from: str
+    alertas_intervalo_minutos: int
 
 
 def _entero(nombre: str, por_defecto: str, errores: list[str], minimo: int = 1) -> int:
@@ -89,6 +96,10 @@ def load_settings() -> Settings:
     refresh_days = _entero("REFRESH_TOKEN_EXPIRE_DAYS", "7", errores)
     rate_max = _entero("RATE_LIMIT_MAX", "10", errores)
     rate_window = _entero("RATE_LIMIT_WINDOW", "60", errores)
+    email_port = _entero("EMAIL_PORT", "587", errores)
+    alertas_intervalo = _entero(
+        "ALERTAS_INTERVALO_MINUTOS", "0", errores, minimo=0
+    )
 
     if errores:
         raise ConfigError("Entorno inválido:\n- " + "\n- ".join(errores))
@@ -103,6 +114,15 @@ def load_settings() -> Settings:
         rate_limit_enabled=_booleano("RATE_LIMIT_ENABLED", True),
         rate_limit_max=rate_max,
         rate_limit_window_seconds=rate_window,
+        # EXPLICACIÓN: Email apagado por defecto => entorno de desarrollo sin SMTP
+        email_activo=_booleano("EMAIL_ACTIVO", False),
+        email_host=os.getenv("EMAIL_HOST", "localhost"),
+        email_port=email_port,
+        email_user=os.getenv("EMAIL_USER", ""),
+        email_pass=os.getenv("EMAIL_PASS", ""),
+        email_from=os.getenv("EMAIL_FROM", "noreply@sgep.local"),
+        # EXPLICACIÓN: 0 = tarea de vencimientos desactivada (la activa .env)
+        alertas_intervalo_minutos=alertas_intervalo,
     )
 
 
