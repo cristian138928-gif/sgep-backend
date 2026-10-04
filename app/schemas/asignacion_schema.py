@@ -6,7 +6,7 @@ Vincula aprendices con un instructor seguidor.
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class AsignacionCreateSchema(BaseModel):
@@ -25,8 +25,7 @@ class AsignacionResponseSchema(BaseModel):
     fecha_asignacion: datetime
     activa: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AprendizAsignadoSchema(BaseModel):
@@ -38,8 +37,7 @@ class AprendizAsignadoSchema(BaseModel):
     id_instructor_asignado: int | None = None
     nombre_instructor: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InstructorConAprendicesSchema(BaseModel):
@@ -49,5 +47,4 @@ class InstructorConAprendicesSchema(BaseModel):
     centro_formacion: str
     total_aprendices: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -84,6 +84,6 @@ async def test_avance_instructor_no_autorizado(client: AsyncClient, db_session: 
 
 @pytest.mark.asyncio
 async def test_avance_sin_auth(client: AsyncClient):
-    """Test: Sin token retorna 403 (HTTPBearer default)."""
+    """Test: Sin token retorna 401 (RFC 6750: no autenticado, distinto de 403)."""
     response = await client.get("/api/v1/aprendiz/avance")
-    assert response.status_code == 403
+    assert response.status_code == 401

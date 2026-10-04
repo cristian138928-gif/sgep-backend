@@ -4,7 +4,7 @@ Esquemas Pydantic para dashboard del instructor.
 Response models para perfil y estadisticas.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EstadisticasInstructorSchema(BaseModel):
@@ -14,13 +14,14 @@ class EstadisticasInstructorSchema(BaseModel):
     ajustes_requeridos: int
     pendientes_por_evaluar: int
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "total_evaluadas": 25,
             "aprobadas": 18,
             "ajustes_requeridos": 7,
             "pendientes_por_evaluar": 5
-        }
+        }},
+    )
 
 
 class InstructorPerfilSchema(BaseModel):
@@ -31,5 +32,4 @@ class InstructorPerfilSchema(BaseModel):
     centro_formacion: str
     especialidad: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

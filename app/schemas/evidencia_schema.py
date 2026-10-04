@@ -6,7 +6,7 @@ Request/Response models para endpoints de evidencias.
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ====================================
 # ESQUEMAS DE REQUEST
@@ -25,12 +25,13 @@ class EvidenciaCreateSchema(BaseModel):
     tipo_formato: str = Field(..., min_length=2, max_length=50)
     fecha_deadline: datetime | None = None
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "titulo": "Bitácora Semana 3",
             "tipo_formato": "Bitácora",
             "fecha_deadline": "2025-10-15T23:59:59"
-        }
+        }},
+    )
 
 
 class EvaluarEvidenciaSchema(BaseModel):
@@ -44,11 +45,12 @@ class EvaluarEvidenciaSchema(BaseModel):
     estado: str = Field(..., pattern="^(Aprobada|Ajuste Requerido)$")
     observaciones: str = Field(..., min_length=10, max_length=1000)
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "estado": "Aprobada",
             "observaciones": "Buena bitácora, cumple con los requisitos mínimos."
-        }
+        }},
+    )
 
 
 # ====================================
@@ -67,9 +69,9 @@ class EvidenciaResponseSchema(BaseModel):
     fecha_carga: datetime
     fecha_deadline: datetime | None
 
-    class Config:
-        from_attributes = True
-        example = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"example": {
             "id_evidencia": 1,
             "titulo": "Bitácora Semana 3",
             "tipo_formato": "Bitácora",
@@ -77,7 +79,8 @@ class EvidenciaResponseSchema(BaseModel):
             "estado": "Pendiente",
             "fecha_carga": "2025-09-18T10:30:00",
             "fecha_deadline": "2025-10-15T23:59:59"
-        }
+        }},
+    )
 
 
 class RetroalimentacionResponseSchema(BaseModel):
@@ -91,16 +94,17 @@ class RetroalimentacionResponseSchema(BaseModel):
     estado_evaluacion: str
     fecha_revision: datetime
 
-    class Config:
-        from_attributes = True
-        example = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"example": {
             "id_retroalimentacion": 1,
             "id_evidencia": 1,
             "id_instructor": 2,
             "observaciones": "Buena bitácora, cumple con los requisitos.",
             "estado_evaluacion": "Aprobada",
             "fecha_revision": "2025-09-19T14:30:00"
-        }
+        }},
+    )
 
 
 class AlertaVencimientoSchema(BaseModel):
@@ -117,14 +121,15 @@ class AlertaVencimientoSchema(BaseModel):
     dias_restantes: int
     estado_alerta: str
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "id_evidencia": 3,
             "titulo": "Bitácora Semana 4",
             "fecha_deadline": "2026-10-05T23:59:00",
             "dias_restantes": 2,
             "estado_alerta": "Por vencer",
-        }
+        }},
+    )
 
 
 class AlertaVencimientoRolSchema(AlertaVencimientoSchema):
@@ -136,15 +141,16 @@ class AlertaVencimientoRolSchema(AlertaVencimientoSchema):
     """
     nombre_aprendiz: str
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "id_evidencia": 3,
             "titulo": "Bitácora Semana 4",
             "fecha_deadline": "2026-10-05T23:59:00",
             "dias_restantes": -1,
             "estado_alerta": "Vencida",
             "nombre_aprendiz": "Cristian Muñoz",
-        }
+        }},
+    )
 
 
 class RetroalimentacionCreateSchema(BaseModel):

@@ -4,15 +4,11 @@ Esquemas Pydantic para dashboard del coordinador.
 Response models para estadisticas, supervision, paginacion.
 """
 
-from typing import Generic, TypeVar
-
-from pydantic import BaseModel
-
-T = TypeVar("T")
+from pydantic import BaseModel, ConfigDict
 
 
-class PaginacionSchema(BaseModel, Generic[T]):
-    """Respuesta paginada generica."""
+class PaginacionSchema[T](BaseModel):
+    """Respuesta paginada generica (PEP 695: type params nativos de Python 3.12)."""
     items: list[T]
     total: int
     page: int
@@ -30,8 +26,8 @@ class EstadisticasSchema(BaseModel):
     total_instructores: int
     porcentaje_aprobacion: float
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "total_evidencias": 45,
             "aprobadas": 30,
             "pendientes": 10,
@@ -39,7 +35,8 @@ class EstadisticasSchema(BaseModel):
             "total_aprendices": 20,
             "total_instructores": 5,
             "porcentaje_aprobacion": 66.67
-        }
+        }},
+    )
 
 
 class AvanceAprendizSchema(BaseModel):
@@ -52,9 +49,9 @@ class AvanceAprendizSchema(BaseModel):
     aprobadas: int
     porcentaje_avance: float
 
-    class Config:
-        from_attributes = True
-        example = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"example": {
             "id_usuario": 1,
             "nombre_completo": "Juan Perez",
             "numero_ficha": "3388939",
@@ -62,7 +59,8 @@ class AvanceAprendizSchema(BaseModel):
             "total_evidencias": 10,
             "aprobadas": 7,
             "porcentaje_avance": 70.0
-        }
+        }},
+    )
 
 
 class InstructorResponseSchema(BaseModel):
@@ -73,5 +71,4 @@ class InstructorResponseSchema(BaseModel):
     centro_formacion: str
     especialidad: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

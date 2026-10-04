@@ -341,9 +341,9 @@ async def test_exportar_csv(client: AsyncClient, db_session):
 
 @pytest.mark.asyncio
 async def test_coordinador_no_autorizado(client: AsyncClient):
-    """Test: Acceso sin token debe fallar."""
+    """Test: Acceso sin token -> 401 (no autenticado, RFC 6750)."""
     response = await client.get("/api/v1/coordinador/estadisticas")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio

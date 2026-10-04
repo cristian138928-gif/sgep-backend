@@ -5,15 +5,20 @@ Configura BD de prueba async con SQLite.
 """
 
 import asyncio
+import os
 from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.database.connection import get_db
-from app.main import app
-from app.models.usuario import Base
+# EXPLICACIÓN: BCRYPT_ROUNDS=4 en tests porque coste 12 tarda ~0.3s/hash y hay ~200 hashes
+os.environ["BCRYPT_ROUNDS"] = "4"
+
+from app.database.connection import get_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.models.usuario import Base  # noqa: E402
 
 # EXPLICACIÓN: SQLite async para tests (no depende de PostgreSQL)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -24,6 +29,19 @@ test_engine = create_async_engine(
     echo=False,
     connect_args={"check_same_thread": False}
 )
+
+
+@event.listens_for(test_engine.sync_engine, "connect")
+def _sqlite_pragmas(dbapi_connection, _record) -> None:
+    """
+    EXPLICACIÓN: WAL + synchronous=NORMAL elimina el fsync por commit
+    (~110ms en Windows); sin esto cada test tarda ~1.4s solo en DDL/DML.
+    Seguro en tests porque la BD es desechable.
+    """
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
 
 # Session factory para tests
 TestSessionLocal = async_sessionmaker(

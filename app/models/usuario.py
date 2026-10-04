@@ -11,6 +11,7 @@ Conceptos implementados:
 4. ABSTRACCIÓN: mostramos interfaz simple, ocultamos complejidad
 """
 
+import os
 from datetime import UTC, datetime
 
 import bcrypt
@@ -132,9 +133,11 @@ class UsuarioBase(Base):
         # bcrypt.gensalt() crea un "salt" aleatorio (dificulta ataques)
         # .hashpw() hashea la contraseña
         # .decode('utf-8') convierte bytes a string
+        # EXPLICACIÓN: Coste configurable (12=prod, 4=tests) porque bcrypt domina el tiempo de suite
+        coste = int(os.getenv("BCRYPT_ROUNDS", "12"))
         self.clave_hash = bcrypt.hashpw(
             contraseña_texto.encode('utf-8'),
-            bcrypt.gensalt()
+            bcrypt.gensalt(rounds=coste)
         ).decode('utf-8')
 
     def verificar_contrasena(self, contraseña_texto: str) -> bool:

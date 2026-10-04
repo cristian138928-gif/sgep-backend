@@ -6,7 +6,7 @@ Request/Response models para autenticación.
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # ====================================
 # ESQUEMAS DE REGISTRO
@@ -32,16 +32,18 @@ class RegistroAprendizSchema(BaseModel):
     numero_ficha: str = Field(..., min_length=5, max_length=20)
     programa: str = Field(..., min_length=3, max_length=100)
 
-    class Config:
+    # EXPLICACIÓN: ConfigDict (v2) elimina el DeprecationWarning de class Config
+    model_config = ConfigDict(
         # Ejemplo para documentación automática en Swagger
-        example = {
+        json_schema_extra={"example": {
             "nombre_completo": "Juan Pérez García",
             "correo_institucional": "juan.perez@sena.edu.co",
             "contraseña": "MiContra123!",
             "numero_documento": "1023456789",
             "numero_ficha": "3388939",
             "programa": "ADSO - Análisis y Desarrollo de Software"
-        }
+        }},
+    )
 
 
 # EXPLICACIÓN: Esquemas adicionales para registro de Instructor y Coordinador
@@ -83,11 +85,12 @@ class LoginSchema(BaseModel):
     correo_institucional: EmailStr
     contraseña: str = Field(..., min_length=8)
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "correo_institucional": "juan.perez@sena.edu.co",
             "contraseña": "MiContra123!"
-        }
+        }},
+    )
 
 # ====================================
 # ESQUEMAS DE RESPUESTA
@@ -101,11 +104,12 @@ class TokenSchema(BaseModel):
     access_token: str  # El JWT en sí
     token_type: str = "bearer"  # Tipo de token (siempre "bearer")
 
-    class Config:
-        example = {
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "token_type": "bearer"
-        }
+        }},
+    )
 
 class AprendizResponseSchema(BaseModel):
     """
@@ -120,16 +124,17 @@ class AprendizResponseSchema(BaseModel):
     programa: str
     fecha_creacion: datetime
 
-    class Config:
-        from_attributes = True  # Convierte modelos SQLAlchemy a JSON automáticamente
-        example = {
+    model_config = ConfigDict(
+        from_attributes=True,  # Convierte modelos SQLAlchemy a JSON automáticamente
+        json_schema_extra={"example": {
             "id_usuario": 1,
             "nombre_completo": "Juan Pérez García",
             "correo_institucional": "juan.perez@sena.edu.co",
             "numero_ficha": "3388939",
             "programa": "ADSO",
             "fecha_creacion": "2025-09-18T10:30:00"
-        }
+        }},
+    )
 
 # EXPLICACIÓN: ASCII-only porque las consolas cp1252 no codifican emojis (UnicodeEncodeError)
 print("[OK] Esquemas de autenticacion configurados")

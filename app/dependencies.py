@@ -6,10 +6,11 @@ Funciones reutilizables para inyección de dependencias (auth, BD, etc.)
 
 import os
 
+import jwt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from jwt import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -64,7 +65,7 @@ async def get_current_user(
         # EXPLICACIÓN: Extraemos el token del header
         token = credentials.credentials
 
-        # EXPLICACIÓN: Decodificamos el JWT
+        # EXPLICACIÓN: Decodificamos el JWT (PyJWT valida exp y firma automáticamente)
         # payload contiene: {"sub": "email@email.com", "id": 1, "exp": ...}
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
@@ -73,9 +74,9 @@ async def get_current_user(
         if email is None:
             raise credentials_exception
 
-    except JWTError:
+    except PyJWTError:
         # EXPLICACIÓN: Si el token expiró o es inválido
-        # EXPLICACIÓN: from None oculta la cadena JWTError (no aporta al usuario)
+        # EXPLICACIÓN: from None oculta la cadena de error (no aporta al usuario)
         raise credentials_exception from None
 
     # EXPLICACIÓN: Buscamos el usuario en la BD

@@ -54,3 +54,6 @@ uploads/
 # Archivos generados
 __pycache__/
 *.db
+# EXPLICACIÓN: Sidecars WAL de SQLite (se generan con journal_mode=WAL)
+*.db-wal
+*.db-shm

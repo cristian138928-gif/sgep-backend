@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from dotenv import load_dotenv
 from fastapi import HTTPException, status
-from jose import jwt
+from jwt import encode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -240,4 +240,4 @@ class AuthService:
             expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire})
-        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

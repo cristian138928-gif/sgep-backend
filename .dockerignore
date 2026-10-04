@@ -10,4 +10,7 @@ venv/
 .vscode/
 .idea/
 test.db
+*.db
+*.db-wal
+*.db-shm
 *.md

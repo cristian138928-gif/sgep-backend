@@ -127,8 +127,9 @@ async def test_estadisticas_con_evaluaciones(client: AsyncClient, db_session):
     # Decodificar token para obtener ID
     import os
 
+    import jwt
     from dotenv import load_dotenv
-    from jose import jwt
+
     load_dotenv()
     payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
     instructor_id_num = payload["id"]
@@ -313,9 +314,9 @@ async def test_historial_con_evaluaciones(client: AsyncClient, db_session):
 
 @pytest.mark.asyncio
 async def test_instructor_no_autorizado(client: AsyncClient):
-    """Test: Acceso sin token."""
+    """Test: Acceso sin token -> 401 (no autenticado, RFC 6750)."""
     response = await client.get("/api/v1/instructor/perfil")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
