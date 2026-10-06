@@ -266,6 +266,76 @@ async def test_evaluar_ya_evaluada(client: AsyncClient, db_session):
     assert response.status_code == 409
 
 
+@pytest.mark.asyncio
+async def test_evaluar_evidencia_inexistente_404(client: AsyncClient, db_session):
+    """Test: PUT /evaluar/{id} con ID inexistente -> 404."""
+    token = await crear_instructor(db_session)
+
+    response = await client.put(
+        "/api/v1/instructor/evaluar/999999",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"estado": "Aprobada", "observaciones": "No existe."}
+    )
+
+    assert response.status_code == 404
+    # EXPLICACIÓN: El 404 del service viaja tal cual por la capa de ruta
+    assert "no encontrada" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_evaluar_estado_invalido_defensa_service(db_session):
+    """Test: el service rechaza estado invalido aunque el schema no llegue a frenarlo."""
+    from fastapi import HTTPException
+
+    from app.services.instructor_service import InstructorService
+
+    with pytest.raises(HTTPException) as exc_info:
+        await InstructorService.evaluar_evidencia(
+            db=db_session,
+            id_evidencia=1,
+            id_instructor=1,
+            estado="Rechazada",
+            observaciones="Defensa en profundidad.",
+        )
+
+    assert exc_info.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_evaluar_instructor_sin_fila_404(db_session):
+    """Test: instructor con ID sin fila en tabla Instructor -> 404."""
+    from fastapi import HTTPException
+
+    from app.services.instructor_service import InstructorService
+
+    aprendiz = await crear_aprendiz(db_session)
+    ev = await crear_evidencia_pendiente(db_session, aprendiz.id_usuario)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await InstructorService.evaluar_evidencia(
+            db=db_session,
+            id_evidencia=ev.id_evidencia,
+            id_instructor=999999,
+            estado="Aprobada",
+            observaciones="Instructor fantasma.",
+        )
+
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_perfil_instructor_inexistente_404(db_session):
+    """Test: GET /instructor/perfil sin fila Instructor -> 404."""
+    from fastapi import HTTPException
+
+    from app.services.instructor_service import InstructorService
+
+    with pytest.raises(HTTPException) as exc_info:
+        await InstructorService.obtener_perfil(db_session, 999999)
+
+    assert exc_info.value.status_code == 404
+
+
 # ====================================
 # TESTS - HISTORIAL
 # ====================================

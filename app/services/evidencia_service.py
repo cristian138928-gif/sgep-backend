@@ -1,7 +1,7 @@
 # app/services/evidencia_service.py
 """
 Servicio de Evidencias.
-Responsabilidad: Gestión completa de evidencias (CRUD + evaluación).
+Responsabilidad: Gestión de evidencias (CRUD, acceso RBAC y alertas).
 """
 
 from datetime import UTC, datetime
@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.usuario import (
     Aprendiz,
     Evidencia,
-    Instructor,
     Retroalimentacion,
     UsuarioBase,
 )
@@ -27,7 +26,8 @@ class EvidenciaService:
     - POST /evidencias/upload (subir PDF)
     - GET /evidencias/mis-evidencias (listar del aprendiz)
     - GET /evidencias/{id} (detalle)
-    - PUT /evidencias/{id}/evaluar (instructor evalúa)
+    - GET /evidencias/{id}/descarga (PDF con RBAC)
+    - GET /evidencias/{id}/retroalimentacion (evaluación del instructor)
     """
 
     @staticmethod
@@ -158,91 +158,6 @@ class EvidenciaService:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes acceso a esta evidencia",
         )
-
-    @staticmethod
-    async def evaluar_evidencia(
-        db: AsyncSession,
-        id_evidencia: int,
-        id_instructor: int,
-        estado: str,
-        observaciones: str
-    ) -> Retroalimentacion:
-        """
-        Evalúa una evidencia (solo instructores).
-
-        Pasos:
-        1. Verificar que la evidencia exista
-        2. Verificar que el instructor exista
-        3. Validar estado (Aprobada / Ajuste Requerido)
-        4. Crear registro de Retroalimentacion
-        5. Actualizar estado de la evidencia
-
-        Args:
-            db: Sesión async
-            id_evidencia: ID de la evidencia a evaluar
-            id_instructor: ID del instructor que evalúa
-            estado: "Aprobada" o "Ajuste Requerido"
-            observaciones: Comentarios del instructor
-
-        Returns:
-            Retroalimentacion creada
-
-        Raises:
-            404: Evidencia o instructor no encontrado
-            400: Estado inválido
-        """
-        # Validar estado
-        if estado not in ["Aprobada", "Ajuste Requerido"]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Estado inválido. Debe ser 'Aprobada' o 'Ajuste Requerido'"
-            )
-
-        # Verificar evidencia
-        stmt_ev = select(Evidencia).where(Evidencia.id_evidencia == id_evidencia)
-        resultado_ev = await db.execute(stmt_ev)
-        evidencia = resultado_ev.scalars().first()
-
-        if not evidencia:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Evidencia no encontrada"
-            )
-
-        # EXPLICACIÓN: Validar que la evidencia no haya sido evaluada previamente
-        if evidencia.estado != "Pendiente":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Esta evidencia ya fue evaluada"
-            )
-
-        # Verificar instructor
-        stmt_inst = select(Instructor).where(Instructor.id_usuario == id_instructor)
-        resultado_inst = await db.execute(stmt_inst)
-        instructor = resultado_inst.scalars().first()
-
-        if not instructor:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Instructor no encontrado"
-            )
-
-        # Crear retroalimentación
-        nueva_retro = Retroalimentacion(
-            id_evidencia=id_evidencia,
-            id_instructor=id_instructor,
-            observaciones=observaciones,
-            estado_evaluacion=estado
-        )
-
-        # Actualizar estado de la evidencia
-        evidencia.estado = estado
-
-        db.add(nueva_retro)
-        await db.commit()
-        await db.refresh(nueva_retro)
-
-        return nueva_retro
 
     @staticmethod
     async def obtener_retroalimentacion(

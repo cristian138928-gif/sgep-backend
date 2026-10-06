@@ -2,7 +2,7 @@
 # (reproducibilidad: requirements = entorno ejecutado, sin drift).
 fastapi==0.142.2 # Web framework ASGI con OpenAPI/Swagger incluido.
 uvicorn[standard]==0.54.0 # Servidor ASGI para FastAPI.
-sqlalchemy==2.1.3 # ORM async (SQLAlchemy 2.x).
+sqlalchemy[asyncio]==2.1.3 # ORM async (SQLAlchemy 2.x; extra asyncio trae greenlet).
 psycopg2-binary==2.9.9 # Adaptador sync para PostgreSQL.
 asyncpg==0.31.0 # EXPLICACIÓN: Adaptador async para PostgreSQL.
 pydantic[email]==2.13.5 # EXPLICACIÓN: Validación de datos + EmailStr.

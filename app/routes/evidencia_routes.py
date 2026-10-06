@@ -11,7 +11,6 @@ from pathlib import Path
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Depends,
     File,
     Form,
@@ -26,12 +25,10 @@ from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase
 from app.schemas.evidencia_schema import (
-    EvaluarEvidenciaSchema,
     EvidenciaResponseSchema,
     RetroalimentacionResponseSchema,
 )
 from app.services.evidencia_service import EvidenciaService
-from app.services.instructor_service import InstructorService
 
 router = APIRouter(prefix="/api/v1/evidencias", tags=["Evidencias"])
 
@@ -189,45 +186,6 @@ async def evidencia_detail(
     # EXPLICACIÓN: Misma regla que descarga: sin propiedad/rol no hay metadatos (RNF01)
     EvidenciaService.verificar_acceso(usuario, evidencia)
     return evidencia
-
-
-@router.put(
-    "/{id_evidencia}/evaluar",
-    response_model=RetroalimentacionResponseSchema
-)
-async def evaluar_evidencia(
-    id_evidencia: int,
-    datos: EvaluarEvidenciaSchema,
-    background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
-    usuario: UsuarioBase = Depends(get_current_user)
-):
-    """
-    ENDPOINT: PUT /api/v1/evidencias/{id_evidencia}/evaluar
-
-    Evalúa una evidencia (solo instructores) y notifica al aprendiz.
-
-    Args:
-        id_evidencia: ID de la evidencia
-        datos: Estado + observaciones
-        background_tasks: Cola para el email post-respuesta
-        usuario: Instructor autenticado
-    """
-    if usuario.rol != "instructor":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo los instructores pueden evaluar evidencias"
-        )
-
-    return await InstructorService.evaluar_evidencia(
-        db=db,
-        id_evidencia=id_evidencia,
-        id_instructor=usuario.id_usuario,
-        estado=datos.estado,
-        observaciones=datos.observaciones,
-        background=background_tasks,
-    )
-
 
 
 @router.get(

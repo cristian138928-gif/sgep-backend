@@ -4,10 +4,14 @@ Tests para AuthService.
 Cubre: registro, login, validaciones.
 """
 
+from datetime import UTC, datetime, timedelta
+
+import jwt
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.schemas.usuario_schema import (
     LoginSchema,
     RegistroAprendizSchema,
@@ -238,6 +242,73 @@ async def test_endpoint_me_devuelve_perfil(client: AsyncClient):
 async def test_endpoint_me_sin_token_401(client: AsyncClient):
     """Test: GET /api/v1/auth/me sin token retorna 401."""
     response = await client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+
+
+# ====================================
+# TESTS DE get_current_user (tokens hostiles)
+# ====================================
+
+def _token_firmado(payload: dict) -> str:
+    """EXPLICACIÓN: Firma con la clave real para llegar a la rama de negocio testada."""
+    return jwt.encode(
+        payload,
+        settings.secret_key,
+        algorithm=settings.algorithm,
+    )
+
+
+@pytest.mark.asyncio
+async def test_me_token_basura_401(client: AsyncClient):
+    """Test: JWT corrupto -> PyJWTError -> 401 (el motivo no se filtra)."""
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": "Bearer no.es.un.jwt"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_me_token_sin_sub_401(client: AsyncClient):
+    """Test: JWT válido pero sin claim sub -> 401 (payload no confiable)."""
+    token = _token_firmado({
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+        "type": "access",
+    })
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_me_refresh_usado_como_access_401(client: AsyncClient):
+    """Test: refresh token NO autoriza la API (claims de tipo)."""
+    token = _token_firmado({
+        "sub": "nadie@test.com",
+        "exp": datetime.now(UTC) + timedelta(days=7),
+        "type": "refresh",
+    })
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_me_usuario_inexistente_401(client: AsyncClient):
+    """Test: sub firmado de un correo sin usuario en BD -> 401."""
+    token = _token_firmado({
+        "sub": "fantasma@test.com",
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+        "type": "access",
+    })
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert response.status_code == 401
 
 

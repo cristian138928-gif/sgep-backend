@@ -16,6 +16,9 @@ env/
 # Variables de entorno (sensibles)
 .env
 
+# EXPLICACIÓN: Config local de opencode con API keys → nunca al repositorio
+opencode.json
+
 # IDE / Editor
 .vscode/
 .idea/

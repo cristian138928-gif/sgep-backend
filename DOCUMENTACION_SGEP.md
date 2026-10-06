@@ -53,7 +53,7 @@ v (genera)
 |-----------|------------------|----------------|--------|
 | RF01 | POST /api/v1/auth/login | CP-01: Login correcto/incorrecto | **Aprobado** |
 | RF02 | POST /api/v1/evidencias/upload | CP-02: Carga de PDF válido | **Aprobado** |
-| RF03 | PUT /api/v1/evidencias/{id}/evaluar | CP-03: Cambio de estado a Aprobado | **Aprobado** |
+| RF03 | PUT /api/v1/instructor/evaluar/{id} | CP-03: Cambio de estado a Aprobado | **Aprobado** |
 | RF04 | POST /api/v1/retroalimentacion/ | CP-04: Registro de comentarios | **Aprobado** |
 | RF05 | POST /api/v1/asignaciones/ | CP-05: Asignación de instructor | **Aprobado** |
 | RF06 | GET /api/v1/aprendiz/avance | CP-06: Cálculo de % de bitácoras | **Aprobado** |
