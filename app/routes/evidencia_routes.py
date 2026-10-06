@@ -101,7 +101,7 @@ async def upload_evidencia(
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"El archivo excede el tamaño máximo de {MAX_FILE_SIZE // (1024 * 1024)} MB"
         )
     await file.seek(0)  # Reiniciar puntero después de leer

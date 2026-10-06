@@ -39,10 +39,8 @@ async def get_db():
     - Se cierra automáticamente después de la respuesta
     - Esto es una "función generadora" (yield = pausa la ejecución)
     """
+    # EXPLICACIÓN: el async with ya cierra la sesión en __aexit__ (sin try/finally redundante)
     async with AsyncSessionLocal() as session:
-        try:
-            yield session  # Entrega la sesión a FastAPI
-        finally:
-            await session.close()  # Cierra siempre, incluso si hay error
+        yield session
 
 print("Conexión a BD configurada")

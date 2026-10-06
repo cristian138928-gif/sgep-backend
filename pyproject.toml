@@ -72,4 +72,6 @@ show_missing = true
 exclude_also = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
+    # EXPLICACIÓN: guard de ejecución directa; no es código de la app
+    'if __name__ == "__main__":',
 ]
