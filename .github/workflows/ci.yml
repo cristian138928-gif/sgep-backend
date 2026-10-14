@@ -1,0 +1,66 @@
+# .github/workflows/ci.yml
+# EXPLICACIÓN: dos jobs en paralelo (backend y frontend) para fallar rápido
+# y de forma independiente en cada capa del proyecto.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# EXPLICACIÓN: si llega otro push a la misma PR, se cancela la corrida anterior
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (ruff + pytest)
+    runs-on: ubuntu-latest
+    # EXPLICACIÓN: secret_key/database_url sólo validan el arranque (fail-fast);
+    # los tests reales usan SQLite efímero (tests/conftest.py)
+    env:
+      SECRET_KEY: ci-secret-de-pruebas-min-32-caracteres
+      DATABASE_URL: sqlite+aiosqlite:///./test.db
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv (Rust)
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Python 3.12
+        run: uv python install 3.12
+
+      - name: Instalar dependencias (lock congelado)
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Tests + cobertura
+        run: uv run pytest --cov=app --cov-report=term -q
+
+  frontend:
+    name: Frontend (vue-tsc + vite build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 22 + caché npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dependencias (reproducible)
+        run: npm ci
+
+      - name: Typecheck + build de producción
+        run: npm run build
