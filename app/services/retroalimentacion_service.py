@@ -38,6 +38,16 @@ class RetroalimentacionService:
                 detail="Evidencia no encontrada"
             )
 
+        # EXPLICACIÓN: id_evidencia es unique en el modelo; duplicar daría 500 (IntegrityError)
+        stmt_dup = select(Retroalimentacion).where(
+            Retroalimentacion.id_evidencia == id_evidencia
+        )
+        if (await db.execute(stmt_dup)).scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La evidencia ya tiene retroalimentacion registrada"
+            )
+
         # Verificar instructor
         stmt_ins = select(Instructor).where(Instructor.id_usuario == id_instructor)
         instructor = (await db.execute(stmt_ins)).scalar_one_or_none()
@@ -62,16 +72,6 @@ class RetroalimentacionService:
         await db.commit()
         await db.refresh(nueva)
         return nueva
-
-    @staticmethod
-    async def obtener_por_evidencia(
-        db: AsyncSession, id_evidencia: int
-    ) -> Retroalimentacion | None:
-        """Obtiene la retroalimentacion de una evidencia."""
-        stmt = select(Retroalimentacion).where(
-            Retroalimentacion.id_evidencia == id_evidencia
-        )
-        return (await db.execute(stmt)).scalar_one_or_none()
 
     @staticmethod
     async def obtener_por_id(

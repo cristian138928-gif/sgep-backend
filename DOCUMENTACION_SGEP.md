@@ -54,8 +54,8 @@ v (genera)
 | RF01 | POST /api/v1/auth/login | CP-01: Login correcto/incorrecto | **Aprobado** |
 | RF02 | POST /api/v1/evidencias/upload | CP-02: Carga de PDF válido | **Aprobado** |
 | RF03 | PUT /api/v1/instructor/evaluar/{id} | CP-03: Cambio de estado a Aprobado | **Aprobado** |
-| RF04 | POST /api/v1/retroalimentacion/ | CP-04: Registro de comentarios | **Aprobado** |
-| RF05 | POST /api/v1/asignaciones/ | CP-05: Asignación de instructor | **Aprobado** |
+| RF04 | POST /api/v1/retroalimentacion/ · GET /api/v1/evidencias/{id}/retroalimentacion | CP-04: Registro de comentarios (lectura con RBAC: dueño/instructor/coordinador) | **Aprobado** |
+| RF05 | POST /api/v1/asignaciones/ · GET /api/v1/asignaciones/ · DELETE /api/v1/asignaciones/{id_aprendiz} | CP-05: Asignación y baja de instructor seguidor (vista coordinador) | **Aprobado** |
 | RF06 | GET /api/v1/aprendiz/avance | CP-06: Cálculo de % de bitácoras | **Aprobado** |
 | RF07 | GET /api/v1/coordinador/estadisticas | CP-07: Dashboard consolidado | **Aprobado** |
 | RNF01 | GET /api/v1/evidencias/{id}/descarga | CP-08: Descarga con RBAC y sanitizacion de upload | **Aprobado** |

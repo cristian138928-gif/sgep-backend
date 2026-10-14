@@ -26,25 +26,3 @@ class AsignacionResponseSchema(BaseModel):
     activa: bool
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class AprendizAsignadoSchema(BaseModel):
-    """Aprendiz con info de su asignacion."""
-    id_usuario: int
-    nombre_completo: str
-    numero_ficha: str
-    programa: str
-    id_instructor_asignado: int | None = None
-    nombre_instructor: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class InstructorConAprendicesSchema(BaseModel):
-    """Instructor con lista de aprendices asignados."""
-    id_usuario: int
-    nombre_completo: str
-    centro_formacion: str
-    total_aprendices: int
-
-    model_config = ConfigDict(from_attributes=True)

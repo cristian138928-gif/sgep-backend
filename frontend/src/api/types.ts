@@ -97,6 +97,24 @@ export interface Retroalimentacion {
   fecha_revision: string
 }
 
+export interface Asignacion {
+  id_asignacion: number
+  id_aprendiz: number
+  id_instructor: number
+  nombre_aprendiz: string
+  nombre_instructor: string
+  fecha_asignacion: string
+  activa: boolean
+}
+
+export interface Instructor {
+  id_usuario: number
+  nombre_completo: string
+  correo_institucional: string
+  centro_formacion: string
+  especialidad: string
+}
+
 export interface Pagina<T> {
   items: T[]
   total: number

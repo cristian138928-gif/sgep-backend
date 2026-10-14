@@ -6,10 +6,11 @@ Vincula aprendices con un instructor seguidor.
 
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
-from app.models.usuario import Aprendiz, AsignacionSeguimiento, Instructor
+from app.models.usuario import Aprendiz, AsignacionSeguimiento, Instructor, UsuarioBase
 
 
 class AsignacionService:
@@ -157,12 +158,39 @@ class AsignacionService:
         }
 
     @staticmethod
-    async def contar_aprendices_por_instructor(
-        db: AsyncSession, id_instructor: int
-    ) -> int:
-        """Cuenta aprendices activos de un instructor."""
-        stmt = select(func.count(AsignacionSeguimiento.id_asignacion)).where(
-            AsignacionSeguimiento.id_instructor == id_instructor,
-            AsignacionSeguimiento.activa == 1
+    async def listar_activas(db: AsyncSession) -> list[dict]:
+        """
+        Lista todas las asignaciones activas (vista del coordinador).
+
+        Returns:
+            dicts con ambos nombres para pintar la tabla sin N+1 queries
+        """
+        # EXPLICACIÓN: 2 alias de UsuarioBase evitan el SAWarning por
+        # herencia joined-table (Aprendiz/Instructor comparten la tabla base)
+        ap_alias = aliased(UsuarioBase)
+        ins_alias = aliased(UsuarioBase)
+        stmt = (
+            select(
+                AsignacionSeguimiento,
+                ap_alias.nombre_completo,
+                ins_alias.nombre_completo,
+            )
+            .join(ap_alias, AsignacionSeguimiento.id_aprendiz == ap_alias.id_usuario)
+            .join(ins_alias, AsignacionSeguimiento.id_instructor == ins_alias.id_usuario)
+            .where(AsignacionSeguimiento.activa == 1)
+            .order_by(AsignacionSeguimiento.fecha_asignacion.desc())
         )
-        return (await db.execute(stmt)).scalar() or 0
+        filas = (await db.execute(stmt)).all()
+
+        return [
+            {
+                "id_asignacion": f[0].id_asignacion,
+                "id_aprendiz": f[0].id_aprendiz,
+                "id_instructor": f[0].id_instructor,
+                "nombre_aprendiz": f[1],
+                "nombre_instructor": f[2],
+                "fecha_asignacion": f[0].fecha_asignacion,
+                "activa": bool(f[0].activa),
+            }
+            for f in filas
+        ]

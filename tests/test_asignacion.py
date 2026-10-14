@@ -329,3 +329,78 @@ async def test_instructor_no_puede_crear_asignacion(client: AsyncClient, db_sess
     )
 
     assert response.status_code == 403
+
+
+# ====================================
+# TESTS - RF05: LISTADO GLOBAL (COORDINADOR)
+# ====================================
+
+@pytest.mark.asyncio
+async def test_listar_asignaciones_coordinador(client: AsyncClient, db_session):
+    """Test: GET /asignaciones/ devuelve la asignacion activa con ambos nombres."""
+    token = await crear_coordinador_token(db_session)
+    instructor = await crear_instructor(db_session)
+    aprendiz = await crear_aprendiz(db_session)
+    await client.post(
+        "/api/v1/asignaciones/",
+        json={"id_aprendiz": aprendiz.id_usuario, "id_instructor": instructor.id_usuario},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    response = await client.get(
+        "/api/v1/asignaciones/",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["nombre_aprendiz"] == "Aprendiz Test"
+    assert data[0]["nombre_instructor"] == "Instructor Test"
+    assert data[0]["activa"] is True
+
+
+@pytest.mark.asyncio
+async def test_listar_asignaciones_excluye_desactivadas(client: AsyncClient, db_session):
+    """Test: la asignacion quitada con DELETE no aparece en la lista."""
+    token = await crear_coordinador_token(db_session)
+    instructor = await crear_instructor(db_session)
+    aprendiz = await crear_aprendiz(db_session)
+    await client.post(
+        "/api/v1/asignaciones/",
+        json={"id_aprendiz": aprendiz.id_usuario, "id_instructor": instructor.id_usuario},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    await client.delete(
+        f"/api/v1/asignaciones/{aprendiz.id_usuario}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    response = await client.get(
+        "/api/v1/asignaciones/",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+@pytest.mark.asyncio
+async def test_listar_asignaciones_rol_no_autorizado(client: AsyncClient, db_session):
+    """Test: instructor y aprendiz no ven el listado -> 403."""
+    token_ins = await crear_instructor(db_session)
+    aprendiz = await crear_aprendiz(db_session)
+
+    for token in (
+        AuthService.crear_token_acceso(
+            data={"sub": token_ins.correo_institucional, "id": token_ins.id_usuario}
+        ),
+        AuthService.crear_token_acceso(
+            data={"sub": aprendiz.correo_institucional, "id": aprendiz.id_usuario}
+        ),
+    ):
+        response = await client.get(
+            "/api/v1/asignaciones/",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 403

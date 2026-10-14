@@ -89,6 +89,12 @@ const router = createRouter({
           component: () => import('../views/coordinador/AprendicesView.vue'),
           meta: { roles: ['coordinador'] },
         },
+        {
+          path: 'coordinador/asignaciones',
+          name: 'asignaciones',
+          component: () => import('../views/coordinador/AsignacionesView.vue'),
+          meta: { roles: ['coordinador'] },
+        },
       ],
     },
     {

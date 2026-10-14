@@ -202,6 +202,10 @@ async def retroalimentacion_detail(
 
     Obtiene la retroalimentación de una evidencia.
     """
+    # EXPLICACIÓN: acceso primero; sin esto cualquier autenticado leía comentarios (RNF01)
+    evidencia = await EvidenciaService.obtener_evidencia_por_id(db, id_evidencia)
+    EvidenciaService.verificar_acceso(usuario, evidencia)
+
     retro = await EvidenciaService.obtener_retroalimentacion(db, id_evidencia)
     if not retro:
         raise HTTPException(

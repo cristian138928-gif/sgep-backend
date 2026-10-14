@@ -15,6 +15,7 @@ from app.schemas.evidencia_schema import (
     RetroalimentacionCreateSchema,
     RetroalimentacionResponseSchema,
 )
+from app.services.evidencia_service import EvidenciaService
 from app.services.retroalimentacion_service import RetroalimentacionService
 
 router = APIRouter(prefix="/api/v1/retroalimentacion", tags=["Retroalimentacion"])
@@ -71,24 +72,8 @@ async def ver_retroalimentacion(
 
     Obtiene una retroalimentacion por su ID.
     """
-    return await RetroalimentacionService.obtener_por_id(db, id_retroalimentacion)
-
-
-@router.get("/evidencia/{id_evidencia}", response_model=RetroalimentacionResponseSchema)
-async def ver_retroalimentacion_evidencia(
-    id_evidencia: int,
-    db: AsyncSession = Depends(get_db),
-    usuario: UsuarioBase = Depends(get_current_user)
-):
-    """
-    GET /api/v1/retroalimentacion/evidencia/{id}
-
-    Obtiene la retroalimentacion de una evidencia.
-    """
-    retro = await RetroalimentacionService.obtener_por_evidencia(db, id_evidencia)
-    if not retro:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No existe retroalimentacion para esta evidencia"
-        )
+    retro = await RetroalimentacionService.obtener_por_id(db, id_retroalimentacion)
+    # EXPLICACIÓN: sin verificar acceso, cualquier usuario leería comentarios ajenos (RNF01)
+    evidencia = await EvidenciaService.obtener_evidencia_por_id(db, retro.id_evidencia)
+    EvidenciaService.verificar_acceso(usuario, evidencia)
     return retro

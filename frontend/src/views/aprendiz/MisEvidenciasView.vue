@@ -1,16 +1,26 @@
 <script setup lang="ts">
 // src/views/aprendiz/MisEvidenciasView.vue
 // EXPLICACIÓN: subida Multipart/form-data + descarga con Bearer => 2 casos de uso del RF01
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import { api, descargar, ApiError } from '../../api/client'
-import type { Evidencia } from '../../api/types'
+import type { Evidencia, Retroalimentacion } from '../../api/types'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 
 const evidencias = ref<Evidencia[]>([])
 const error = ref('')
 const info = ref('')
 const subiendo = ref(false)
+
+// EXPLICACIÓN: 'sin' = aún no evaluada (404); 'error' = fallo; ausente = sin consultar
+const retros = reactive<Record<number, Retroalimentacion | 'sin' | 'error'>>({})
+const cargandoRetro = ref(0)
+const retroAbierta = ref<number | null>(null)
+
+// EXPLICACIÓN: variable simple => vue-tsc estrecha la unión en las ramas del template
+const retroVisible = computed<Retroalimentacion | 'sin' | 'error' | undefined>(() =>
+  retroAbierta.value === null ? undefined : retros[retroAbierta.value],
+)
 
 const form = reactive({
   titulo: '',
@@ -62,6 +72,31 @@ async function descargarEvidencia(e: Evidencia): Promise<void> {
     await descargar(`/api/v1/evidencias/${e.id_evidencia}/descarga`, `${e.titulo}.pdf`)
   } catch {
     error.value = 'No se pudo descargar la evidencia.'
+  }
+}
+
+async function alternarRetro(e: Evidencia): Promise<void> {
+  error.value = ''
+  const id = e.id_evidencia
+  retroAbierta.value = retroAbierta.value === id ? null : id
+  // EXPLICACIÓN: 'error' se reintenta al reabrir; el resto ya está en caché local
+  if (retroAbierta.value === null || (id in retros && retros[id] !== 'error')) return
+
+  cargandoRetro.value = id
+  try {
+    retros[id] = await api<Retroalimentacion>(
+      `/api/v1/evidencias/${id}/retroalimentacion`,
+    )
+  } catch (err) {
+    // EXPLICACIÓN: 404 = aún no evaluada (mensaje neutro); el resto sí se reporta
+    const sinRetro = err instanceof ApiError && err.status === 404
+    retros[id] = sinRetro ? 'sin' : 'error'
+    if (!sinRetro) {
+      error.value = 'No se pudo cargar la retroalimentación.'
+      retroAbierta.value = null
+    }
+  } finally {
+    cargandoRetro.value = 0
   }
 }
 
@@ -137,21 +172,44 @@ function fechaCorta(iso: string | null): string {
               <th>Cargada</th>
               <th>Límite</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="e in evidencias" :key="e.id_evidencia">
-              <td>{{ e.titulo }}</td>
-              <td>{{ e.tipo_formato }}</td>
-              <td><EstadoBadge :estado="e.estado" /></td>
-              <td>{{ fechaCorta(e.fecha_carga) }}</td>
-              <td>{{ fechaCorta(e.fecha_deadline) }}</td>
-              <td style="text-align: right">
-                <button class="btn btn-suave" type="button" @click="descargarEvidencia(e)">
-                  Descargar PDF
-                </button>
-              </td>
-            </tr>
+            <template v-for="e in evidencias" :key="e.id_evidencia">
+              <tr>
+                <td>{{ e.titulo }}</td>
+                <td>{{ e.tipo_formato }}</td>
+                <td><EstadoBadge :estado="e.estado" /></td>
+                <td>{{ fechaCorta(e.fecha_carga) }}</td>
+                <td>{{ fechaCorta(e.fecha_deadline) }}</td>
+                <td style="text-align: right">
+                  <button class="btn btn-suave" type="button" @click="descargarEvidencia(e)">
+                    Descargar PDF
+                  </button>
+                </td>
+                <td style="text-align: right">
+                  <button class="btn btn-suave" type="button" @click="alternarRetro(e)">
+                    {{ retroAbierta === e.id_evidencia ? 'Ocultar' : 'Ver retroalimentación' }}
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="retroAbierta === e.id_evidencia">
+                <td colspan="7" style="background: var(--gris-suave, #f7f8fa)">
+                  <p v-if="cargandoRetro === e.id_evidencia">Cargando retroalimentación…</p>
+                  <p v-else-if="retroVisible === 'sin'">
+                    Aún no hay retroalimentación para esta evidencia.
+                  </p>
+                  <div v-else-if="typeof retroVisible === 'object'">
+                    <p>
+                      <strong>{{ retroVisible.estado_evaluacion }}</strong>
+                      · {{ fechaCorta(retroVisible.fecha_revision) }}
+                    </p>
+                    <p>{{ retroVisible.observaciones }}</p>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>

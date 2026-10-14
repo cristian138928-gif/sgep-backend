@@ -32,6 +32,20 @@ async def verificar_coordinador(
     return usuario
 
 
+@router.get("/", response_model=list[AsignacionResponseSchema])
+async def listar_asignaciones(
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(verificar_coordinador)
+):
+    """
+    GET /api/v1/asignaciones/
+
+    Lista todas las asignaciones activas (RF05).
+    Una sola consulta evita N+1 al pintar la tabla del coordinador.
+    """
+    return await AsignacionService.listar_activas(db)
+
+
 @router.post(
     "/",
     response_model=AsignacionResponseSchema,

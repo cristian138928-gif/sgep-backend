@@ -30,6 +30,7 @@ const navCoordinador: ItemNav[] = [
   { ruta: '/app/coordinador/dashboard', etiqueta: 'Dashboard' },
   { ruta: '/app/coordinador/evidencias', etiqueta: 'Evidencias' },
   { ruta: '/app/coordinador/aprendices', etiqueta: 'Aprendices' },
+  { ruta: '/app/coordinador/asignaciones', etiqueta: 'Asignaciones' },
   { ruta: '/app/notificaciones', etiqueta: 'Notificaciones' },
 ]
 

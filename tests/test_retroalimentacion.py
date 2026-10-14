@@ -1,4 +1,4 @@
-# tests/test_retroalimentacion.py
+﻿# tests/test_retroalimentacion.py
 """
 Tests para endpoints de retroalimentacion independiente.
 Cubre: crear con/ sin cambio de estado, obtener por ID, por evidencia, seguridad.
@@ -64,6 +64,13 @@ async def crear_aprendiz_con_evidencia(
     await db_session.commit()
     await db_session.refresh(ev)
     return ap, ev
+
+
+def token_de(usuario) -> str:
+    """JWT de acceso para el usuario dado."""
+    return AuthService.crear_token_acceso(
+        data={"sub": usuario.correo_institucional, "id": usuario.id_usuario}
+    )
 
 
 # ====================================
@@ -217,7 +224,7 @@ async def test_obtener_retroalimentacion_por_evidencia(client: AsyncClient, db_s
     )
 
     response = await client.get(
-        f"/api/v1/retroalimentacion/evidencia/{evidencia.id_evidencia}",
+        f"/api/v1/evidencias/{evidencia.id_evidencia}/retroalimentacion",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -245,7 +252,7 @@ async def test_obtener_retroalimentacion_evidencia_sin_retro(client: AsyncClient
     _, evidencia = await crear_aprendiz_con_evidencia(db_session)
 
     response = await client.get(
-        f"/api/v1/retroalimentacion/evidencia/{evidencia.id_evidencia}",
+        f"/api/v1/evidencias/{evidencia.id_evidencia}/retroalimentacion",
         headers={"Authorization": f"Bearer {token}"}
     )
 
@@ -307,6 +314,145 @@ async def test_coordinador_no_puede_crear_retroalimentacion(client: AsyncClient,
             "observaciones": "El coordinador no deberia poder crear retroalimentacion directamente"
         },
         headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 403
+
+
+# ====================================
+# TESTS - RF04: LECTURA SEGURA (RBAC)
+# ====================================
+
+async def crear_otro_aprendiz(db_session) -> Aprendiz:
+    """Aprendiz distinto al dueÃ±o de la evidencia."""
+    otro = Aprendiz(
+        nombre_completo="Aprendiz Ajeno",
+        correo_institucional="ap_ajeno@test.com",
+        numero_documento="1088888888",
+        tipo_documento="CC",
+        rol="aprendiz",
+        numero_ficha="777",
+        programa="ADSO"
+    )
+    otro.establecer_contrasena("Otro123!")
+    db_session.add(otro)
+    await db_session.commit()
+    await db_session.refresh(otro)
+    return otro
+
+
+async def crear_retro_de(evidencia_id: int, token: str, client: AsyncClient) -> None:
+    """Crea una retroalimentacion via API para la evidencia."""
+    resp = await client.post(
+        "/api/v1/retroalimentacion/",
+        json={
+            "id_evidencia": evidencia_id,
+            "observaciones": "Comentario generado por helper de prueba RF04"
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_dueno_obtiene_retro_por_evidencia(client: AsyncClient, db_session):
+    """Test: el aprendiz dueÃ±o lee la retroalimentacion de su evidencia (RF04)."""
+    token_ins, _ = await crear_instructor_token(db_session)
+    ap, evidencia = await crear_aprendiz_con_evidencia(db_session)
+    await crear_retro_de(evidencia.id_evidencia, token_ins, client)
+
+    response = await client.get(
+        f"/api/v1/evidencias/{evidencia.id_evidencia}/retroalimentacion",
+        headers={"Authorization": f"Bearer {token_de(ap)}"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["observaciones"]
+
+
+@pytest.mark.asyncio
+async def test_aprendiz_ajeno_no_lee_retro_por_evidencia(client: AsyncClient, db_session):
+    """Test: otro aprendiz no ve comentarios ajenos -> 403 (RNF01)."""
+    token_ins, _ = await crear_instructor_token(db_session)
+    _, evidencia = await crear_aprendiz_con_evidencia(db_session)
+    await crear_retro_de(evidencia.id_evidencia, token_ins, client)
+    ajeno = await crear_otro_aprendiz(db_session)
+
+    response = await client.get(
+        f"/api/v1/evidencias/{evidencia.id_evidencia}/retroalimentacion",
+        headers={"Authorization": f"Bearer {token_de(ajeno)}"}
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_aprendiz_ajeno_no_lee_retro_por_id(client: AsyncClient, db_session):
+    """Test: GET por ID tambien exige propiedad -> 403 (RNF01)."""
+    token_ins, _ = await crear_instructor_token(db_session)
+    _, evidencia = await crear_aprendiz_con_evidencia(db_session)
+    resp_create = await client.post(
+        "/api/v1/retroalimentacion/",
+        json={
+            "id_evidencia": evidencia.id_evidencia,
+            "observaciones": "Comentario que el ajeno no deberia poder leer nunca"
+        },
+        headers={"Authorization": f"Bearer {token_ins}"}
+    )
+    retro_id = resp_create.json()["id_retroalimentacion"]
+    ajeno = await crear_otro_aprendiz(db_session)
+
+    response = await client.get(
+        f"/api/v1/retroalimentacion/{retro_id}",
+        headers={"Authorization": f"Bearer {token_de(ajeno)}"}
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_retro_duplicada_retorna_409(client: AsyncClient, db_session):
+    """Test: evidencia ya evaluada no admite 2a retro -> 409 (no 500)."""
+    token_ins, _ = await crear_instructor_token(db_session)
+    _, evidencia = await crear_aprendiz_con_evidencia(db_session)
+    await crear_retro_de(evidencia.id_evidencia, token_ins, client)
+
+    response = await client.post(
+        "/api/v1/retroalimentacion/",
+        json={
+            "id_evidencia": evidencia.id_evidencia,
+            "observaciones": "Segundo comentario que deberia chocar con el unico permitido"
+        },
+        headers={"Authorization": f"Bearer {token_ins}"}
+    )
+
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_retro_evidencia_inexistente_404(client: AsyncClient, db_session):
+    """Test: evidencia inexistente -> 404 antes de resolver la retro."""
+    token_ins, _ = await crear_instructor_token(db_session)
+
+    response = await client.get(
+        "/api/v1/evidencias/99999/retroalimentacion",
+        headers={"Authorization": f"Bearer {token_ins}"}
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_ruta_evidencias_retro_exige_acceso(client: AsyncClient, db_session):
+    """Test: la ruta canonica /evidencias/{id}/retroalimentacion exige RBAC."""
+    token_ins, _ = await crear_instructor_token(db_session)
+    _, evidencia = await crear_aprendiz_con_evidencia(db_session)
+    await crear_retro_de(evidencia.id_evidencia, token_ins, client)
+    ajeno = await crear_otro_aprendiz(db_session)
+
+    response = await client.get(
+        f"/api/v1/evidencias/{evidencia.id_evidencia}/retroalimentacion",
+        headers={"Authorization": f"Bearer {token_de(ajeno)}"}
     )
 
     assert response.status_code == 403

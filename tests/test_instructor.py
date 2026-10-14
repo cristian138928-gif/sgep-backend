@@ -125,13 +125,13 @@ async def test_estadisticas_con_evaluaciones(client: AsyncClient, db_session):
     ev = await crear_evidencia_pendiente(db_session, aprendiz.id_usuario)
 
     # Decodificar token para obtener ID
-    import os
-
+    # EXPLICACIÓN: settings (app.config) es la única fuente de SECRET_KEY/ALGORITHM;
+    # os.getenv("ALGORITHM") es None sin .env y PyJWT lanza InvalidAlgorithmError
     import jwt
-    from dotenv import load_dotenv
 
-    load_dotenv()
-    payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+    from app.config import settings
+
+    payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     instructor_id_num = payload["id"]
 
     from app.models.usuario import Retroalimentacion

@@ -43,7 +43,7 @@ npm run build      # typecheck + build de producción en dist/
 
 - **Auth**: cliente `fetch` propio (`src/api/client.ts`) con rotación de refresh tokens y mutex de reintento (un solo refresh ante N peticiones en 401).
 - **Guards**: rol leído del claim JWT del token (`meta.roles` en rutas); acceso equivocado redirige al home del propio rol.
-- **Vistas por rol**: aprendiz (avance + alertas + evidencias), instructor (bandeja + evaluar + historial), coordinador (dashboard + evidencias con filtros + aprendices con CSV), notificaciones para los 3 roles.
+- **Vistas por rol**: aprendiz (avance + alertas + evidencias con retroalimentación RF04), instructor (bandeja + evaluar + historial), coordinador (dashboard + evidencias con filtros + aprendices con CSV + asignaciones RF05), notificaciones para los 3 roles.
 - **Descargas autenticadas**: PDFs y CSV se solicitan con `Authorization` y se guardan vía Blob.
 
 ## Calidad de Código
@@ -75,14 +75,29 @@ uv run pytest --cov=app        # tests + cobertura (core=sysmon, Python 3.12+)
 | GET | /api/v1/instructor/alertas?dias=7 | Vencimientos de sus aprendices | Instructor |
 | GET | /api/v1/coordinador/alertas?dias=7 | Vencimientos globales | Coordinador |
 | GET | /api/v1/evidencias/{id}/descarga | Descarga PDF seguro | Aprendiz/Instructor/Coord |
+| GET | /api/v1/evidencias/{id}/retroalimentacion | Comentarios de la evidencia (RBAC) | Aprendiz dueño/Instructor/Coord |
 | PUT | /api/v1/instructor/evaluar/{id} | Evaluar evidencia | Instructor |
 | GET | /api/v1/instructor/evidencias-pendientes | Pendientes | Instructor |
+| GET | /api/v1/instructor/historial | Historial paginado de evaluaciones | Instructor |
+| GET | /api/v1/instructor/estadisticas | Métricas del instructor | Instructor |
+| GET | /api/v1/instructor/perfil | Perfil del instructor | Instructor |
 | GET | /api/v1/coordinador/estadisticas | Dashboard | Coordinador |
-| GET | /api/v1/coordinador/evidencias | Todas las evidencias | Coordinador |
+| GET | /api/v1/coordinador/evidencias | Todas las evidencias (paginadas) | Coordinador |
+| GET | /api/v1/coordinador/aprendices | Aprendices con avance | Coordinador |
+| GET | /api/v1/coordinador/instructores | Lista de instructores | Coordinador |
 | GET | /api/v1/coordinador/exportar-avance | CSV consolidado de expedientes (RF07) | Coordinador |
-| GET | /api/v1/notificaciones | Mis notificaciones in-app | Autenticado |
-| GET | /api/v1/notificaciones/no-leidas | Badge de no leídas | Autenticado |
-| POST | /api/v1/notificaciones/{id}/marcar-leida | Marcar como leída | Autenticado |
+| GET | /api/v1/coordinador/exportar-evidencias | CSV de evidencias | Coordinador |
+| POST | /api/v1/retroalimentacion/ | Crear comentario independiente | Instructor |
+| GET | /api/v1/retroalimentacion/{id} | Retroalimentación por ID (RBAC) | Dueño/Instructor/Coord |
+| GET | /api/v1/asignaciones/ | Asignaciones activas (RF05) | Coordinador |
+| POST | /api/v1/asignaciones/ | Asignar instructor seguidor (RF05) | Coordinador |
+| DELETE | /api/v1/asignaciones/{id_aprendiz} | Quitar asignación (RF05) | Coordinador |
+| GET | /api/v1/asignaciones/instructor/{id} | Aprendices de un instructor | Coordinador |
+| GET | /api/v1/asignaciones/aprendiz/{id} | Instructor de un aprendiz | Coordinador/Aprendiz dueño |
+| GET | /api/v1/notificaciones | Lista + badge no leídas | Autenticado |
+| GET | /api/v1/notificaciones/no-leidas | Conteo de no leídas | Autenticado |
+| POST | /api/v1/notificaciones/{id}/marcar-leida | Marcar una como leída | Autenticado |
+| POST | /api/v1/notificaciones/marcar-todas-leidas | Acción masiva del header | Autenticado |
 
 ## Estructura
 
@@ -91,7 +106,7 @@ app/
 ├── main.py              # Entry point FastAPI + CORS + cabeceras OWASP + lifespan alertas
 ├── config.py            # Settings tipados + validación fail-fast de .env
 ├── models/usuario.py    # SQLAlchemy models (POO) + Notificacion
-├── routes/              # Endpoints por rol (+ notificaciones)
+├── routes/              # Endpoints por rol (+ notificaciones + retroalimentación)
 ├── schemas/             # Pydantic validation (ConfigDict v2)
 ├── security/            # Rate limiting (ventana deslizante)
 ├── services/            # Business logic (+ email, notificaciones)
@@ -99,34 +114,37 @@ app/
 └── database/            # Connection config
 tests/
 ├── conftest.py          # Fixtures + helpers
-├── test_auth.py         # 12 tests
+├── test_auth.py         # 18 tests
 ├── test_config.py       # 4 tests (validación de .env)
 ├── test_refresh.py      # 6 tests (rotación de tokens)
 ├── test_rate_limit.py   # 5 tests (429 + cabeceras OWASP)
-├── test_notificaciones.py # 7 tests (in-app + dedupe de vencimientos)
+├── test_notificaciones.py # 9 tests (in-app + dedupe de vencimientos)
 ├── test_email.py        # 3 tests (consola + SMTP fake)
 ├── test_reportes.py     # 3 tests (CSV expedientes RF07)
-├── test_evidencias.py   # 4 tests
-├── test_instructor.py   # 12 tests
+├── test_evidencias.py   # 9 tests
+├── test_instructor.py   # 16 tests
 ├── test_coordinador.py  # 13 tests
-├── test_asignacion.py   # 12 tests
-├── test_retroalimentacion.py # 11 tests
+├── test_asignacion.py   # 15 tests (incluye listado global RF05)
+├── test_retroalimentacion.py # 17 tests (incluye RBAC de lectura RF04)
 ├── test_aprendiz.py     # 3 tests
 ├── test_descarga.py     # 8 tests
 ├── test_alertas.py      # 9 tests
-└── test_alertas_roles.py # 9 tests
+├── test_alertas_roles.py # 9 tests
+├── test_main.py         # 4 tests (lifespan + cabeceras)
+├── test_models_poo.py   # 15 tests (herencia/polimorfismo)
+└── test_connection.py   # 1 test
 ```
 
 ## Tests
 
 ```bash
-# Todos los tests (125)
+# Todos los tests (167)
 uv run pytest tests/ -v
 
 # Solo auth
 uv run pytest tests/test_auth.py -v
 
-# Con coverage (91%)
+# Con coverage (98%)
 uv run pytest tests/ --cov=app
 ```
 
