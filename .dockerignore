@@ -1,16 +1,29 @@
-# EXPLICACIÓN: Excluir archivos innecesarios para imagen ligera
+# EXPLICACIÓN: Excluir todo lo que no debe entrar en la imagen de producción
 .git
 .gitignore
 .env
+.env.example
 .pytest_cache
 .ruff_cache
+.coverage
 __pycache__
 *.pyc
 venv/
+.venv/
 .vscode/
 .idea/
+.github/
+.opencode/
 test.db
 *.db
 *.db-wal
 *.db-shm
 *.md
+
+# EXPLICACIÓN: frontend se builda aparte (Node); solo interesa el backend
+frontend/
+uploads/
+docker-compose.yml
+Dockerfile
+dockerignore
+opencode.json

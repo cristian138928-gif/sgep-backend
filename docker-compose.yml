@@ -1,6 +1,5 @@
 # EXPLICACIÓN: Orquestación de servicios para desarrollo local
-version: '3.8'
-
+# Compose v2 ignora 'version:' (obsoleto); no declararlo evita el warning
 services:
   # EXPLICACIÓN: Base de datos PostgreSQL
   db:
@@ -27,12 +26,22 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # EXPLICACIÓN: credenciales del compose apuntan al servicio 'db' (nombre DNS interno)
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/sgep_db
-      SECRET_KEY: ${SECRET_KEY:-tu_clave_super_secura_minimo_32_caracteres_2024}
+      # EXPLICACIÓN: sin default => si falta en .env, config.py falla al arrancar (fail-fast)
+      SECRET_KEY: ${SECRET_KEY:?Configura SECRET_KEY en .env (minimo 32 caracteres)}
       ALGORITHM: HS256
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      # EXPLICACIÓN: /health responde 200 sin tocar BD => check barato y estable
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     volumes:
       - uploads_data:/app/uploads
 
