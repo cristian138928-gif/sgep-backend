@@ -99,3 +99,70 @@ async def test_lifespan_crea_y_cancela_tarea(monkeypatch):
 
     # EXPLICACIÓN: tras salir, lifespan.cancel() ya se ejecutó
     await asyncio.sleep(0)
+
+
+# ====================================
+# MIGRACIONES EN LIFESPAN
+# ====================================
+
+def test_migraciones_loguea_upgrades(monkeypatch, caplog):
+    """Test: si alembic reporta upgrades, cada línea se loguea como INFO."""
+    import logging
+    from unittest.mock import Mock
+
+    from app.main import _aplicar_migraciones
+
+    salida = (
+        "INFO  [alembic.runtime.migration] Running upgrade 41f739ff838f -> head\n"
+    )
+    # EXPLICACIÓN: Mock evita ejecutar alembic real (requiere BD viva)
+    monkeypatch.setattr(
+        "app.main.subprocess.run",
+        Mock(return_value=Mock(stdout=salida)),
+    )
+
+    with caplog.at_level(logging.INFO, logger="sgep.alertas"):
+        _aplicar_migraciones()
+
+    # EXPLICACIÓN: caplog.text ya viene formateado (logger usa %s args)
+    assert "Running upgrade" in caplog.text
+
+
+def test_migraciones_sin_cambios_no_loguea(monkeypatch, caplog):
+    """Test: "sin cambios" => stdout vacío => cero logs INFO."""
+    import logging
+    from unittest.mock import Mock
+
+    from app.main import _aplicar_migraciones
+
+    monkeypatch.setattr(
+        "app.main.subprocess.run",
+        Mock(return_value=Mock(stdout="")),
+    )
+
+    with caplog.at_level(logging.INFO, logger="sgep.alertas"):
+        _aplicar_migraciones()
+
+    assert "Running upgrade" not in caplog.text
+
+
+def test_migraciones_falla_loguea_y_propaga(monkeypatch, caplog):
+    """Test: alembic falla => stderr en log ERROR y la excepción se re-lanza."""
+    import logging
+    import subprocess
+    from unittest.mock import Mock
+
+    from app.main import _aplicar_migraciones
+
+    error = subprocess.CalledProcessError(
+        returncode=1, cmd=["alembic"], stderr="ConnectionRefusedError"
+    )
+    monkeypatch.setattr("app.main.subprocess.run", Mock(side_effect=error))
+
+    with caplog.at_level(logging.ERROR, logger="sgep.alertas"), pytest.raises(
+        subprocess.CalledProcessError
+    ):
+        _aplicar_migraciones()
+
+    assert "ConnectionRefusedError" in caplog.text
+

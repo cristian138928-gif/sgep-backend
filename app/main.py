@@ -55,13 +55,22 @@ def _aplicar_migraciones() -> None:
     """
     # EXPLICACIÓN: cwd = raíz del proyecto (donde vive alembic.ini)
     raiz = Path(__file__).resolve().parents[1]
-    subprocess.run(
-        ["alembic", "upgrade", "head"],
-        check=True,
-        cwd=raiz,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        resultado = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            check=True,
+            cwd=raiz,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        # EXPLICACIÓN: capture_output traga el stderr => loguearlo antes de morir
+        logger.error("Alembic falló (exit %s): %s", exc.returncode, exc.stderr)
+        raise
+    # EXPLICACIÓN: "sin cambios" deja stdout vacío => solo logueamos si hubo upgrades
+    for linea in resultado.stdout.strip().splitlines():
+        if "Running upgrade" in linea:
+            logger.info("Alembic: %s", linea.strip())
 
 
 @asynccontextmanager
