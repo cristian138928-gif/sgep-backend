@@ -105,3 +105,76 @@ async def test_refresh_basura_rechazado(client: AsyncClient):
     )
 
     assert response.status_code == 401
+
+
+# ====================================
+# DETECCIÓN DE REUSO (rotación real)
+# ====================================
+
+@pytest.mark.asyncio
+async def test_reuso_invalida_cadena_completa(client: AsyncClient):
+    """Reusar un refresh ya canjeado => 401 y TODA la cadena muere."""
+    tokens = await _login(client)
+
+    # Rota A -> B (A queda usado)
+    resp = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+    assert resp.status_code == 200
+    nuevos = resp.json()
+
+    # Reusar A (el viejo) => 401 por reuso
+    resp_a = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+    assert resp_a.status_code == 401
+    # EXPLICACIÓN: el borrado de cadena mató también al token B de la rotación
+    resp_b = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": nuevos["refresh_token"]}
+    )
+    assert resp_b.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_sin_jti_rechazado(client: AsyncClient):
+    """Un refresh bien firmado pero sin jti (tokens pre-feature) => 401."""
+    from app.services.auth_service import AuthService
+
+    tokens = await _login(client)
+    # EXPLICACIÓN: decodificamos el refresh para reconstruir los claims sin jti
+    from jwt import decode as jwt_decode
+
+    from app.config import settings
+
+    payload = jwt_decode(
+        tokens["refresh_token"], settings.secret_key, algorithms=[settings.algorithm]
+    )
+    sin_jti = AuthService.crear_token_refresh(
+        {k: v for k, v in payload.items() if k != "jti"}
+    )
+
+    response = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": sin_jti}
+    )
+
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_rotacion_deja_jti_usado_y_nuevo_activo(client: AsyncClient, db_session):
+    """Tras rotar: el jti viejo queda usado=1 y el nuevo usado=0."""
+    from sqlalchemy import select
+
+    from app.models.refresh_token import RefreshToken
+
+    tokens = await _login(client)
+    await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+
+    registros = (
+        (await db_session.execute(select(RefreshToken))).scalars().all()
+    )
+    # EXPLICACIÓN: registro + login + rotación = 3 jtis; solo el rotado queda usado
+    assert len(registros) == 3
+    assert sorted(r.usado for r in registros) == [0, 0, 1]

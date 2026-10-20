@@ -5,13 +5,15 @@ Responsabilidad:Registrar y autenticar usuarios, gestionar JWT.
 """
 
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 from fastapi import HTTPException, status
 from jwt import PyJWTError, decode, encode
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.models.refresh_token import RefreshToken
 from app.models.usuario import Aprendiz, Coordinador, Instructor, UsuarioBase
 from app.schemas.usuario_schema import (
     LoginSchema,
@@ -252,14 +254,22 @@ class AuthService:
         return encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
     @staticmethod
-    def crear_par_tokens(usuario: UsuarioBase) -> dict[str, str]:
-        """Devuelve el par {access_token, refresh_token, token_type} de un usuario."""
+    async def crear_par_tokens(db: AsyncSession, usuario: UsuarioBase) -> dict[str, str]:
+        """
+        Devuelve el par {access_token, refresh_token, token_type} y persiste
+        el jti del refresh en BD (habilita detección de reuso).
+        """
         # EXPLICACIÓN: El claim "rol" permite guards de rutas en el SPA sin /me extra
+        jti = str(uuid4())
+        expira_en = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
         datos = {
             "sub": usuario.correo_institucional,
             "id": usuario.id_usuario,
             "rol": usuario.rol,
+            "jti": jti,
         }
+        db.add(RefreshToken(jti=jti, id_usuario=usuario.id_usuario, expira_en=expira_en))
+        await db.commit()
         return {
             "access_token": AuthService.crear_token_acceso(datos),
             "refresh_token": AuthService.crear_token_refresh(datos),
@@ -269,7 +279,10 @@ class AuthService:
     @staticmethod
     async def refrescar_acceso(db: AsyncSession, refresh_token: str) -> dict[str, str]:
         """
-        Canjea un refresh token por un par nuevo (rotación).
+        Canjea un refresh token por un par nuevo (rotación con detección de reuso).
+
+        EXPLICACIÓN: si un jti ya canjeado vuelve a aparecer, alguien lo usó
+        dos veces => posible robo => matamos TODOS los refresh del usuario.
 
         Args:
             db: Sesión async
@@ -279,8 +292,8 @@ class AuthService:
             dict: Nuevo par de tokens
 
         Raises:
-            HTTPException 401: Token inválido, expirado, de tipo incorrecto
-                             o usuario eliminado
+            HTTPException 401: Token inválido, expirado, de tipo incorrecto,
+                             reusado o usuario eliminado
         """
         invalido = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -310,4 +323,37 @@ class AuthService:
         if usuario is None:
             raise invalido
 
-        return AuthService.crear_par_tokens(usuario)
+        # EXPLICACIÓN: tokens emitidos antes de esta versión no tienen jti => re-login
+        jti = payload.get("jti")
+        if jti is None:
+            raise invalido
+
+        stmt_jti = select(RefreshToken).where(RefreshToken.jti == jti)
+        registro = (await db.execute(stmt_jti)).scalars().first()
+        if registro is None or registro.usado:
+            # EXPLICACIÓN: reuso => purgamos TODA la cadena del usuario
+            await db.execute(
+                delete(RefreshToken).where(RefreshToken.id_usuario == usuario.id_usuario)
+            )
+            await db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token reusado; sesiones invalidadas",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # EXPLICACIÓN: housekeeping — los expirados del usuario ya no sirven
+        registro.usado = 1
+        # EXPLICACIÓN: synchronize_session=False evita que SQLAlchemy evalúe la
+        # comparación de fechas en memoria (SQLite guarda naive y now() es aware)
+        await db.execute(
+            delete(RefreshToken)
+            .where(
+                RefreshToken.id_usuario == usuario.id_usuario,
+                RefreshToken.expira_en < datetime.now(UTC),
+            )
+            .execution_options(synchronize_session=False)
+        )
+        await db.commit()
+
+        return await AuthService.crear_par_tokens(db, usuario)

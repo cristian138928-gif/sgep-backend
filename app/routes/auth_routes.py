@@ -63,7 +63,7 @@ async def registro(
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        **AuthService.crear_par_tokens(usuario),
+        **await AuthService.crear_par_tokens(db, usuario),
     }
 
 
@@ -85,7 +85,7 @@ async def registro_instructor(
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        **AuthService.crear_par_tokens(usuario),
+        **await AuthService.crear_par_tokens(db, usuario),
     }
 
 
@@ -107,7 +107,7 @@ async def registro_coordinador(
         "id_usuario": usuario.id_usuario,
         "nombre": usuario.nombre_completo,
         "email": usuario.correo_institucional,
-        **AuthService.crear_par_tokens(usuario),
+        **await AuthService.crear_par_tokens(db, usuario),
     }
 
 
@@ -136,7 +136,7 @@ async def login(
     # EXPLICACIÓN: Delegamos la lógica al servicio AuthService
     usuario = await AuthService.login(db, credenciales)
 
-    return AuthService.crear_par_tokens(usuario)
+    return await AuthService.crear_par_tokens(db, usuario)
 
 
 @router.post("/refresh", response_model=TokenSchema, status_code=status.HTTP_200_OK)
@@ -148,8 +148,8 @@ async def refresh(
     """
     ENDPOINT: POST /api/v1/auth/refresh
 
-    Canjea un refresh token por un par nuevo (rotación).
-    El refresh token viejo sigue válido hasta su expiración (7 días).
+    Canjea un refresh token por un par nuevo (rotación con detección de reuso).
+    Reusar un token ya canjeado invalida TODA la cadena del usuario (posible robo).
 
     Returns:
         200 OK: Nuevo par de tokens
