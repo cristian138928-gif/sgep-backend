@@ -6,7 +6,9 @@ Configura FastAPI, middleware, lifespan de alertas y rutas.
 
 import asyncio
 import logging
+import subprocess
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,9 +48,27 @@ async def _loop_alertas_vencimiento() -> None:
         await asyncio.sleep(settings.alertas_intervalo_minutos * 60)
 
 
+def _aplicar_migraciones() -> None:
+    """
+    EXPLICACIÓN: subprocess en vez de API de alembic porque env.py usa
+    asyncio.run (prohibido anidar event loops dentro de lifespan).
+    """
+    # EXPLICACIÓN: cwd = raíz del proyecto (donde vive alembic.ini)
+    raiz = Path(__file__).resolve().parents[1]
+    subprocess.run(
+        ["alembic", "upgrade", "head"],
+        check=True,
+        cwd=raiz,
+        capture_output=True,
+        text=True,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Arranca/detiene la tarea periódica de alertas junto al servidor."""
+    # EXPLICACIÓN: esquema al día antes de servir el primer request
+    _aplicar_migraciones()
     tarea = None
     if settings.alertas_intervalo_minutos > 0:
         tarea = asyncio.create_task(_loop_alertas_vencimiento())

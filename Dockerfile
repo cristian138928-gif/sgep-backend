@@ -19,6 +19,9 @@ COPY --from=builder /app/.venv /app/.venv
 
 # EXPLICACIÓN: código después de las deps => editar app/*.py no reinstala paquetes
 COPY app ./app
+# EXPLICACIÓN: alembic necesario en runtime (lifespan ejecuta `alembic upgrade head`)
+COPY alembic ./alembic
+COPY alembic.ini ./
 COPY create_tables.py ./
 
 # EXPLICACIÓN: uploads debe existir y ser escribible por el usuario no-root

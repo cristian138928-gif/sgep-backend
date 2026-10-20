@@ -24,6 +24,7 @@ test.db
 frontend/
 uploads/
 docker-compose.yml
+docker-compose.dev.yml
 Dockerfile
 dockerignore
 opencode.json

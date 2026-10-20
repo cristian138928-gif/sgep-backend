@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      # EXPLICACIÓN: 5433 en host para no chocar con PostgreSQL nativo en 5432
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -44,6 +45,16 @@ services:
       start_period: 10s
     volumes:
       - uploads_data:/app/uploads
+
+  # EXPLICACIÓN: SPA Vue servida por nginx con proxy /api -> api:8000
+  frontend:
+    build: ./frontend
+    container_name: sgep_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:

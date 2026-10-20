@@ -25,8 +25,16 @@ uv run uvicorn app.main:app --reload --port 8000
 # Frontend (SPA Vue 3, proxy /api -> :8000)
 cd frontend && npm install && npm run dev   # http://localhost:5173
 
-# Docker
-docker-compose up --build
+# Migraciones (Alembic)
+uv run alembic revision --autogenerate -m "descripcion"   # generar desde modelos
+uv run alembic upgrade head                               # aplicar
+uv run alembic downgrade -1                               # retroceder una revisión
+
+# Docker (producción local: db + api + frontend en :3000, migraciones solas al arrancar)
+docker compose up --build -d
+
+# Docker desarrollo (hot reload: editas app/*.py y uvicorn recarga solo)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
 
 ## Frontend (Vue 3 + TypeScript)

@@ -22,6 +22,7 @@ dependencies = [
     "bcrypt==5.0.0",
     "PyJWT==2.15.1",
     "python-multipart==0.0.32",
+    "alembic>=1.20.0",
 ]
 
 [dependency-groups]
@@ -38,7 +39,8 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["venv", "__pycache__"]
+# EXPLICACIÓN: alembic/versions es autogenerado => no aplica reglas de estilo del proyecto
+extend-exclude = ["venv", "__pycache__", "alembic/versions"]
 
 [tool.ruff.lint]
 # E/W: errores y estilo base | F: pyflakes | I: orden de imports

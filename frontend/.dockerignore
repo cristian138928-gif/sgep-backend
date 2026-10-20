@@ -1,0 +1,7 @@
+# EXPLICACIÓN: solo lo necesario al contexto de build del frontend
+node_modules
+dist
+.git
+.gitignore
+*.md
+Dockerfile

@@ -1,0 +1,9 @@
+# EXPLICACIÓN: override de desarrollo — se aplica encima del compose base
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  api:
+    # EXPLICACIÓN: --reload + bind mount => editas app/*.py y el servidor recarga solo
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
+    volumes:
+      # EXPLICACIÓN: monta el código local SOLO sobre app/ (el .venv de la imagen se conserva)
+      - ./app:/app/app

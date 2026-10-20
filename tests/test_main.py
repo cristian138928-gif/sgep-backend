@@ -84,6 +84,8 @@ async def test_lifespan_crea_y_cancela_tarea(monkeypatch):
     """Test: con intervalo > 0 arranca la tarea y al salir la cancela."""
     from tests.conftest import TestSessionLocal
 
+    # EXPLICACIÓN: las migraciones requieren BD viva => fuera del alcance de este test
+    monkeypatch.setattr("app.main._aplicar_migraciones", lambda: None)
     monkeypatch.setattr(settings, "alertas_intervalo_minutos", 1)
     monkeypatch.setattr("app.main.AsyncSessionLocal", TestSessionLocal)
 

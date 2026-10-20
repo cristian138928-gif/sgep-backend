@@ -1,9 +1,8 @@
 # create_tables.py
 """
-Script para crear las tablas de la base de datos.
-Ejecutar una sola vez para inicializar la BD.
-
-Uso: uv run python create_tables.py
+DEPRECADO: usar Alembic (uv run alembic upgrade head).
+Script legado que creaba tablas con create_all (no migra columnas nuevas).
+Se conserva solo como referencia histórica.
 """
 
 import asyncio
