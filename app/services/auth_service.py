@@ -24,6 +24,9 @@ from app.schemas.usuario_schema import (
 
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
+# EXPLICACIÓN: ventana para absorber la carrera de refresh entre pestañas del SPA
+REUSE_GRACE_SECONDS = 15
+
 
 class AuthService:
     """
@@ -330,8 +333,31 @@ class AuthService:
 
         stmt_jti = select(RefreshToken).where(RefreshToken.jti == jti)
         registro = (await db.execute(stmt_jti)).scalars().first()
-        if registro is None or registro.usado:
-            # EXPLICACIÓN: reuso => purgamos TODA la cadena del usuario
+
+        # EXPLICACIÓN: sin registro => nunca emitido o ya purgado => mismo caso
+        if registro is not None and registro.usado:
+            usada_en = registro.usada_en
+            if usada_en is not None and usada_en.tzinfo is None:
+                # EXPLICACIÓN: SQLite devuelve naive; asumimos UTC (los writes son UTC)
+                usada_en = usada_en.replace(tzinfo=UTC)
+            # EXPLICACIÓN: gracia de 15s => carrera benigna entre pestañas (NO es robo)
+            if (
+                usada_en is not None
+                and (datetime.now(UTC) - usada_en).total_seconds() <= REUSE_GRACE_SECONDS
+            ):
+                return await AuthService.crear_par_tokens(db, usuario)
+            # EXPLICACIÓN: reuso pasado la gracia => purgamos TODA la cadena del usuario
+            await db.execute(
+                delete(RefreshToken).where(RefreshToken.id_usuario == usuario.id_usuario)
+            )
+            await db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token reusado; sesiones invalidadas",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if registro is None:
             await db.execute(
                 delete(RefreshToken).where(RefreshToken.id_usuario == usuario.id_usuario)
             )
@@ -344,6 +370,7 @@ class AuthService:
 
         # EXPLICACIÓN: housekeeping — los expirados del usuario ya no sirven
         registro.usado = 1
+        registro.usada_en = datetime.now(UTC)
         # EXPLICACIÓN: synchronize_session=False evita que SQLAlchemy evalúe la
         # comparación de fechas en memoria (SQLite guarda naive y now() es aware)
         await db.execute(

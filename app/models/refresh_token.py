@@ -57,3 +57,9 @@ class RefreshToken(Base):
         default=0,
         comment="0=activo, 1=ya canjeado (reuso => ataque)"
     )
+
+    usada_en = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Cuándo se canjeó (habilita la gracia de 15s entre pestañas)"
+    )

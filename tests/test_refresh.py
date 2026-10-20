@@ -112,8 +112,14 @@ async def test_refresh_basura_rechazado(client: AsyncClient):
 # ====================================
 
 @pytest.mark.asyncio
-async def test_reuso_invalida_cadena_completa(client: AsyncClient):
-    """Reusar un refresh ya canjeado => 401 y TODA la cadena muere."""
+async def test_reuso_invalida_cadena_completa(client: AsyncClient, db_session):
+    """Reusar un refresh YA fuera de la gracia => 401 y TODA la cadena muere."""
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+
+    from app.models.refresh_token import RefreshToken
+
     tokens = await _login(client)
 
     # Rota A -> B (A queda usado)
@@ -122,6 +128,15 @@ async def test_reuso_invalida_cadena_completa(client: AsyncClient):
     )
     assert resp.status_code == 200
     nuevos = resp.json()
+
+    # EXPLICACIÓN: envejecemos la rotación para salir de la gracia de 15s (ataque real)
+    viejo = (
+        await db_session.execute(
+            select(RefreshToken).where(RefreshToken.usado == 1)
+        )
+    ).scalars().one()
+    viejo.usada_en = datetime.now(UTC) - timedelta(seconds=60)
+    await db_session.commit()
 
     # Reusar A (el viejo) => 401 por reuso
     resp_a = await client.post(
@@ -133,6 +148,29 @@ async def test_reuso_invalida_cadena_completa(client: AsyncClient):
         "/api/v1/auth/refresh", json={"refresh_token": nuevos["refresh_token"]}
     )
     assert resp_b.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_reuso_dentro_de_gracia_es_carrera(client: AsyncClient):
+    """Dos pestañas canjeando casi a la vez => 200 (carrera benigna, no robo)."""
+    tokens = await _login(client)
+
+    r1 = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+    assert r1.status_code == 200
+
+    # EXPLICACIÓN: reuso INMEDIATO (la 2da pestaña) => dentro de la gracia de 15s
+    r2 = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+    )
+    assert r2.status_code == 200
+
+    # Y la cadena NO fue purgada: el token de la 1ª rotación sigue sirviendo
+    r3 = await client.post(
+        "/api/v1/auth/refresh", json={"refresh_token": r1.json()["refresh_token"]}
+    )
+    assert r3.status_code == 200
 
 
 @pytest.mark.asyncio
