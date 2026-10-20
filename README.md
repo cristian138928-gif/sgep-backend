@@ -37,6 +37,33 @@ docker compose up --build -d
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
 
+## Demo en 1 minuto (presentación)
+
+```bash
+# 1. Levantar todo (migraciones se aplican solas al arrancar la api)
+docker compose up --build -d
+
+# 2. Sembrar datos de demo (idempotente: no pisa nada si ya existe)
+docker compose exec api python seed_demo.py
+
+# 3. Abrir la SPA
+#    http://localhost:3000
+```
+
+| Rol | Correo | Password | Qué mostrar |
+|---|---|---|---|
+| Aprendiz | `aprendiz.demo@sena.edu.co` | `Demo1234!` | Avance **33.33%**, evidencia con ajuste |
+| Aprendiz | `aprendiz2.demo@sena.edu.co` | `Demo1234!` | Avance **100%** (la "estrella") |
+| Instructor | `instructor.demo@sena.edu.co` | `Demo1234!` | Bandeja, evaluar, historial |
+| Coordinador | `coordinador.demo@sena.edu.co` | `Demo1234!` | Dashboard, CSV, asignaciones RF05 |
+
+> **Nota**: `RATE_LIMIT_MAX` (defecto 10/min en auth) aplica también al demo. Si se
+> dispara, esperar 60s o reiniciar `docker compose restart api`.
+
+Verificaciones pre-presentación (smokes): flujo RF02→RF07 completo, seguridad
+(RBAC 401/403, traversal, rate limit) y rotación de refresh tokens — todos pasan
+en CI y localmente.
+
 ## Frontend (Vue 3 + TypeScript)
 
 SPA en `frontend/` construida con Vite, tipada con `vue-tsc` y sin framework CSS (tokens propios en `src/styles/main.css`).
