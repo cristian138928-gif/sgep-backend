@@ -18,7 +18,8 @@ export function rutaPorRol(rol: Rol | null): string {
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'inicio', redirect: '/' },
+    // EXPLICACIÓN: SIN ruta '/' con redirect a sí mismo — Vue Router recursa en
+    // push() hasta explotar el stack. El beforeEach (más abajo) resuelve '/'.
     {
       path: '/login',
       name: 'login',
