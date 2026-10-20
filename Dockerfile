@@ -23,6 +23,8 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 COPY create_tables.py ./
+# EXPLICACIÓN: seed de demo ejecutable con docker compose exec api python seed_demo.py
+COPY seed_demo.py ./
 
 # EXPLICACIÓN: uploads debe existir y ser escribible por el usuario no-root
 RUN mkdir -p /app/uploads && chown -R nobody:nogroup /app

@@ -221,11 +221,11 @@ class Aprendiz(UsuarioBase):
     # ATRIBUTOS ESPECÍFICOS DEL APRENDIZ
     # =====================
 
+    # EXPLICACIÓN: SIN unique — una ficha agrupa a ~30 aprendices del mismo grupo SENA
     numero_ficha = Column(
         String(20),
-        unique=True,
         nullable=False,
-        comment="Número de ficha de SENA (ej: 3388939)"
+        comment="Número de ficha de SENA (ej: 3388939; compartida por el grupo)"
     )
 
     programa = Column(

@@ -72,6 +72,27 @@ async def test_registrar_aprendiz_email_duplicado(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
+async def test_misma_ficha_permite_varios_aprendices(db_session: AsyncSession):
+    """Test: REGRESIÓN — una ficha SENA agrupa ~30 aprendices (nunca UNIQUE)."""
+    base = {
+        "nombre_completo": "Aprendiz de Prueba",
+        "contraseña": "MiContra123!",
+        "numero_ficha": "3388939",
+        "programa": "ADSO",
+    }
+    datos_1 = RegistroAprendizSchema(**base, correo_institucional="ficha1@test.com",
+                                    numero_documento="2111111111")
+    datos_2 = RegistroAprendizSchema(**base, correo_institucional="ficha2@test.com",
+                                    numero_documento="2222222222")
+
+    await AuthService.registrar_aprendiz(db_session, datos_1)
+    # EXPLICACIÓN: sin esto, el 2do registro de la MISMA ficha reventaba (409/500)
+    aprendiz_2 = await AuthService.registrar_aprendiz(db_session, datos_2)
+
+    assert aprendiz_2.numero_ficha == "3388939"
+
+
+@pytest.mark.asyncio
 async def test_login_exitoso(db_session: AsyncSession):
     """Test: Login con credenciales correctas."""
     # Primero registrar
