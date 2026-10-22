@@ -4,6 +4,7 @@
 // (GET /evidencias/{id} exige ser asignado; evaluar no) => fallback a fetch.
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ClipboardCheck, Send, X } from 'lucide-vue-next'
 
 import { api, ApiError } from '../../api/client'
 import type { Evidencia, Retroalimentacion } from '../../api/types'
@@ -64,30 +65,41 @@ async function enviar(): Promise<void> {
 
 <template>
   <div>
-    <h1>Evaluar evidencia #{{ id }}</h1>
+    <div class="encabezado">
+      <div>
+        <div class="migas">Instructor · Evaluación</div>
+        <h1>Evaluar evidencia #{{ id }}</h1>
+      </div>
+      <div class="acciones">
+        <span class="migas">
+          <ClipboardCheck :size="14" class="ico-migas" />
+          RF03
+        </span>
+      </div>
+    </div>
 
     <div class="tarjeta">
       <div v-if="meta">
         <h2>{{ meta.titulo }}</h2>
-        <p style="color: var(--texto-suave); margin-top: 0">
+        <p class="texto-suave sin-margen">
           {{ meta.tipo_formato }}
           <template v-if="meta.fecha_deadline">
-            · Límite: {{ meta.fecha_deadline.slice(0, 10) }}
+            · Límite: <span class="dato">{{ meta.fecha_deadline.slice(0, 10) }}</span>
           </template>
         </p>
       </div>
-      <p v-else style="color: var(--texto-suave)">Cargando metadatos…</p>
+      <p v-else class="texto-suave">Cargando metadatos…</p>
 
       <div v-if="error" class="alerta-error">{{ error }}</div>
 
       <form @submit.prevent="enviar">
         <div class="campo">
           <label>Decisión</label>
-          <label style="font-weight: 400; display: inline-flex; gap: 0.4rem; margin-right: 1.2rem">
+          <label class="opcion">
             <input v-model="estado" type="radio" value="Aprobada" required />
             Aprobada
           </label>
-          <label style="font-weight: 400; display: inline-flex; gap: 0.4rem">
+          <label class="opcion">
             <input v-model="estado" type="radio" value="Ajuste Requerido" required />
             Ajuste Requerido
           </label>
@@ -106,11 +118,13 @@ async function enviar(): Promise<void> {
           />
         </div>
 
-        <div style="display: flex; gap: 0.7rem">
+        <div class="fila">
           <button class="btn btn-primario" type="submit" :disabled="enviando">
+            <Send v-if="!enviando" :size="15" />
             {{ enviando ? 'Guardando…' : 'Registrar evaluación' }}
           </button>
           <button class="btn" type="button" @click="router.push({ name: 'pendientes' })">
+            <X :size="15" />
             Cancelar
           </button>
         </div>

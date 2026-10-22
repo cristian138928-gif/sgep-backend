@@ -2,14 +2,22 @@
 // src/views/LoginView.vue
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { FileCheck2, Lock, ShieldCheck, TrendingUp } from 'lucide-vue-next'
 
 import { ApiError } from '../api/client'
+import AuthPanel from '../components/AuthPanel.vue'
 import { rutaPorRol } from '../router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+
+const features = [
+  { icono: FileCheck2, texto: 'Carga y seguimiento de bitácoras y formatos F023/F028' },
+  { icono: ShieldCheck, texto: 'Evaluación con retroalimentación y control de accesos' },
+  { icono: TrendingUp, texto: 'Avance porcentual y alertas de vencimiento en tiempo real' },
+]
 
 const correo = ref('')
 const contraseña = ref('')
@@ -38,9 +46,13 @@ async function enviar(): Promise<void> {
 </script>
 
 <template>
-  <div class="auth">
+  <AuthPanel
+    lema="Tus evidencias de etapa práctica,"
+    resaltado="bajo control"
+    :features="features"
+  >
     <div class="auth-tarjeta">
-      <div class="auth-logo">SGE<span>P</span></div>
+      <div class="auth-logo logo-sm mb-1">SGE<span>P</span></div>
       <p class="auth-sub">Inicia sesión para gestionar tus evidencias</p>
 
       <div v-if="error" class="alerta-error">{{ error }}</div>
@@ -70,7 +82,8 @@ async function enviar(): Promise<void> {
           />
         </div>
 
-        <button class="btn btn-primario" type="submit" :disabled="cargando" style="width: 100%">
+        <button class="btn btn-primario btn-ancho" type="submit" :disabled="cargando">
+          <Lock v-if="!cargando" :size="15" />
           {{ cargando ? 'Ingresando…' : 'Ingresar' }}
         </button>
       </form>
@@ -80,5 +93,5 @@ async function enviar(): Promise<void> {
         <router-link to="/registro">Regístrate aquí</router-link>
       </p>
     </div>
-  </div>
+  </AuthPanel>
 </template>

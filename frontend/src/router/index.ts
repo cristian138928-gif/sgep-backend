@@ -119,6 +119,15 @@ router.beforeEach(async (to) => {
     }
   }
 
+  // EXPLICACIÓN: 404 es público (URL desconocida sin sesión => 404, no login);
+  // '/' cae en el catch-all => se resuelve como home del rol o login
+  if (to.name === 'no-encontrado') {
+    if (to.path === '/') {
+      return auth.autenticado ? rutaPorRol(auth.rol) : { name: 'login', query: { redirigir: '/' } }
+    }
+    return true
+  }
+
   // Usuario ya logueado no debe ver login/registro
   if (to.meta.publico === true) {
     return auth.autenticado ? rutaPorRol(auth.rol) : true
@@ -133,9 +142,6 @@ router.beforeEach(async (to) => {
     // EXPLICACIÓN: rol equivocado => home del propio rol (sin bucle por ruta actual)
     return rutaPorRol(auth.rol)
   }
-
-  // '/' autenticado => dashboard del rol
-  if (to.path === '/') return rutaPorRol(auth.rol)
 
   return true
 })

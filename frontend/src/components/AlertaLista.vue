@@ -1,7 +1,10 @@
 <script setup lang="ts">
 // src/components/AlertaLista.vue
 // EXPLICACIÓN: lista reutilizable de alertas de vencimiento (aprendiz/instructor/coordinador)
+import { ShieldCheck } from 'lucide-vue-next'
+
 import type { Alerta, AlertaRol } from '../api/types'
+import VacioEstado from './VacioEstado.vue'
 
 const props = defineProps<{ alertas: Alerta[]; mostrarAprendiz?: boolean }>()
 
@@ -16,10 +19,12 @@ function nombreDe(a: Alerta): string {
 </script>
 
 <template>
-  <div v-if="alertas.length === 0" class="vacio">
-    <h3>Sin alertas</h3>
-    <p>Ninguna evidencia vence en la ventana seleccionada.</p>
-  </div>
+  <VacioEstado
+    v-if="alertas.length === 0"
+    :icono="ShieldCheck"
+    titulo="Sin alertas"
+    texto="Ninguna evidencia vence en la ventana seleccionada."
+  />
 
   <div v-else class="tabla-contenedor">
     <div v-for="a in alertas" :key="a.id_evidencia" class="lista-item">

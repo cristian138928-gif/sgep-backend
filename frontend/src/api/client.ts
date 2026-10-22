@@ -91,6 +91,24 @@ export async function api<T>(ruta: string, opciones: OpcionesApi = {}): Promise<
   return (await res.json()) as T
 }
 
+/**
+ * EXPLICACIÓN: los títulos de evidencia pueden traer `/ : * ? " < > |` (p. ej.
+ * "F023: firma / 2026") y eso rompe el nombre en disco => se sanea AQUÍ, en un
+ * solo punto, en vez de confiar en cada vista que llame a `descargar`.
+ */
+export function nombreSeguro(nombre: string): string {
+  const limpio = nombre
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/[\x00-\x1f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (limpio.length <= 150) return limpio || 'descarga'
+  // EXPLICACIÓN: se conserva la extensión al truncar, si no el archivo queda sin tipo
+  const punto = limpio.lastIndexOf('.')
+  const ext = punto > 0 && limpio.length - punto <= 10 ? limpio.slice(punto) : ''
+  return `${limpio.slice(0, 150 - ext.length).trimEnd()}${ext}`
+}
+
 /** Descarga un archivo protegido (CSV/PDF) y lo guarda con nombre sugerido. */
 export async function descargar(ruta: string, nombreArchivo: string): Promise<void> {
   const cabeceras: Record<string, string> = {}
@@ -103,7 +121,12 @@ export async function descargar(ruta: string, nombreArchivo: string): Promise<vo
   const url = URL.createObjectURL(blob)
   const enlace = document.createElement('a')
   enlace.href = url
-  enlace.download = nombreArchivo
+  enlace.download = nombreSeguro(nombreArchivo)
+  // EXPLICACIÓN: append + remove => algunos navegadores ignoran click() de un <a> huérfano
+  document.body.appendChild(enlace)
   enlace.click()
-  URL.revokeObjectURL(url)
+  enlace.remove()
+  // EXPLICACIÓN: revocar en el siguiente tick => revoke síncrono cancela la
+  // descarga en Safari/Edge porque el navegador aún no ha leído el blob
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

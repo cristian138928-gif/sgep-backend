@@ -3,12 +3,20 @@
 // EXPLICACIÓN: un solo componente con pestañas por rol => evita 3 vistas casi idénticas
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ClipboardCheck, ShieldCheck, UserCheck } from 'lucide-vue-next'
 
 import { ApiError } from '../api/client'
+import AuthPanel from '../components/AuthPanel.vue'
 import { rutaPorRol } from '../router'
 import { useAuthStore } from '../stores/auth'
 
 type TipoRegistro = 'aprendiz' | 'instructor' | 'coordinador'
+
+const features = [
+  { icono: ClipboardCheck, texto: 'Sube bitácoras y formatos en PDF con fecha límite' },
+  { icono: ShieldCheck, texto: 'Tu avance y tus comentarios de revisión en un solo lugar' },
+  { icono: UserCheck, texto: 'Instructor seguidor asignado desde el primer día' },
+]
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -81,7 +89,11 @@ async function enviar(): Promise<void> {
 </script>
 
 <template>
-  <div class="auth">
+  <AuthPanel
+    lema="Crea tu cuenta y registra tus evidencias"
+    resaltado="en minutos"
+    :features="features"
+  >
     <div class="auth-tarjeta">
       <div class="auth-logo">SGE<span>P</span></div>
       <p class="auth-sub">Crea tu cuenta en el sistema</p>
@@ -179,10 +191,9 @@ async function enviar(): Promise<void> {
         </div>
 
         <button
-          class="btn btn-primario"
+          class="btn btn-primario btn-ancho"
           type="submit"
           :disabled="cargando || !!errorClave"
-          style="width: 100%"
         >
           {{ cargando ? 'Creando cuenta…' : 'Crear cuenta' }}
         </button>
@@ -193,5 +204,5 @@ async function enviar(): Promise<void> {
         <router-link to="/login">Inicia sesión</router-link>
       </p>
     </div>
-  </div>
+  </AuthPanel>
 </template>

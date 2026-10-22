@@ -2,10 +2,13 @@
 // src/views/coordinador/EvidenciasView.vue
 // EXPLICACIÓN: filtros de la API + paginación server-side (page/page_size)
 import { onMounted, reactive, ref } from 'vue'
+import { Download, FileDown, FileSearch, Filter } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { Evidencia, Pagina } from '../../api/types'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import PaginacionBar from '../../components/PaginacionBar.vue'
+import VacioEstado from '../../components/VacioEstado.vue'
 
 const filtros = reactive({
   estado: '',
@@ -15,6 +18,7 @@ const filtros = reactive({
 })
 const pagina = ref<Pagina<Evidencia> | null>(null)
 const paginaActual = ref(1)
+const cargando = ref(true)
 const error = ref('')
 
 function rutaActual(): string {
@@ -27,10 +31,13 @@ function rutaActual(): string {
 }
 
 async function cargar(): Promise<void> {
+  cargando.value = true
   try {
     pagina.value = await api<Pagina<Evidencia>>(rutaActual())
   } catch {
     error.value = 'No se pudieron cargar las evidencias.'
+  } finally {
+    cargando.value = false
   }
 }
 
@@ -71,15 +78,23 @@ onMounted(cargar)
 
 <template>
   <div>
-    <div style="display: flex; justify-content: space-between; align-items: center">
-      <h1>Evidencias</h1>
-      <button class="btn btn-suave" type="button" @click="exportarCsv">Exportar CSV</button>
+    <div class="encabezado">
+      <div>
+        <div class="migas">Coordinación · Documentos</div>
+        <h1>Evidencias</h1>
+      </div>
+      <div class="acciones">
+        <button class="btn btn-suave" type="button" @click="exportarCsv">
+          <Download :size="15" />
+          Exportar CSV
+        </button>
+      </div>
     </div>
 
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
     <div class="tarjeta">
-      <div class="rejilla rejilla-2" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))">
+      <div class="rejilla rejilla-estrecha">
         <div class="campo">
           <label for="estado">Estado</label>
           <select id="estado" v-model="filtros.estado">
@@ -102,17 +117,27 @@ onMounted(cargar)
           <input id="hasta" v-model="filtros.fecha_hasta" type="date" />
         </div>
       </div>
-      <button class="btn btn-primario" type="button" @click="aplicarFiltros">Aplicar filtros</button>
+      <button class="btn btn-primario" type="button" @click="aplicarFiltros">
+        <Filter :size="15" />
+        Aplicar filtros
+      </button>
     </div>
 
-    <div class="tarjeta" style="margin-top: 1rem; padding: 0">
-      <div v-if="!pagina || pagina.items.length === 0" class="vacio">
-        <h3>Sin resultados</h3>
-        <p>Ninguna evidencia coincide con los filtros aplicados.</p>
-      </div>
+    <div class="tarjeta tarjeta-flush mt-1">
+      <VacioEstado
+        v-if="cargando || !pagina || pagina.items.length === 0"
+        :icono="FileSearch"
+        :cargando="cargando"
+        titulo="Sin resultados"
+        :texto="
+          cargando
+            ? 'Aplicando filtros y consultando el servidor…'
+            : 'Ninguna evidencia coincide con los filtros aplicados.'
+        "
+      />
 
       <template v-else>
-        <div class="tabla-contenedor" style="border: none; box-shadow: none">
+        <div class="tabla-contenedor tabla-plana">
           <table class="tabla">
             <thead>
               <tr>
@@ -131,28 +156,21 @@ onMounted(cargar)
                 <td><EstadoBadge :estado="e.estado" /></td>
                 <td>{{ e.fecha_carga.slice(0, 10) }}</td>
                 <td>{{ e.fecha_deadline ? e.fecha_deadline.slice(0, 10) : '—' }}</td>
-                <td style="text-align: right">
+                <td class="der">
                   <button class="btn btn-suave" type="button" @click="descargarPdf(e)">
+                    <FileDown :size="15" />
                     PDF
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
-          <div class="paginacion">
-            <button class="btn" type="button" :disabled="paginaActual === 1" @click="cambiarPagina(-1)">
-              Anterior
-            </button>
-            <span>Página {{ pagina.page }} de {{ pagina.total_pages }}</span>
-            <button
-              class="btn"
-              type="button"
-              :disabled="paginaActual === pagina.total_pages"
-              @click="cambiarPagina(1)"
-            >
-              Siguiente
-            </button>
-          </div>
+          <PaginacionBar
+            :pagina="pagina.page"
+            :total-paginas="pagina.total_pages"
+            :pagina-actual="paginaActual"
+            @cambiar="cambiarPagina"
+          />
         </div>
       </template>
     </div>

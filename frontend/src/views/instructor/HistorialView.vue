@@ -1,22 +1,29 @@
 <script setup lang="ts">
 // src/views/instructor/HistorialView.vue
 import { onMounted, ref } from 'vue'
+import { History } from 'lucide-vue-next'
 
 import { api } from '../../api/client'
 import type { EstadoEvidencia, Pagina, Retroalimentacion } from '../../api/types'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import PaginacionBar from '../../components/PaginacionBar.vue'
+import VacioEstado from '../../components/VacioEstado.vue'
 
 const pagina = ref<Pagina<Retroalimentacion> | null>(null)
 const paginaActual = ref(1)
+const cargando = ref(true)
 const error = ref('')
 
 async function cargar(): Promise<void> {
+  cargando.value = true
   try {
     pagina.value = await api<Pagina<Retroalimentacion>>(
       `/api/v1/instructor/historial?page=${paginaActual.value}&page_size=10`,
     )
   } catch {
     error.value = 'No se pudo cargar el historial.'
+  } finally {
+    cargando.value = false
   }
 }
 
@@ -38,17 +45,29 @@ onMounted(cargar)
 
 <template>
   <div>
-    <h1>Historial de evaluaciones</h1>
+    <div class="encabezado">
+      <div>
+        <div class="migas">Instructor · Seguimiento</div>
+        <h1>Historial de evaluaciones</h1>
+      </div>
+    </div>
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
-    <div class="tarjeta" style="padding: 0">
-      <div v-if="!pagina || pagina.items.length === 0" class="vacio">
-        <h3>Sin evaluaciones registradas</h3>
-        <p>Las evaluaciones que registres aparecerán aquí.</p>
-      </div>
+    <div class="tarjeta tarjeta-flush">
+      <VacioEstado
+        v-if="cargando || !pagina || pagina.items.length === 0"
+        :icono="History"
+        :cargando="cargando"
+        :titulo="cargando ? 'Cargando historial…' : 'Sin evaluaciones registradas'"
+        :texto="
+          cargando
+            ? 'Estamos consultando tus evaluaciones.'
+            : 'Las evaluaciones que registres aparecerán aquí.'
+        "
+      />
 
       <template v-else>
-        <div class="tabla-contenedor" style="border: none; box-shadow: none">
+        <div class="tabla-contenedor tabla-plana">
           <table class="tabla">
             <thead>
               <tr>
@@ -65,24 +84,16 @@ onMounted(cargar)
                 <td>
                   <EstadoBadge :estado="r.estado_evaluacion as EstadoEvidencia" />
                 </td>
-                <td style="max-width: 420px">{{ r.observaciones }}</td>
+                <td class="texto-suave ancho-max">{{ r.observaciones }}</td>
               </tr>
             </tbody>
           </table>
-          <div class="paginacion">
-            <button class="btn" type="button" :disabled="paginaActual === 1" @click="cambiarPagina(-1)">
-              Anterior
-            </button>
-            <span>Página {{ pagina.page }} de {{ pagina.total_pages }}</span>
-            <button
-              class="btn"
-              type="button"
-              :disabled="paginaActual === pagina.total_pages"
-              @click="cambiarPagina(1)"
-            >
-              Siguiente
-            </button>
-          </div>
+          <PaginacionBar
+            :pagina="pagina.page"
+            :total-paginas="pagina.total_pages"
+            :pagina-actual="paginaActual"
+            @cambiar="cambiarPagina"
+          />
         </div>
       </template>
     </div>

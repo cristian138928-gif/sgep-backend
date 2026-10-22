@@ -2,10 +2,12 @@
 // src/views/aprendiz/AvanceView.vue
 // EXPLICACIÓN: avance + alertas en UNA vista => menos peticiones y contexto único
 import { onMounted, ref } from 'vue'
+import { Bell, Gauge, TrendingUp } from 'lucide-vue-next'
 
 import { api } from '../../api/client'
 import type { Alerta, AvanceAprendiz } from '../../api/types'
 import AlertaLista from '../../components/AlertaLista.vue'
+import KpiTarjeta from '../../components/KpiTarjeta.vue'
 
 const avance = ref<AvanceAprendiz | null>(null)
 const alertas = ref<Alerta[]>([])
@@ -28,42 +30,63 @@ onMounted(async () => {
 
 <template>
   <div>
-    <h1>Mi avance</h1>
+    <div class="encabezado">
+      <div>
+        <div class="migas">Aprendiz · Etapa práctica</div>
+        <h1>Mi avance</h1>
+      </div>
+    </div>
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
     <template v-if="avance">
       <div class="tarjeta">
-        <h2>{{ avance.nombre_completo }}</h2>
-        <p style="color: var(--texto-suave); margin-top: 0">
-          Ficha {{ avance.numero_ficha }} · {{ avance.programa }}
-        </p>
+        <div class="cabecera-fila">
+          <div>
+            <h2 class="m-0">{{ avance.nombre_completo }}</h2>
+            <p class="texto-suave sin-margen">
+              Ficha {{ avance.numero_ficha }} · {{ avance.programa }}
+            </p>
+          </div>
+          <span class="kpi-ico">
+            <Gauge :size="18" />
+          </span>
+        </div>
 
-        <div class="barra-progreso" style="margin: 1rem 0 0.5rem">
+        <div class="barra-progreso mt-1">
           <div :style="{ width: `${avance.porcentaje_avance}%` }" />
         </div>
-        <p style="font-weight: 700; margin: 0">
+        <p class="dato dato-fuerte">
           {{ avance.porcentaje_avance }} % completado
         </p>
       </div>
 
-      <div class="rejilla rejilla-3" style="margin-top: 1rem">
-        <div class="tarjeta metrica">
-          <div class="metrica-valor">{{ avance.total_evidencias }}</div>
-          <div class="metrica-etiqueta">Evidencias</div>
-        </div>
-        <div class="tarjeta metrica">
-          <div class="metrica-valor">{{ avance.aprobadas }}</div>
-          <div class="metrica-etiqueta">Aprobadas</div>
-        </div>
-        <div class="tarjeta metrica">
-          <div class="metrica-valor">{{ avance.total_evidencias - avance.aprobadas }}</div>
-          <div class="metrica-etiqueta">Pendientes</div>
-        </div>
+      <div class="rejilla rejilla-3 mt-1">
+        <KpiTarjeta
+          etiqueta="Evidencias"
+          :valor="avance.total_evidencias"
+          :icono="TrendingUp"
+          tono="azul"
+        />
+        <KpiTarjeta
+          etiqueta="Aprobadas"
+          :valor="avance.aprobadas"
+          :icono="TrendingUp"
+          tono="verde"
+        />
+        <KpiTarjeta
+          etiqueta="Pendientes"
+          :valor="avance.total_evidencias - avance.aprobadas"
+          :icono="TrendingUp"
+          tono="ambar"
+        />
       </div>
 
-      <div class="tarjeta" style="margin-top: 1rem">
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <h2>Alertas de vencimiento</h2>
+      <div class="tarjeta mt-1">
+        <div class="cabecera-fila separada">
+          <h2 class="m-0">
+            <Bell :size="16" class="ico-aviso" />
+            Alertas de vencimiento
+          </h2>
           <select v-model.number="ventana" class="btn" @change="cargarAlertas">
             <option :value="7">Próximos 7 días</option>
             <option :value="14">Próximos 14 días</option>

@@ -2,12 +2,15 @@
 // src/views/aprendiz/MisEvidenciasView.vue
 // EXPLICACIÓN: subida Multipart/form-data + descarga con Bearer => 2 casos de uso del RF01
 import { computed, onMounted, reactive, ref } from 'vue'
+import { FileDown, MessageSquareText, Upload } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { Evidencia, Retroalimentacion } from '../../api/types'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import VacioEstado from '../../components/VacioEstado.vue'
 
 const evidencias = ref<Evidencia[]>([])
+const cargando = ref(true)
 const error = ref('')
 const info = ref('')
 const subiendo = ref(false)
@@ -101,7 +104,12 @@ async function alternarRetro(e: Evidencia): Promise<void> {
 }
 
 async function cargar(): Promise<void> {
-  evidencias.value = await api<Evidencia[]>('/api/v1/evidencias/mis-evidencias')
+  cargando.value = true
+  try {
+    evidencias.value = await api<Evidencia[]>('/api/v1/evidencias/mis-evidencias')
+  } finally {
+    cargando.value = false
+  }
 }
 
 onMounted(async () => {
@@ -119,7 +127,12 @@ function fechaCorta(iso: string | null): string {
 
 <template>
   <div>
-    <h1>Mis evidencias</h1>
+    <div class="encabezado">
+      <div>
+        <div class="migas">Aprendiz · Etapa práctica</div>
+        <h1>Mis evidencias</h1>
+      </div>
+    </div>
 
     <div v-if="error" class="alerta-error">{{ error }}</div>
     <div v-if="info" class="alerta-info">{{ info }}</div>
@@ -151,18 +164,22 @@ function fechaCorta(iso: string | null): string {
           </div>
         </div>
         <button class="btn btn-primario" type="submit" :disabled="subiendo">
+          <Upload v-if="!subiendo" :size="15" />
           {{ subiendo ? 'Subiendo…' : 'Subir evidencia' }}
         </button>
       </form>
     </div>
 
-    <div class="tarjeta" style="margin-top: 1rem; padding: 0">
-      <div v-if="evidencias.length === 0" class="vacio">
-        <h3>Aún no has subido evidencias</h3>
-        <p>Usa el formulario superior para adjuntar tu primera evidencia.</p>
-      </div>
+    <div class="tarjeta tarjeta-flush mt-1">
+      <VacioEstado
+        v-if="cargando || evidencias.length === 0"
+        :icono="Upload"
+        :cargando="cargando"
+        titulo="Aún no has subido evidencias"
+        texto="Usa el formulario superior para adjuntar tu primera evidencia."
+      />
 
-      <div v-else class="tabla-contenedor" style="border: none; box-shadow: none">
+      <div v-else class="tabla-contenedor tabla-plana">
         <table class="tabla">
           <thead>
             <tr>
@@ -183,19 +200,21 @@ function fechaCorta(iso: string | null): string {
                 <td><EstadoBadge :estado="e.estado" /></td>
                 <td>{{ fechaCorta(e.fecha_carga) }}</td>
                 <td>{{ fechaCorta(e.fecha_deadline) }}</td>
-                <td style="text-align: right">
+                <td class="der">
                   <button class="btn btn-suave" type="button" @click="descargarEvidencia(e)">
-                    Descargar PDF
+                    <FileDown :size="15" />
+                    PDF
                   </button>
                 </td>
-                <td style="text-align: right">
+                <td class="der">
                   <button class="btn btn-suave" type="button" @click="alternarRetro(e)">
-                    {{ retroAbierta === e.id_evidencia ? 'Ocultar' : 'Ver retroalimentación' }}
+                    <MessageSquareText :size="15" />
+                    {{ retroAbierta === e.id_evidencia ? 'Ocultar' : 'Retroalimentación' }}
                   </button>
                 </td>
               </tr>
               <tr v-if="retroAbierta === e.id_evidencia">
-                <td colspan="7" style="background: var(--gris-suave, #f7f8fa)">
+                <td colspan="7" class="fila-expandida">
                   <p v-if="cargandoRetro === e.id_evidencia">Cargando retroalimentación…</p>
                   <p v-else-if="retroVisible === 'sin'">
                     Aún no hay retroalimentación para esta evidencia.
