@@ -6,7 +6,7 @@ Request/Response models para autenticación.
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 # ====================================
 # ESQUEMAS DE REGISTRO
@@ -143,6 +143,34 @@ class PerfilUsuarioSchema(BaseModel):
             "rol": "aprendiz"
         }},
     )
+
+class ActualizarPerfilSchema(BaseModel):
+    """
+    Request de PUT /api/v1/auth/me: editar nombre y/o cambiar contraseña.
+
+    EXPLICACIÓN: el correo NO es editable porque es la clave natural del JWT
+    (claim sub) y del login; cambiarlo invalidaría la sesión de todos lados.
+    """
+
+    nombre_completo: str | None = Field(None, min_length=5, max_length=150)
+    contraseña_actual: str | None = Field(None, min_length=8, max_length=100)
+    contraseña_nueva: str | None = Field(None, min_length=8, max_length=100)
+
+    @model_validator(mode="after")
+    def _al_menos_un_cambio(self) -> "ActualizarPerfilSchema":
+        """EXPLICACIÓN: un PUT vacío no tiene sentido de negocio -> 422 temprano."""
+        if self.nombre_completo is None and self.contraseña_nueva is None:
+            raise ValueError("Indica nombre_completo o contraseña_nueva")
+        return self
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {
+            "nombre_completo": "Juan Pérez García",
+            "contraseña_actual": "MiContra123!",
+            "contraseña_nueva": "NuevaContra456!",
+        }},
+    )
+
 
 class AprendizResponseSchema(BaseModel):
     """

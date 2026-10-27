@@ -54,6 +54,12 @@ const router = createRouter({
           component: () => import('../views/NotificacionesView.vue'),
         },
         {
+          // EXPLICACIÓN: sin meta.roles => las 3 roles acceden (como notificaciones)
+          path: 'perfil',
+          name: 'perfil',
+          component: () => import('../views/PerfilView.vue'),
+        },
+        {
           path: 'instructor/pendientes',
           name: 'pendientes',
           component: () => import('../views/instructor/PendientesView.vue'),

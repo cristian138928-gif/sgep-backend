@@ -150,6 +150,7 @@ function fechaCorta(iso: string | null): string {
             <select id="tipo" v-model="form.tipo_formato">
               <option>Bitacora</option>
               <option>F023</option>
+              <option>F028</option>
               <option>Informe</option>
               <option>Otro</option>
             </select>

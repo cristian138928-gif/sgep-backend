@@ -11,6 +11,7 @@ from app.database.connection import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import UsuarioBase
 from app.schemas.usuario_schema import (
+    ActualizarPerfilSchema,
     LoginSchema,
     PerfilUsuarioSchema,
     RefreshTokenSchema,
@@ -173,3 +174,24 @@ async def perfil_actual(usuario: UsuarioBase = Depends(get_current_user)):
         401: Sin token o token inválido/expirado
     """
     return usuario
+
+
+@router.put("/me", response_model=PerfilUsuarioSchema, status_code=status.HTTP_200_OK)
+async def actualizar_perfil(
+    datos: ActualizarPerfilSchema,
+    db: AsyncSession = Depends(get_db),
+    usuario: UsuarioBase = Depends(get_current_user),
+):
+    """
+    ENDPOINT: PUT /api/v1/auth/me
+
+    Editar nombre y/o cambiar contraseña del usuario autenticado.
+    Al cambiar la contraseña se revocan los refresh tokens (re-login).
+
+    Returns:
+        200: Perfil actualizado
+        400: Contraseña nueva sin contraseña actual
+        401: Sin token o contraseña actual incorrecta
+        422: Payload sin ningún cambio
+    """
+    return await AuthService.actualizar_perfil(db, usuario, datos)

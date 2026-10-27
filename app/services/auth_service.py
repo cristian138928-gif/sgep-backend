@@ -16,6 +16,7 @@ from app.config import settings
 from app.models.refresh_token import RefreshToken
 from app.models.usuario import Aprendiz, Coordinador, Instructor, UsuarioBase
 from app.schemas.usuario_schema import (
+    ActualizarPerfilSchema,
     LoginSchema,
     RegistroAprendizSchema,
     RegistroCoordinadorSchema,
@@ -218,6 +219,57 @@ class AuthService:
                 detail="Correo o contraseña incorrectos"
             )
 
+        return usuario
+
+    @staticmethod
+    async def actualizar_perfil(
+        db: AsyncSession,
+        usuario: UsuarioBase,
+        datos: ActualizarPerfilSchema,
+    ) -> UsuarioBase:
+        """
+        PUT /api/v1/auth/me: actualiza nombre y/o contraseña del usuario.
+
+        Reglas de negocio:
+        - Cambiar contraseña exige verificar la actual (401 si falla).
+        - Al cambiar contraseña se revocan TODOS los refresh tokens
+          (otros dispositivos deben volver a iniciar sesión).
+
+        Args:
+            db: Sesión async (la misma que get_current_user, por request)
+            usuario: Usuario autenticado (objeto attached a la sesión)
+            datos: Cambios solicitados (nombre y/o contraseña)
+
+        Returns:
+            UsuarioBase actualizado
+
+        Raises:
+            HTTPException 400: Contraseña nueva sin contraseña actual
+            HTTPException 401: Contraseña actual incorrecta
+        """
+        if datos.contraseña_nueva is not None:
+            if datos.contraseña_actual is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debes enviar contraseña_actual para cambiar la contraseña",
+                )
+            if not usuario.verificar_contrasena(datos.contraseña_actual):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Contraseña actual incorrecta",
+                )
+            usuario.establecer_contrasena(datos.contraseña_nueva)
+            # EXPLICACIÓN: purgar refresh invalida sesiones abiertas en otros
+            # dispositivos — si robaron la contraseña, el ladrón queda fuera
+            await db.execute(
+                delete(RefreshToken).where(RefreshToken.id_usuario == usuario.id_usuario)
+            )
+
+        if datos.nombre_completo is not None:
+            usuario.nombre_completo = datos.nombre_completo
+
+        await db.commit()
+        await db.refresh(usuario)
         return usuario
 
     @staticmethod

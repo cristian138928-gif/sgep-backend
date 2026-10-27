@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   TrendingUp,
+  User,
   UserCheck,
   Users,
   X,
@@ -36,11 +37,13 @@ const navAprendiz: ItemNav[] = [
   { ruta: '/app/avance', etiqueta: 'Mi avance', icono: TrendingUp },
   { ruta: '/app/mis-evidencias', etiqueta: 'Mis evidencias', icono: Files },
   { ruta: '/app/notificaciones', etiqueta: 'Notificaciones', icono: Bell },
+  { ruta: '/app/perfil', etiqueta: 'Mi perfil', icono: User },
 ]
 const navInstructor: ItemNav[] = [
   { ruta: '/app/instructor/pendientes', etiqueta: 'Por evaluar', icono: Inbox },
   { ruta: '/app/instructor/historial', etiqueta: 'Historial', icono: History },
   { ruta: '/app/notificaciones', etiqueta: 'Notificaciones', icono: Bell },
+  { ruta: '/app/perfil', etiqueta: 'Mi perfil', icono: User },
 ]
 const navCoordinador: ItemNav[] = [
   { ruta: '/app/coordinador/dashboard', etiqueta: 'Dashboard', icono: LayoutDashboard },
@@ -48,6 +51,7 @@ const navCoordinador: ItemNav[] = [
   { ruta: '/app/coordinador/aprendices', etiqueta: 'Aprendices', icono: Users },
   { ruta: '/app/coordinador/asignaciones', etiqueta: 'Asignaciones', icono: UserCheck },
   { ruta: '/app/notificaciones', etiqueta: 'Notificaciones', icono: Bell },
+  { ruta: '/app/perfil', etiqueta: 'Mi perfil', icono: User },
 ]
 
 const items = computed<ItemNav[]>(() => {
