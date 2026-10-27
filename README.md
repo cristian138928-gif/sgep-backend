@@ -101,6 +101,7 @@ uv run pytest --cov=app        # tests + cobertura (core=sysmon, Python 3.12+)
 | POST | /api/v1/auth/login | Login (access + refresh) | Público |
 | POST | /api/v1/auth/refresh | Canjear refresh token (rotación) | Público |
 | GET | /api/v1/auth/me | Perfil (nombre + rol) | Autenticado |
+| PUT | /api/v1/auth/me | Editar nombre / cambiar contraseña (revoca refresh) | Autenticado |
 | GET | /api/v1/notificaciones | Lista + badge no leídas | Autenticado |
 | POST | /api/v1/notificaciones/marcar-todas-leidas | Acción masiva del header | Autenticado |
 | POST | /api/v1/evidencias/upload | Subir PDF | Aprendiz |
@@ -167,13 +168,15 @@ tests/
 ├── test_alertas_roles.py # 9 tests
 ├── test_main.py         # 4 tests (lifespan + cabeceras)
 ├── test_models_poo.py   # 15 tests (herencia/polimorfismo)
+├── test_perfil.py       # 7 tests (PUT /auth/me: nombre + contraseña)
+├── test_migraciones.py  # Alembic (revisiones SQLite)
 └── test_connection.py   # 1 test
 ```
 
 ## Tests
 
 ```bash
-# Todos los tests (167)
+# Todos los tests (185)
 uv run pytest tests/ -v
 
 # Solo auth
