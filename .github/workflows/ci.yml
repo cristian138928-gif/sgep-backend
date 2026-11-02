@@ -40,8 +40,9 @@ jobs:
       - name: Lint (ruff)
         run: uv run ruff check .
 
-      - name: Tests + cobertura
-        run: uv run pytest --cov=app --cov-report=term -q
+      - name: Tests + cobertura (gate 95%)
+        # EXPLICACIÓN: falla el CI si la cobertura baja de 95 (hoy 98%)
+        run: uv run pytest --cov=app --cov-report=term --cov-fail-under=95 -q
 
   frontend:
     name: Frontend (vue-tsc + vite build)
@@ -61,6 +62,9 @@ jobs:
 
       - name: Dependencias (reproducible)
         run: npm ci
+
+      - name: Tests unitarios (vitest)
+        run: npm test
 
       - name: Typecheck + build de producción
         run: npm run build

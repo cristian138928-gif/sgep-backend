@@ -73,9 +73,11 @@ cd frontend
 npm install        # dependencias (vue, vue-router, pinia, vite)
 npm run dev        # desarrollo con proxy /api -> http://localhost:8000
 npm run typecheck  # vue-tsc --noEmit
+npm test           # vitest (44 tests, entorno happy-dom)
 npm run build      # typecheck + build de producción en dist/
 ```
 
+- **Tests**: `frontend/tests/*.spec.ts` cubren cliente HTTP (mutex del refresh, errores, `nombreSeguro`), JWT/session, stores de pinia y guards del router.
 - **Auth**: cliente `fetch` propio (`src/api/client.ts`) con rotación de refresh tokens y mutex de reintento (un solo refresh ante N peticiones en 401).
 - **Guards**: rol leído del claim JWT del token (`meta.roles` en rutas); acceso equivocado redirige al home del propio rol.
 - **Vistas por rol**: aprendiz (avance + alertas + evidencias con retroalimentación RF04), instructor (bandeja + evaluar + historial), coordinador (dashboard + evidencias con filtros + aprendices con CSV + asignaciones RF05), notificaciones para los 3 roles.
@@ -89,7 +91,10 @@ Configuración única en `pyproject.toml` (ruff + pytest + coverage):
 uv run ruff check .            # lint (reglas E,F,W,I,UP,B,SIM,C4,RET,PIE,PTH)
 uv run ruff check . --fix      # auto-fix seguro
 uv run pytest --cov=app        # tests + cobertura (core=sysmon, Python 3.12+)
+                               # CI exige >=95% (hoy 98%)
 ```
+
+El frontend usa Vitest por separado (`cd frontend && npm test`); ambos jobs corren en GitHub Actions.
 
 ## Endpoints Principales
 
@@ -171,19 +176,30 @@ tests/
 ├── test_perfil.py       # 7 tests (PUT /auth/me: nombre + contraseña)
 ├── test_migraciones.py  # Alembic (revisiones SQLite)
 └── test_connection.py   # 1 test
+frontend/
+├── src/api/client.ts    # cliente HTTP (rotación refresh + mutex)
+├── src/router/index.ts  # guards por rol
+└── tests/               # vitest (44 tests, happy-dom)
+    ├── helpers.ts       # fabricarToken() para JWT de mentira
+    ├── jwt.spec.ts / session.spec.ts / client.spec.ts
+    ├── auth.spec.ts / notificaciones.spec.ts
+    └── router.spec.ts
 ```
 
 ## Tests
 
 ```bash
-# Todos los tests (185)
+# Backend: todos los tests (185)
 uv run pytest tests/ -v
 
 # Solo auth
 uv run pytest tests/test_auth.py -v
 
-# Con coverage (98%)
+# Con coverage (98%, CI exige >=95%)
 uv run pytest tests/ --cov=app
+
+# Frontend (44)
+cd frontend && npm test
 ```
 
 ## Seguridad
