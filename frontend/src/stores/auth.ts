@@ -64,6 +64,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout(): void {
+    // EXPLICACIÓN: se revoca el refresh en el backend ANTES de borrarlo local;
+    // fire-and-forget (catch) porque sin red el access caduca solo en 24h
+    const refresh = session.refresh
+    if (refresh) {
+      void api('/api/v1/auth/logout', {
+        method: 'POST',
+        auth: false,
+        body: JSON.stringify({ refresh_token: refresh }),
+      }).catch(() => undefined)
+    }
     session.limpiar()
     token.value = null
     perfil.value = null

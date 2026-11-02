@@ -23,6 +23,7 @@ from app.routes.evidencia_routes import router as evidencia_router
 from app.routes.instructor_routes import router as instructor_router
 from app.routes.notificacion_routes import router as notificacion_router
 from app.routes.retroalimentacion_routes import router as retroalimentacion_router
+from app.services.auth_service import AuthService
 from app.services.notificacion_service import NotificacionService
 
 logger = logging.getLogger("sgep.alertas")
@@ -46,6 +47,23 @@ async def _loop_alertas_vencimiento() -> None:
         except Exception:  # noqa: BLE001 - EXPLICACIÓN: el loop debe sobrevivir a errores
             logger.exception("Fallo generando alertas de vencimiento")
         await asyncio.sleep(settings.alertas_intervalo_minutos * 60)
+
+
+async def _loop_purga_refresh() -> None:
+    """
+    EXPLICACIÓN: borra refresh caducados cada N minutos
+    (REFRESH_PURGA_INTERVALO_MINUTOS; 0 desactiva). Sin esto la tabla
+    crece un fila por login y nunca se limpia sola.
+    """
+    while True:
+        try:
+            async with AsyncSessionLocal() as session:
+                borrados = await AuthService.purgar_refresh_expirados(session)
+            if borrados:
+                logger.info("Refresh tokens expirados purgados: %s", borrados)
+        except Exception:  # noqa: BLE001 - EXPLICACIÓN: el loop debe sobrevivir a errores
+            logger.exception("Fallo purgando refresh tokens caducados")
+        await asyncio.sleep(settings.refresh_purga_intervalo_minutos * 60)
 
 
 def _aplicar_migraciones() -> None:
@@ -75,14 +93,16 @@ def _aplicar_migraciones() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Arranca/detiene la tarea periódica de alertas junto al servidor."""
+    """Arranca/detiene las tareas periódicas (alertas + purga de refresh)."""
     # EXPLICACIÓN: esquema al día antes de servir el primer request
     _aplicar_migraciones()
-    tarea = None
+    tareas = []
     if settings.alertas_intervalo_minutos > 0:
-        tarea = asyncio.create_task(_loop_alertas_vencimiento())
+        tareas.append(asyncio.create_task(_loop_alertas_vencimiento()))
+    if settings.refresh_purga_intervalo_minutos > 0:
+        tareas.append(asyncio.create_task(_loop_purga_refresh()))
     yield
-    if tarea:
+    for tarea in tareas:
         tarea.cancel()
 
 

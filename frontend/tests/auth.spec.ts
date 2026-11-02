@@ -102,4 +102,34 @@ describe('useAuthStore', () => {
 
     expect(auth.token).toBe('nuevo')
   })
+
+  it('logout revoca el refresh en el backend y limpia el estado', async () => {
+    session.guardar({
+      access_token: fabricarToken({ rol: 'aprendiz', exp: 9_999_999_999 }),
+      refresh_token: 'r-para-revocar',
+      token_type: 'bearer',
+    })
+    const auth = useAuthStore()
+    auth.sincronizarToken()
+    fetchMock.mockResolvedValue(respuesta(200, { mensaje: 'Sesión cerrada' }))
+
+    auth.logout()
+
+    // EXPLICACIÓN: es fire-and-forget => esperamos el microtask del POST
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/v1/auth/logout')
+    expect(JSON.parse(String(fetchMock.mock.calls[0]![1]?.body))).toEqual({
+      refresh_token: 'r-para-revocar',
+    })
+    expect(auth.autenticado).toBe(false)
+    expect(session.access).toBeNull()
+  })
+
+  it('logout sin refresh no llama al backend (nada que revocar)', () => {
+    const auth = useAuthStore()
+
+    auth.logout()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })

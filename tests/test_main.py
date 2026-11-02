@@ -9,7 +9,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.config import settings
-from app.main import _loop_alertas_vencimiento, app, lifespan
+from app.main import _loop_alertas_vencimiento, _loop_purga_refresh, app, lifespan
 
 # ====================================
 # RUTAS BÁSICAS
@@ -98,6 +98,81 @@ async def test_lifespan_crea_y_cancela_tarea(monkeypatch):
         assert len(tareas) == 1
 
     # EXPLICACIÓN: tras salir, lifespan.cancel() ya se ejecutó
+    await asyncio.sleep(0)
+
+
+# ====================================
+# LOOP DE PURGA DE REFRESH (lifespan)
+# ====================================
+
+@pytest.mark.asyncio
+async def test_loop_purga_sobrevive_y_duerme(monkeypatch):
+    """Test: la purga duerme entre rondas aunque la BD falle."""
+    from tests.conftest import TestSessionLocal
+
+    monkeypatch.setattr("app.main.AsyncSessionLocal", TestSessionLocal)
+
+    esperas: list[float] = []
+
+    async def _sleep_que_cancela(segundos: float) -> None:
+        esperas.append(segundos)
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(asyncio, "sleep", _sleep_que_cancela)
+
+    with pytest.raises(asyncio.CancelledError):
+        await _loop_purga_refresh()
+
+    assert esperas == [settings.refresh_purga_intervalo_minutos * 60]
+
+
+@pytest.mark.asyncio
+async def test_loop_purga_sobrevive_a_error_de_bd(monkeypatch):
+    """Test: BD caída no mata el loop de purga (except -> sigue y duerme)."""
+
+    class _SesionRota:
+        """EXPLICACIÓN: sesión falsa que revienta al entrar (simula BD caída)."""
+
+        async def __aenter__(self):
+            raise RuntimeError("BD caida")
+
+        async def __aexit__(self, *exc):
+            return False
+
+    monkeypatch.setattr("app.main.AsyncSessionLocal", _SesionRota)
+
+    esperas: list[float] = []
+
+    async def _sleep_que_cancela(segundos: float) -> None:
+        esperas.append(segundos)
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(asyncio, "sleep", _sleep_que_cancela)
+
+    with pytest.raises(asyncio.CancelledError):
+        await _loop_purga_refresh()
+
+    assert esperas == [settings.refresh_purga_intervalo_minutos * 60]
+
+
+@pytest.mark.asyncio
+async def test_lifespan_crea_tarea_purga(monkeypatch):
+    """Test: con REFRESH_PURGA_INTERVALO_MINUTOS > 0 arranca su tarea y la cancela."""
+    from tests.conftest import TestSessionLocal
+
+    monkeypatch.setattr("app.main._aplicar_migraciones", lambda: None)
+    monkeypatch.setattr(settings, "alertas_intervalo_minutos", 0)
+    monkeypatch.setattr(settings, "refresh_purga_intervalo_minutos", 1)
+    monkeypatch.setattr("app.main.AsyncSessionLocal", TestSessionLocal)
+
+    async with lifespan(app):
+        tareas = [
+            tarea
+            for tarea in asyncio.all_tasks()
+            if tarea.get_coro().__qualname__ == "_loop_purga_refresh"
+        ]
+        assert len(tareas) == 1
+
     await asyncio.sleep(0)
 
 

@@ -56,7 +56,7 @@ def test_reporte_acumula_todos_los_errores(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_entero_invalido_reportado(monkeypatch: pytest.MonkeyPatch):
-    """Variable no numérica → error claro con el nombre de la variable."""
+    """Variable no numǸrica ��' error claro con el nombre de la variable."""
     _entorno_valido(monkeypatch)
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "muchas")
 
@@ -64,3 +64,13 @@ def test_entero_invalido_reportado(monkeypatch: pytest.MonkeyPatch):
         load_settings()
 
     assert "ACCESS_TOKEN_EXPIRE_MINUTES" in str(exc.value)
+
+
+def test_purga_intervalo_con_minimo_cero(monkeypatch: pytest.MonkeyPatch):
+    """REFRESH_PURGA_INTERVALO_MINUTOS admite 0 (apagado) como alertas."""
+    _entorno_valido(monkeypatch)
+    monkeypatch.setenv("REFRESH_PURGA_INTERVALO_MINUTOS", "0")
+
+    cfg = load_settings()
+
+    assert cfg.refresh_purga_intervalo_minutos == 0

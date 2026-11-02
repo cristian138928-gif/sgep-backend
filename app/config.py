@@ -43,6 +43,7 @@ class Settings:
     email_pass: str
     email_from: str
     alertas_intervalo_minutos: int
+    refresh_purga_intervalo_minutos: int
 
 
 def _entero(nombre: str, por_defecto: str, errores: list[str], minimo: int = 1) -> int:
@@ -100,6 +101,9 @@ def load_settings() -> Settings:
     alertas_intervalo = _entero(
         "ALERTAS_INTERVALO_MINUTOS", "0", errores, minimo=0
     )
+    refresh_purga = _entero(
+        "REFRESH_PURGA_INTERVALO_MINUTOS", "0", errores, minimo=0
+    )
 
     if errores:
         raise ConfigError("Entorno inválido:\n- " + "\n- ".join(errores))
@@ -123,6 +127,8 @@ def load_settings() -> Settings:
         email_from=os.getenv("EMAIL_FROM", "noreply@sgep.local"),
         # EXPLICACIÓN: 0 = tarea de vencimientos desactivada (la activa .env)
         alertas_intervalo_minutos=alertas_intervalo,
+        # EXPLICACIÓN: 0 = purga de refresh caducados desactivada (la activa .env)
+        refresh_purga_intervalo_minutos=refresh_purga,
     )
 
 

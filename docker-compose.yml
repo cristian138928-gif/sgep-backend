@@ -33,6 +33,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:?Configura SECRET_KEY en .env (minimo 32 caracteres)}
       ALGORITHM: HS256
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      # EXPLICACIÓN: housekeeping de refresh_tokens cada hora (0 = apagado)
+      REFRESH_PURGA_INTERVALO_MINUTOS: ${REFRESH_PURGA_INTERVALO_MINUTOS:-60}
     depends_on:
       db:
         condition: service_healthy

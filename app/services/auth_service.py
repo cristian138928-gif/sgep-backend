@@ -273,6 +273,60 @@ class AuthService:
         return usuario
 
     @staticmethod
+    async def cerrar_sesion(db: AsyncSession, refresh_token: str) -> bool:
+        """
+        POST /api/v1/auth/logout: revoca el refresh token presentado.
+
+        EXPLICACIÓN: el JWT es stateless y sigue siendo "válido" hasta expirar;
+        borrar su jti de BD lo deja sin efecto (el canje falla con 401).
+
+        Args:
+            db: Sesión async
+            refresh_token: Refresh que el cliente quiere cerrar
+
+        Returns:
+            bool: True si se revocó un jti registrado (False = no-op)
+
+        Raises:
+            Ninguno: un token basura NO revienta el logout (idempotente).
+        """
+        try:
+            # EXPLICACIÓN: verify_exp=False => también se revoca un refresh ya
+            # vencido; cerrar sesión nunca debe fallar por caducidad
+            payload = decode(
+                refresh_token,
+                settings.secret_key,
+                algorithms=[settings.algorithm],
+                options={"verify_exp": False},
+            )
+        except PyJWTError:
+            return False
+
+        jti = payload.get("jti")
+        if not jti:
+            return False
+
+        resultado = await db.execute(delete(RefreshToken).where(RefreshToken.jti == jti))
+        await db.commit()
+        return bool(resultado.rowcount)
+
+    @staticmethod
+    async def purgar_refresh_expirados(db: AsyncSession) -> int:
+        """
+        Housekeeping: borra refresh tokens cuya expiración ya pasó.
+
+        Returns:
+            int: filas borradas (para loguear la limpieza en el lifespan)
+        """
+        resultado = await db.execute(
+            delete(RefreshToken)
+            .where(RefreshToken.expira_en < datetime.now(UTC))
+            .execution_options(synchronize_session=False)
+        )
+        await db.commit()
+        return int(resultado.rowcount or 0)
+
+    @staticmethod
     def crear_token_acceso(data: dict, expires_delta: timedelta = None) -> str:
         """
         Genera JWT de ACCESO (type=access, corta duración).

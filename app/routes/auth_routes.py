@@ -162,6 +162,29 @@ async def refresh(
     return await AuthService.refrescar_acceso(db, datos.refresh_token)
 
 
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(
+    datos: RefreshTokenSchema,
+    db: AsyncSession = Depends(get_db),
+    _limite: None = Depends(rate_limit_auth),
+):
+    """
+    ENDPOINT: POST /api/v1/auth/logout
+
+    Revoca el refresh token enviado: su jti se borra de BD y el canje posterior
+    falla con 401 (el access caduca solo en <=24h).
+
+    Returns:
+        200 OK: siempre, aunque el token ya no exista (idempotente)
+
+    Raises:
+        422: Payload sin refresh_token
+        429: Límite de intentos por IP superado
+    """
+    await AuthService.cerrar_sesion(db, datos.refresh_token)
+    return {"mensaje": "Sesión cerrada"}
+
+
 @router.get("/me", response_model=PerfilUsuarioSchema, status_code=status.HTTP_200_OK)
 async def perfil_actual(usuario: UsuarioBase = Depends(get_current_user)):
     """
