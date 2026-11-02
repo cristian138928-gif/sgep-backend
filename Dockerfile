@@ -22,7 +22,6 @@ COPY app ./app
 # EXPLICACIÓN: alembic necesario en runtime (lifespan ejecuta `alembic upgrade head`)
 COPY alembic ./alembic
 COPY alembic.ini ./
-COPY create_tables.py ./
 # EXPLICACIÓN: seed de demo ejecutable con docker compose exec api python seed_demo.py
 COPY seed_demo.py ./
 

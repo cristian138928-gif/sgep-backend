@@ -73,7 +73,7 @@ cd frontend
 npm install        # dependencias (vue, vue-router, pinia, vite)
 npm run dev        # desarrollo con proxy /api -> http://localhost:8000
 npm run typecheck  # vue-tsc --noEmit
-npm test           # vitest (44 tests, entorno happy-dom)
+npm test           # vitest (59 tests, entorno happy-dom)
 npm run build      # typecheck + build de producción en dist/
 ```
 
@@ -105,6 +105,7 @@ El frontend usa Vitest por separado (`cd frontend && npm test`); ambos jobs corr
 | POST | /api/v1/auth/registro-coordinador | Registro coordinador | Público |
 | POST | /api/v1/auth/login | Login (access + refresh) | Público |
 | POST | /api/v1/auth/refresh | Canjear refresh token (rotación) | Público |
+| POST | /api/v1/auth/logout | Revoca el refresh enviado (logout real) | Público (rate limit) |
 | GET | /api/v1/auth/me | Perfil (nombre + rol) | Autenticado |
 | PUT | /api/v1/auth/me | Editar nombre / cambiar contraseña (revoca refresh) | Autenticado |
 | GET | /api/v1/notificaciones | Lista + badge no leídas | Autenticado |
@@ -157,7 +158,7 @@ tests/
 ├── conftest.py          # Fixtures + helpers
 ├── test_auth.py         # 18 tests
 ├── test_config.py       # 4 tests (validación de .env)
-├── test_refresh.py      # 6 tests (rotación de tokens)
+├── test_refresh.py      # 10 tests (rotación de tokens)
 ├── test_rate_limit.py   # 5 tests (429 + cabeceras OWASP)
 ├── test_notificaciones.py # 9 tests (in-app + dedupe de vencimientos)
 ├── test_email.py        # 3 tests (consola + SMTP fake)
@@ -174,22 +175,23 @@ tests/
 ├── test_main.py         # 4 tests (lifespan + cabeceras)
 ├── test_models_poo.py   # 15 tests (herencia/polimorfismo)
 ├── test_perfil.py       # 7 tests (PUT /auth/me: nombre + contraseña)
+├── test_logout.py       # 7 tests (POST /auth/logout + purga de caducados)
 ├── test_migraciones.py  # Alembic (revisiones SQLite)
 └── test_connection.py   # 1 test
 frontend/
 ├── src/api/client.ts    # cliente HTTP (rotación refresh + mutex)
 ├── src/router/index.ts  # guards por rol
-└── tests/               # vitest (44 tests, happy-dom)
+└── tests/               # vitest (59 tests, happy-dom)
     ├── helpers.ts       # fabricarToken() para JWT de mentira
     ├── jwt.spec.ts / session.spec.ts / client.spec.ts
     ├── auth.spec.ts / notificaciones.spec.ts
-    └── router.spec.ts
+    └── router.spec.ts / componentes.spec.ts
 ```
 
 ## Tests
 
 ```bash
-# Backend: todos los tests (185)
+# Backend: todos los tests (196)
 uv run pytest tests/ -v
 
 # Solo auth
@@ -198,13 +200,15 @@ uv run pytest tests/test_auth.py -v
 # Con coverage (98%, CI exige >=95%)
 uv run pytest tests/ --cov=app
 
-# Frontend (44)
+# Frontend (59)
 cd frontend && npm test
 ```
 
 ## Seguridad
 
 - **JWT doble**: `access` (24h, autoriza API) + `refresh` (7d, solo canjea en `/auth/refresh` con rotación).
+- **Logout real**: `POST /auth/logout` borra el `jti` del refresh en BD (idempotente; la SPA lo llama antes de limpiar localStorage).
+- **Purga de caducados**: tarea en `lifespan` (`REFRESH_PURGA_INTERVALO_MINUTOS`, 60 en compose) que borra `refresh_tokens` vencidos.
 - **Rate limiting**: ventana deslizante en endpoints públicos → `429` + `Retry-After` (configurable con `RATE_LIMIT_*`).
 - **Fail-fast de entorno**: `app/config.py` valida `.env` al importar y lista todos los errores de una vez.
 - **Cabeceras OWASP**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` en toda respuesta.
