@@ -5,12 +5,14 @@ import { onMounted, reactive, ref } from 'vue'
 import { KeyRound, Save, ShieldCheck } from 'lucide-vue-next'
 
 import { api, ApiError } from '../api/client'
-import type { Perfil } from '../api/types'
+import type { Instructor, Perfil } from '../api/types'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 
 const perfil = ref<Perfil | null>(null)
+// EXPLICACIÓN: datos del instructor (centro/especialidad) no viajan en /auth/me
+const perfilInstructor = ref<Instructor | null>(null)
 const nombre = ref('')
 const cargando = ref(true)
 
@@ -27,6 +29,10 @@ onMounted(async () => {
   try {
     perfil.value = await api<Perfil>('/api/v1/auth/me')
     nombre.value = perfil.value.nombre_completo
+    if (auth.rol === 'instructor') {
+      // EXPLICACIÓN: endpoint propio del rol; solo el instructor lo consume
+      perfilInstructor.value = await api<Instructor>('/api/v1/instructor/perfil')
+    }
   } catch {
     error.value = 'No se pudo cargar tu perfil.'
   } finally {
@@ -121,6 +127,16 @@ async function cambiarClave(): Promise<void> {
             <!-- EXPLICACIÓN: el correo es la clave del JWT/login => solo lectura -->
             <input id="correo" :value="perfil?.correo_institucional ?? '—'" type="email" disabled />
           </div>
+          <template v-if="perfilInstructor">
+            <div class="campo">
+              <label for="centro">Centro de formación</label>
+              <input id="centro" :value="perfilInstructor.centro_formacion" type="text" disabled />
+            </div>
+            <div class="campo">
+              <label for="especialidad">Especialidad</label>
+              <input id="especialidad" :value="perfilInstructor.especialidad" type="text" disabled />
+            </div>
+          </template>
         </div>
         <button class="btn btn-primario" type="submit" :disabled="guardandoNombre || cargando">
           <Save v-if="!guardandoNombre" :size="15" />

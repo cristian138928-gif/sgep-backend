@@ -6,7 +6,9 @@ import { FileDown, MessageSquareText, Upload } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { Evidencia, Retroalimentacion } from '../../api/types'
+import vacioDocumentos from '../../assets/imagenes/vacio-documentos.svg'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import Esqueleto from '../../components/Esqueleto.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 
 const evidencias = ref<Evidencia[]>([])
@@ -172,10 +174,11 @@ function fechaCorta(iso: string | null): string {
     </div>
 
     <div class="tarjeta tarjeta-flush mt-1">
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || evidencias.length === 0"
+        v-else-if="evidencias.length === 0"
         :icono="Upload"
-        :cargando="cargando"
+        :ilustracion="vacioDocumentos"
         titulo="Aún no has subido evidencias"
         texto="Usa el formulario superior para adjuntar tu primera evidencia."
       />

@@ -106,19 +106,23 @@ async def listar_evidencias(
     )
 
 
-@router.get("/aprendices", response_model=list[AvanceAprendizSchema])
+@router.get("/aprendices", response_model=PaginacionSchema[AvanceAprendizSchema])
 async def listar_aprendices_con_avance(
     programa: str | None = Query(None, description="Filtrar por programa"),
+    page: int = Query(1, ge=1, description="Numero de pagina"),
+    page_size: int = Query(10, ge=1, le=50, description="Elementos por pagina"),
     db: AsyncSession = Depends(get_db),
     usuario: UsuarioBase = Depends(verificar_coordinador)
 ):
     """
     ENDPOINT: GET /api/v1/coordinador/aprendices
 
-    Lista aprendices con su porcentaje de avance.
+    Lista paginada de aprendices con su porcentaje de avance.
     Filtro opcional por programa.
     """
-    return await CoordinadorService.obtener_avance_aprendices(db, programa=programa)
+    return await CoordinadorService.obtener_avance_aprendices(
+        db, programa=programa, page=page, page_size=page_size
+    )
 
 
 @router.get("/instructores", response_model=list[InstructorResponseSchema])

@@ -6,7 +6,9 @@ import { Download, FileDown, FileSearch, Filter } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { Evidencia, Pagina } from '../../api/types'
+import vacioDocumentos from '../../assets/imagenes/vacio-documentos.svg'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import Esqueleto from '../../components/Esqueleto.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 
@@ -124,16 +126,13 @@ onMounted(cargar)
     </div>
 
     <div class="tarjeta tarjeta-flush mt-1">
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || !pagina || pagina.items.length === 0"
+        v-else-if="!pagina || pagina.items.length === 0"
         :icono="FileSearch"
-        :cargando="cargando"
+        :ilustracion="vacioDocumentos"
         titulo="Sin resultados"
-        :texto="
-          cargando
-            ? 'Aplicando filtros y consultando el servidor…'
-            : 'Ninguna evidencia coincide con los filtros aplicados.'
-        "
+        texto="Ninguna evidencia coincide con los filtros aplicados."
       />
 
       <template v-else>

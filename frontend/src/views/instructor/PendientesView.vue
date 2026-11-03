@@ -6,9 +6,11 @@ import { Bell, ClipboardCheck, Inbox, ListChecks } from 'lucide-vue-next'
 
 import { api } from '../../api/client'
 import type { AlertaRol, EstadisticasInstructor, Pagina } from '../../api/types'
+import vacioBandeja from '../../assets/imagenes/vacio-bandeja.svg'
 import AlertaLista from '../../components/AlertaLista.vue'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 import KpiTarjeta from '../../components/KpiTarjeta.vue'
+import Esqueleto from '../../components/Esqueleto.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 import type { Evidencia } from '../../api/types'
@@ -89,14 +91,13 @@ onMounted(cargar)
         <span v-if="pagina" class="migas">{{ pagina.total }} en cola</span>
       </div>
 
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || !pagina || pagina.items.length === 0"
+        v-else-if="!pagina || pagina.items.length === 0"
         :icono="ClipboardCheck"
-        :cargando="cargando"
+        :ilustracion="vacioBandeja"
         titulo="Todo al día"
-        :texto="
-          cargando ? 'Consultando la bandeja…' : 'No hay evidencias pendientes de evaluación.'
-        "
+        texto="No hay evidencias pendientes de evaluación."
       />
 
       <template v-else>

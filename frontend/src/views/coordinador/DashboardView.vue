@@ -6,6 +6,7 @@ import { CircleCheck, Download, Files, Inbox, TriangleAlert, Users, UserSquare2 
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { AlertaRol, Estadisticas } from '../../api/types'
+import bannerAvance from '../../assets/imagenes/banner-avance.svg'
 import AlertaLista from '../../components/AlertaLista.vue'
 import KpiTarjeta from '../../components/KpiTarjeta.vue'
 
@@ -72,6 +73,7 @@ onMounted(async () => {
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
     <template v-if="stats">
+      <img class="banner-avance" :src="bannerAvance" alt="" aria-hidden="true" />
       <div class="rejilla rejilla-3">
         <KpiTarjeta
           etiqueta="Evidencias totales"
@@ -134,3 +136,16 @@ onMounted(async () => {
     </template>
   </div>
 </template>
+
+<style scoped>
+/* EXPLICACIÓN: banner decorativo sobre los KPIs; alto fijo + cover evita distorsión */
+.banner-avance {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+</style>

@@ -255,7 +255,10 @@ async def test_listar_aprendices_vacios(client: AsyncClient, db_session):
     )
 
     assert response.status_code == 200
-    assert response.json() == []
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
+    assert data["total_pages"] == 1
 
 
 @pytest.mark.asyncio
@@ -275,10 +278,42 @@ async def test_avance_aprendiz(client: AsyncClient, db_session):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["total_evidencias"] == 3
-    assert data[0]["aprobadas"] == 2
-    assert data[0]["porcentaje_avance"] == 66.67
+    assert data["total"] == 1
+    assert data["items"][0]["total_evidencias"] == 3
+    assert data["items"][0]["aprobadas"] == 2
+    assert data["items"][0]["porcentaje_avance"] == 66.67
+
+
+@pytest.mark.asyncio
+async def test_paginacion_aprendices(client: AsyncClient, db_session):
+    """Test: page_size=1 divide el listado en páginas."""
+    token = await crear_coordinador(db_session)
+
+    from app.models.usuario import Aprendiz
+    aprendices = [
+        Aprendiz(
+            nombre_completo=f"User {i}", correo_institucional=f"u{i}@test.com",
+            numero_documento=f"10{i:08d}", tipo_documento="CC", rol="aprendiz",
+            numero_ficha=str(100 + i), programa="ADSO"
+        )
+        for i in range(3)
+    ]
+    for ap in aprendices:
+        ap.establecer_contrasena("Pass123!")
+    db_session.add_all(aprendices)
+    await db_session.commit()
+
+    response = await client.get(
+        "/api/v1/coordinador/aprendices?page=2&page_size=2",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 3
+    assert data["total_pages"] == 2
+    assert data["page"] == 2
+    assert len(data["items"]) == 1
 
 
 @pytest.mark.asyncio
@@ -309,8 +344,8 @@ async def test_filtro_por_programa(client: AsyncClient, db_session):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["programa"] == "ADSO"
+    assert data["total"] == 1
+    assert data["items"][0]["programa"] == "ADSO"
 
 
 # ====================================

@@ -5,10 +5,15 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { UserCheck, UserMinus, UserPlus, Users } from 'lucide-vue-next'
 
 import { api, ApiError } from '../../api/client'
-import type { Asignacion, AvanceAprendiz, Instructor } from '../../api/types'
+import type { Asignacion, AvanceAprendiz, Instructor, Pagina } from '../../api/types'
+import AvatarNombre from '../../components/AvatarNombre.vue'
+import Esqueleto from '../../components/Esqueleto.vue'
+import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 
 const aprendices = ref<AvanceAprendiz[]>([])
+const paginaActual = ref(1)
+const totalPaginas = ref(1)
 const instructores = ref<Instructor[]>([])
 const asignaciones = ref<Asignacion[]>([])
 const cargando = ref(true)
@@ -28,17 +33,28 @@ async function cargar(): Promise<void> {
   try {
     // EXPLICACIÓN: 3 GET independientes en paralelo montan la vista en una ronda de red
     const [aps, ins, asg] = await Promise.all([
-      api<AvanceAprendiz[]>('/api/v1/coordinador/aprendices'),
+      api<Pagina<AvanceAprendiz>>(
+        `/api/v1/coordinador/aprendices?page=${paginaActual.value}&page_size=10`,
+      ),
       api<Instructor[]>('/api/v1/coordinador/instructores'),
       api<Asignacion[]>('/api/v1/asignaciones/'),
     ])
-    aprendices.value = aps
+    aprendices.value = aps.items
+    totalPaginas.value = aps.total_pages
     instructores.value = ins
     asignaciones.value = asg
   } catch {
     error.value = 'No se pudo cargar la información de asignaciones.'
   } finally {
     cargando.value = false
+  }
+}
+
+function cambiarPagina(delta: number): void {
+  const destino = paginaActual.value + delta
+  if (destino >= 1 && destino <= totalPaginas.value) {
+    paginaActual.value = destino
+    void cargar()
   }
 }
 
@@ -108,14 +124,12 @@ onMounted(cargar)
     <div v-if="info" class="alerta-info">{{ info }}</div>
 
     <div class="tarjeta tarjeta-flush">
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || aprendices.length === 0"
+        v-else-if="aprendices.length === 0"
         :icono="Users"
-        :cargando="cargando"
         titulo="Sin aprendices"
-        :texto="
-          cargando ? 'Consultando el registro…' : 'No hay aprendices registrados en el sistema.'
-        "
+        texto="No hay aprendices registrados en el sistema."
       />
 
       <div v-else class="tabla-contenedor tabla-plana">
@@ -130,11 +144,11 @@ onMounted(cargar)
           </thead>
           <tbody>
             <tr v-for="a in aprendices" :key="a.id_usuario">
-              <td>{{ a.nombre_completo }}</td>
+              <td><AvatarNombre :nombre="a.nombre_completo" /></td>
               <td>{{ a.numero_ficha }}</td>
               <td>
                 <template v-if="porAprendiz.get(a.id_usuario)">
-                  {{ porAprendiz.get(a.id_usuario)!.nombre_instructor }}
+                  <AvatarNombre :nombre="porAprendiz.get(a.id_usuario)!.nombre_instructor" />
                 </template>
                 <span v-else><small class="texto-suave">Sin asignar</small></span>
               </td>
@@ -172,10 +186,16 @@ onMounted(cargar)
                   </button>
                 </template>
               </td>
-            </tr>
-          </tbody>
-        </table>
+              </tr>
+            </tbody>
+          </table>
+          <PaginacionBar
+            :pagina="paginaActual"
+            :total-paginas="totalPaginas"
+            :pagina-actual="paginaActual"
+            @cambiar="cambiarPagina"
+          />
+        </div>
       </div>
     </div>
-  </div>
 </template>

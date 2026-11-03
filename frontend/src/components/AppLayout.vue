@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // src/components/AppLayout.vue
 // EXPLICACIÓN: shell de la sesión: sidebar por rol + badge de notificaciones + logout
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue'
+import { Transition, computed, onBeforeUnmount, onMounted, ref, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Bell,
@@ -71,6 +71,17 @@ const iniciales = computed(() => {
 
 const menuAbierto = ref(false)
 
+const rutaActual = ref<string | null>(null)
+
+// EXPLICACIÓN: la barra de progreso de navegación se reinicia con cada ruta activa
+watch(
+  () => route.fullPath,
+  (nueva) => {
+    rutaActual.value = nueva
+  },
+  { immediate: true },
+)
+
 // EXPLICACIÓN: al cambiar de ruta el drawer móvil se cierra solo (si no, tapa el contenido)
 watch(
   () => route.fullPath,
@@ -104,6 +115,7 @@ function cerrarSesion(): void {
 
 <template>
   <div class="layout">
+    <div v-if="rutaActual" class="progreso-ruta" @animationend="rutaActual = null" />
     <div class="fondo-tecnico" aria-hidden="true" />
 
     <div v-if="menuAbierto" class="scrim" @click="menuAbierto = false" />
@@ -166,7 +178,11 @@ function cerrarSesion(): void {
     </header>
 
     <main class="contenido">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <Transition name="vista" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </router-view>
     </main>
   </div>
 </template>
@@ -182,5 +198,22 @@ function cerrarSesion(): void {
   width: 30px;
   height: 30px;
   padding: 0;
+}
+.progreso-ruta {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--verde), var(--cian));
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: subida-ruta 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 60;
+}
+@keyframes subida-ruta {
+  0% { transform: scaleX(0); }
+  70% { transform: scaleX(0.82); }
+  100% { transform: scaleX(1); }
 }
 </style>

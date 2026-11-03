@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" fill="none" role="img" aria-label="Sin documentos">
+  <!-- EXPLICACIÓN: carpeta vacía line-art; se ve bien a 140-200px de ancho -->
+  <path d="M28 44 h34 l12 14 h58 a8 8 0 0 1 8 8 v40 a8 8 0 0 1 -8 8 H28 a8 8 0 0 1 -8 -8 V52 a8 8 0 0 1 8 -8 z" fill="#161e27" stroke="#2a3543" stroke-width="2.5"/>
+  <path d="M20 62 h120" stroke="#1e2733" stroke-width="2"/>
+  <rect x="52" y="18" width="56" height="40" rx="6" fill="#11171f" stroke="#2a3543" stroke-width="2.5" transform="rotate(-6 80 38)"/>
+  <rect x="64" y="30" width="30" height="5" rx="2.5" fill="#4cdb12" transform="rotate(-6 80 38)"/>
+  <rect x="64" y="40" width="36" height="4" rx="2" fill="#2a3543" transform="rotate(-6 80 38)"/>
+  <circle cx="122" cy="92" r="16" fill="#0e141b" stroke="#22d3ee" stroke-width="2.5"/>
+  <path d="M116 92 h12 M122 86 v12" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

@@ -149,16 +149,12 @@ class CoordinadorService:
         }
 
     @staticmethod
-    async def obtener_avance_aprendices(
+    async def _avances_completos(
         db: AsyncSession,
         programa: str | None = None
     ) -> list[dict]:
         """
-        Obtiene el avance de cada aprendiz.
-
-        Args:
-            db: Sesion async
-            programa: Filtrar por programa (opcional)
+        Calcula el avance de TODOS los aprendices (sin paginar).
 
         Returns:
             Lista de dicts con informacion del aprendiz y su avance
@@ -197,6 +193,42 @@ class CoordinadorService:
             })
 
         return avances
+
+    @staticmethod
+    async def obtener_avance_aprendices(
+        db: AsyncSession,
+        programa: str | None = None,
+        page: int = 1,
+        page_size: int = 10
+    ) -> dict:
+        """
+        Avance de aprendices paginado (para la vista del coordinador).
+
+        Args:
+            db: Sesion async
+            programa: Filtrar por programa (opcional)
+            page: Numero de pagina (default 1)
+            page_size: Elementos por pagina (default 10, max 50)
+
+        Returns:
+            dict con items, total, page, page_size, total_pages
+        """
+        # EXPLICACIÓN: el volumen por centro es acotado => paginar en memoria
+        # tras calcular evita subconsultas OFFSET y mantiene el cálculo O(1) por página
+        page_size = min(page_size, 50)
+        avances = await CoordinadorService._avances_completos(db, programa=programa)
+
+        total = len(avances)
+        total_pages = math.ceil(total / page_size) if total > 0 else 1
+        offset = (page - 1) * page_size
+
+        return {
+            "items": avances[offset:offset + page_size],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
 
     @staticmethod
     async def obtener_instructores(db: AsyncSession) -> list[Instructor]:
@@ -256,7 +288,7 @@ class CoordinadorService:
         Returns:
             str con contenido CSV
         """
-        avances = await CoordinadorService.obtener_avance_aprendices(db)
+        avances = await CoordinadorService._avances_completos(db)
 
         buffer = io.StringIO()
         escritor = csv.writer(buffer)

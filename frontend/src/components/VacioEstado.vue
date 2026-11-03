@@ -10,14 +10,17 @@ withDefaults(
     texto: string
     icono: Component
     cargando?: boolean
+    /** EXPLICACIÓN: URL de un SVG; si llega, sustituye al icono circular */
+    ilustracion?: string
   }>(),
-  { cargando: false },
+  { cargando: false, ilustracion: '' },
 )
 </script>
 
 <template>
   <div class="vacio">
-    <span class="vacio-ico" :class="{ girando: cargando }">
+    <img v-if="ilustracion" class="vacio-img" :src="ilustracion" alt="" aria-hidden="true" />
+    <span v-else class="vacio-ico" :class="{ girando: cargando }">
       <component :is="icono" :size="26" />
     </span>
     <h3>{{ titulo }}</h3>
@@ -37,6 +40,12 @@ withDefaults(
   background: var(--superficie-alta);
   border: 1px solid var(--borde-fuerte);
   color: var(--texto-suave);
+}
+.vacio-img {
+  width: 150px;
+  height: auto;
+  margin-bottom: 0.6rem;
+  opacity: 0.92;
 }
 .vacio-ico.girando {
   color: var(--cian);

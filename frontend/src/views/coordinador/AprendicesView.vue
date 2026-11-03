@@ -1,14 +1,19 @@
 <script setup lang="ts">
 // src/views/coordinador/AprendicesView.vue
-// EXPLICACIÓN: avance por aprendiz + reporte RF07 (CSV exportar-avance)
+// EXPLICACIÓN: avance por aprendiz con paginación server-side + reporte RF07 (CSV)
 import { onMounted, ref } from 'vue'
 import { Download, Search, Users, X } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
-import type { AvanceAprendiz } from '../../api/types'
+import type { AvanceAprendiz, Pagina } from '../../api/types'
+import vacioDocumentos from '../../assets/imagenes/vacio-documentos.svg'
+import AvatarNombre from '../../components/AvatarNombre.vue'
+import Esqueleto from '../../components/Esqueleto.vue'
+import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 
-const aprendices = ref<AvanceAprendiz[]>([])
+const pagina = ref<Pagina<AvanceAprendiz> | null>(null)
+const paginaActual = ref(1)
 const programa = ref('')
 const cargando = ref(true)
 const error = ref('')
@@ -17,13 +22,31 @@ const exportando = ref(false)
 async function cargar(): Promise<void> {
   cargando.value = true
   try {
-    const qs = programa.value ? `?programa=${encodeURIComponent(programa.value)}` : ''
-    aprendices.value = await api<AvanceAprendiz[]>(`/api/v1/coordinador/aprendices${qs}`)
+    const params = new URLSearchParams({ page: String(paginaActual.value), page_size: '10' })
+    if (programa.value) params.set('programa', programa.value)
+    pagina.value = await api<Pagina<AvanceAprendiz>>(
+      `/api/v1/coordinador/aprendices?${params.toString()}`,
+    )
   } catch {
     error.value = 'No se pudo cargar la lista de aprendices.'
   } finally {
     cargando.value = false
   }
+}
+
+function cambiarPagina(delta: number): void {
+  const total = pagina.value?.total_pages ?? 1
+  const destino = paginaActual.value + delta
+  if (destino >= 1 && destino <= total) {
+    paginaActual.value = destino
+    void cargar()
+  }
+}
+
+function aplicarFiltro(): void {
+  // EXPLICACIÓN: un filtro nuevo invalida la página actual (evita páginas vacías)
+  paginaActual.value = 1
+  void cargar()
 }
 
 async function exportarAvance(): Promise<void> {
@@ -59,7 +82,7 @@ onMounted(cargar)
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
     <div class="tarjeta">
-      <form class="fila fila-fin" @submit.prevent="cargar">
+      <form class="fila fila-fin" @submit.prevent="aplicarFiltro">
         <div class="campo">
           <label for="programa">Filtrar por programa</label>
           <input id="programa" v-model.trim="programa" type="text" placeholder="ADSO…" />
@@ -72,7 +95,7 @@ onMounted(cargar)
           v-if="programa"
           class="btn"
           type="button"
-          @click="programa = ''; cargar()"
+          @click="programa = ''; aplicarFiltro()"
         >
           <X :size="15" />
           Limpiar
@@ -81,45 +104,52 @@ onMounted(cargar)
     </div>
 
     <div class="tarjeta tarjeta-flush mt-1">
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || aprendices.length === 0"
+        v-else-if="!pagina || pagina.items.length === 0"
         :icono="Users"
-        :cargando="cargando"
+        :ilustracion="vacioDocumentos"
         titulo="Sin aprendices"
-        :texto="
-          cargando ? 'Consultando el registro…' : 'No hay aprendices registrados o el filtro no coincide.'
-        "
+        texto="No hay aprendices registrados o el filtro no coincide."
       />
 
-      <div v-else class="tabla-contenedor tabla-plana">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Ficha</th>
-              <th>Programa</th>
-              <th>Evidencias</th>
-              <th>Aprobadas</th>
-              <th>Avance</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in aprendices" :key="a.id_usuario">
-              <td>{{ a.nombre_completo }}</td>
-              <td>{{ a.numero_ficha }}</td>
-              <td>{{ a.programa }}</td>
-              <td>{{ a.total_evidencias }}</td>
-              <td>{{ a.aprobadas }}</td>
-              <td class="ancho-min">
-                <div class="barra-progreso">
-                  <div :style="{ width: `${a.porcentaje_avance}%` }" />
-                </div>
-                <small class="dato">{{ a.porcentaje_avance }} %</small>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <template v-else>
+        <div class="tabla-contenedor tabla-plana">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Ficha</th>
+                <th>Programa</th>
+                <th>Evidencias</th>
+                <th>Aprobadas</th>
+                <th>Avance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="a in pagina.items" :key="a.id_usuario">
+                <td><AvatarNombre :nombre="a.nombre_completo" /></td>
+                <td>{{ a.numero_ficha }}</td>
+                <td>{{ a.programa }}</td>
+                <td>{{ a.total_evidencias }}</td>
+                <td>{{ a.aprobadas }}</td>
+                <td class="ancho-min">
+                  <div class="barra-progreso">
+                    <div :style="{ width: `${a.porcentaje_avance}%` }" />
+                  </div>
+                  <small class="dato">{{ a.porcentaje_avance }} %</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <PaginacionBar
+            :pagina="pagina.page"
+            :total-paginas="pagina.total_pages"
+            :pagina-actual="paginaActual"
+            @cambiar="cambiarPagina"
+          />
+        </div>
+      </template>
     </div>
   </div>
 </template>

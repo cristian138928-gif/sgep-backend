@@ -5,6 +5,8 @@ import { History } from 'lucide-vue-next'
 
 import { api } from '../../api/client'
 import type { EstadoEvidencia, Pagina, Retroalimentacion } from '../../api/types'
+import vacioBandeja from '../../assets/imagenes/vacio-bandeja.svg'
+import Esqueleto from '../../components/Esqueleto.vue'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
@@ -54,16 +56,13 @@ onMounted(cargar)
     <div v-if="error" class="alerta-error">{{ error }}</div>
 
     <div class="tarjeta tarjeta-flush">
+      <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
-        v-if="cargando || !pagina || pagina.items.length === 0"
+        v-else-if="!pagina || pagina.items.length === 0"
         :icono="History"
-        :cargando="cargando"
-        :titulo="cargando ? 'Cargando historial…' : 'Sin evaluaciones registradas'"
-        :texto="
-          cargando
-            ? 'Estamos consultando tus evaluaciones.'
-            : 'Las evaluaciones que registres aparecerán aquí.'
-        "
+        :ilustracion="vacioBandeja"
+        titulo="Sin evaluaciones registradas"
+        texto="Las evaluaciones que registres aparecerán aquí."
       />
 
       <template v-else>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // src/views/aprendiz/AvanceView.vue
 // EXPLICACIÓN: avance + alertas en UNA vista => menos peticiones y contexto único
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Bell, Gauge, TrendingUp } from 'lucide-vue-next'
 
 import { api } from '../../api/client'
@@ -13,6 +13,13 @@ const avance = ref<AvanceAprendiz | null>(null)
 const alertas = ref<Alerta[]>([])
 const ventana = ref(7)
 const error = ref('')
+
+// EXPLICACIÓN: circunferencia SVG del anillo => porcentaje exacto sin redondeo visual
+const CIRC = 2 * Math.PI * 62
+const anilloOffset = computed(() => {
+  const p = avance.value?.porcentaje_avance ?? 0
+  return CIRC * (1 - p / 100)
+})
 
 async function cargarAlertas(): Promise<void> {
   alertas.value = await api<Alerta[]>(`/api/v1/aprendiz/alertas?dias=${ventana.value}`)
@@ -52,10 +59,14 @@ onMounted(async () => {
           </span>
         </div>
 
-        <div class="barra-progreso mt-1">
-          <div :style="{ width: `${avance.porcentaje_avance}%` }" />
+        <div class="anillo-avance">
+          <svg viewBox="0 0 140 140" class="anillo-svg" role="img" aria-label="Progreso general">
+            <circle cx="70" cy="70" r="62" class="anillo-fondo" />
+            <circle cx="70" cy="70" r="62" class="anillo-cilindro" :stroke-dashoffset="anilloOffset" />
+          </svg>
+          <div class="anillo-texto">{{ avance.porcentaje_avance }}%</div>
         </div>
-        <p class="dato dato-fuerte">
+        <p class="dato dato-fuerte centrado">
           {{ avance.porcentaje_avance }} % completado
         </p>
       </div>
