@@ -6,6 +6,8 @@ import { FileCheck2, Lock, ShieldCheck, TrendingUp } from 'lucide-vue-next'
 
 import { ApiError } from '../api/client'
 import AuthPanel from '../components/AuthPanel.vue'
+// EXPLICACIÓN: logo real del proyecto (Vite lo emite con hash en dist/assets)
+import sgepLogo from '../assets/imagenes/sgep-logo.jpg'
 import { rutaPorRol } from '../router'
 import { useAuthStore } from '../stores/auth'
 
@@ -52,7 +54,11 @@ async function enviar(): Promise<void> {
     :features="features"
   >
     <div class="auth-tarjeta">
-      <div class="auth-logo logo-sm mb-1">SGE<span>P</span></div>
+      <img
+        :src="sgepLogo"
+        alt="SGEP"
+        class="mb-2 h-24 w-auto rounded-xl border border-slate-200 object-cover"
+      />
       <p class="auth-sub">Inicia sesión para gestionar tus evidencias</p>
 
       <div v-if="error" class="alerta-error">{{ error }}</div>

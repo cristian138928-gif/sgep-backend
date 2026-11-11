@@ -5,6 +5,7 @@ import { Transition, computed, onBeforeUnmount, onMounted, ref, watch, type Comp
 import { useRoute, useRouter } from 'vue-router'
 import {
   Bell,
+  BookOpen,
   ClipboardCheck,
   Files,
   History,
@@ -21,11 +22,22 @@ import {
 
 import { useAuthStore } from '../stores/auth'
 import { useNotificacionesStore } from '../stores/notificaciones'
+import { leerFoto, versionFoto } from '../api/foto'
+import AvatarCirculo from './AvatarCirculo.vue'
+import LogoSGEP from './LogoSGEP.vue'
+// EXPLICACIÓN: asset local (Vite lo resuelve a URL con hash) => demo estable sin depender de la red
+import avatarPrueba from '../assets/imagenes/avatar-instructor.jpg'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 const notificaciones = useNotificacionesStore()
+
+// EXPLICACIÓN: versionFoto crea la reactividad => guardar/quitar en el perfil repinta el navbar
+const fotoUsuario = computed(() => {
+  void versionFoto.value
+  return auth.perfil ? leerFoto(auth.perfil.id_usuario) : ''
+})
 
 interface ItemNav {
   ruta: string
@@ -48,6 +60,7 @@ const navInstructor: ItemNav[] = [
 const navCoordinador: ItemNav[] = [
   { ruta: '/app/coordinador/dashboard', etiqueta: 'Dashboard', icono: LayoutDashboard },
   { ruta: '/app/coordinador/evidencias', etiqueta: 'Evidencias', icono: ClipboardCheck },
+  { ruta: '/app/coordinador/bitacoras', etiqueta: 'Bitácoras', icono: BookOpen },
   { ruta: '/app/coordinador/aprendices', etiqueta: 'Aprendices', icono: Users },
   { ruta: '/app/coordinador/asignaciones', etiqueta: 'Asignaciones', icono: UserCheck },
   { ruta: '/app/notificaciones', etiqueta: 'Notificaciones', icono: Bell },
@@ -61,13 +74,6 @@ const items = computed<ItemNav[]>(() => {
 })
 
 const etiquetaRol = computed(() => auth.rol ?? 'usuario')
-
-/** EXPLICACIÓN: iniciales del nombre => avatar identificable sin endpoint de foto */
-const iniciales = computed(() => {
-  const partes = auth.nombre.trim().split(/\s+/).slice(0, 2)
-  if (!partes[0]) return '??'
-  return partes.map((p) => p[0]?.toUpperCase() ?? '').join('')
-})
 
 const menuAbierto = ref(false)
 
@@ -122,7 +128,8 @@ function cerrarSesion(): void {
 
     <aside class="sidebar" :class="{ abierta: menuAbierto }">
       <div class="sidebar-logo">
-        SGE<span>P</span>
+        <!-- EXPLICACIÓN: logo SVG compacto (un solo flex-item => el gap no separa letras) -->
+        <LogoSGEP :fuente="19" />
         <button
           class="btn btn-fantasma menu-toggle cerrar-menu"
           type="button"
@@ -132,7 +139,8 @@ function cerrarSesion(): void {
           <X :size="16" />
         </button>
       </div>
-      <div class="sidebar-version">Gestión de evidencias</div>
+      <!-- EXPLICACIÓN: utilities > components (layers.css) => el texto se estiliza sin '!' -->
+      <div class="sidebar-version text-xs text-slate-400">Gestión de evidencias</div>
 
       <div class="sidebar-seccion">Menú · {{ etiquetaRol }}</div>
       <router-link v-for="item in items" :key="item.ruta" :to="item.ruta">
@@ -168,7 +176,12 @@ function cerrarSesion(): void {
           <b>{{ auth.nombre || auth.perfil?.correo_institucional }}</b>
           <span>{{ etiquetaRol }}</span>
         </span>
-        <span class="avatar">{{ iniciales }}</span>
+        <!-- EXPLICACIÓN: enLinea por defecto = el usuario actual SIEMPRE tiene sesión activa -->
+        <!-- EXPLICACIÓN: foto del perfil > imagen de prueba > iniciales (si falla la carga) -->
+        <AvatarCirculo
+          :nombre="auth.nombre || auth.perfil?.correo_institucional || ''"
+          :foto="fotoUsuario || avatarPrueba"
+        />
 
         <button class="btn" type="button" @click="cerrarSesion">
           <LogOut :size="15" />

@@ -1,48 +1,48 @@
 /* src/styles/main.css
-   EXPLICACIÓN: Tema "dark tech" propio con tokens (sin framework CSS):
-   menos peso en build y control total del tema SGEP.
+   EXPLICACIÓN: Tema "Enterprise" claro propio con tokens (sin framework CSS),
+   alineado a UI_GUIDELINES.md: página slate-50, tarjetas blancas, sidebar slate-900.
    EXPLICACIÓN: TODA la UI consume estas variables, así que cambiar el token
    rediseña el proyecto completo sin tocar cada vista. */
 
 :root {
-  /* EXPLICACIÓN: dark nativo => scrollbars, selects y focus del SO en tema oscuro */
-  color-scheme: dark;
+  /* EXPLICACIÓN: light nativo => scrollbars, selects y focus del SO en tema claro */
+  color-scheme: light;
 
-  /* ---- Acentos de marca ---- */
-  --verde: #4cdb12;
-  --verde-oscuro: #3fbe0e;
-  --verde-suave: rgba(76, 219, 18, 0.14);
-  --azul: #4d8dff;
-  --azul-suave: rgba(77, 141, 255, 0.14);
-  --ambar: #f59e0b;
-  --ambar-suave: rgba(245, 158, 11, 0.14);
-  --rojo: #f05252;
-  --rojo-suave: rgba(240, 82, 82, 0.14);
-  /* EXPLICACIÓN: cian como acento técnico (links de datos, foco, métricas) */
-  --cian: #22d3ee;
-  --cian-suave: rgba(34, 211, 238, 0.14);
+  /* ---- Acentos de marca (paleta Enterprise: emerald/blue/amber/rose) ---- */
+  --verde: #059669; /* emerald-600: primarios y acentos */
+  --verde-oscuro: #047857; /* emerald-700: hover */
+  --verde-suave: #ecfdf5; /* emerald-50: fondos suaves de badge/icono */
+  --azul: #2563eb; /* blue-600 */
+  --azul-suave: #eff6ff; /* blue-50 */
+  --ambar: #d97706; /* amber-600 */
+  --ambar-suave: #fffbeb; /* amber-50 */
+  --rojo: #e11d48; /* rose-600 */
+  --rojo-suave: #fff1f2; /* rose-50 */
+  /* EXPLICACIÓN: cian como acento técnico (links de datos, métricas) */
+  --cian: #0891b2; /* cyan-600 */
+  --cian-suave: #ecfeff; /* cyan-50 */
 
-  /* ---- Superficies ---- */
-  --fondo: #0a0e13;
-  --fondo-2: #0e141b;
-  --superficie: #11171f;
-  --superficie-alta: #161e27;
-  --borde: #1e2733;
-  --borde-fuerte: #2a3543;
-  --gris-suave: #131a22; /* EXPLICACIÓN: fila expandible en tablas (ex var fallback claro) */
+  /* ---- Superficies (guía UI: página slate-50, tarjetas blancas) ---- */
+  --fondo: #f8fafc; /* slate-50: fondo general de pantalla */
+  --fondo-2: #f8fafc; /* slate-50: cabeceras de tabla y campos */
+  --superficie: #ffffff; /* tarjetas y contenedores */
+  --superficie-alta: #f8fafc; /* hover de fila / botón */
+  --borde: #e2e8f0; /* slate-200: bordes delgados */
+  --borde-fuerte: #cbd5e1; /* slate-300 */
+  --gris-suave: #f8fafc; /* fila expandible en tablas */
 
   /* ---- Texto ---- */
-  --texto: #e6edf3;
-  --texto-suave: #8b98a8;
+  --texto: #0f172a; /* slate-900 */
+  --texto-suave: #64748b; /* slate-500 */
 
   /* ---- Geometría / elevación ---- */
-  --radio: 12px;
-  --radio-sm: 8px;
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --sombra-alta: 0 18px 44px rgba(0, 0, 0, 0.5);
-  /* EXPLICACIÓN: glow verde = lenguaje visual "tecnológico" en elementos activos */
-  --glow: 0 0 0 1px rgba(76, 219, 18, 0.35), 0 0 22px rgba(76, 219, 18, 0.16);
-  --linea-superior: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --radio: 12px; /* = rounded-xl de la guía */
+  --radio-sm: 8px; /* = rounded-lg */
+  --sombra: 0 1px 2px rgba(15, 23, 42, 0.06); /* shadow-sm */
+  --sombra-alta: 0 10px 24px rgba(15, 23, 42, 0.1);
+  /* EXPLICACIÓN: anillo esmeralda suave = feedback del botón primario */
+  --glow: 0 0 0 3px rgba(5, 150, 105, 0.25);
+  --linea-superior: inset 0 1px 0 rgba(255, 255, 255, 0);
 
   /* ---- Tipografía ---- */
   --fuente: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -50,60 +50,67 @@
   --fuente-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
 
-* {
-  box-sizing: border-box;
+/* EXPLICACIÓN: capa base = reglas de elemento (Tailwind no trae preflight aquí);
+   al estar en capa, cualquier utility de Tailwind las sobrescribe sin '!'. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--fuente);
+    background: var(--fondo);
+    color: var(--texto);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(5, 150, 105, 0.25);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--fondo);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--borde-fuerte);
+    border-radius: 999px;
+    border: 2px solid var(--fondo);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--verde);
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3 {
+    margin: 0 0 0.5rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { font-size: 1.5rem; font-weight: 700; }
+  h2 { font-size: 1.15rem; font-weight: 700; }
+  h3 { font-size: 1rem; font-weight: 600; }
+
+  a {
+    color: var(--cian);
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
 }
 
-body {
-  margin: 0;
-  font-family: var(--fuente);
-  background: var(--fondo);
-  color: var(--texto);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-::selection {
-  background: rgba(76, 219, 18, 0.3);
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--fondo);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--borde-fuerte);
-  border-radius: 999px;
-  border: 2px solid var(--fondo);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a4757;
-}
-
-:focus-visible {
-  outline: 2px solid var(--cian);
-  outline-offset: 2px;
-}
-
-h1, h2, h3 {
-  margin: 0 0 0.5rem;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-h1 { font-size: 1.5rem; font-weight: 700; }
-h2 { font-size: 1.15rem; font-weight: 700; }
-h3 { font-size: 1rem; font-weight: 600; }
-
-a {
-  color: var(--cian);
-  text-decoration: none;
-}
-a:hover { text-decoration: underline; }
+/* EXPLICACIÓN: capa components = clases del tema propio; por debajo de utilities */
+@layer components {
 
 /* ---------- Encabezado de vista ---------- */
 .encabezado {
@@ -124,7 +131,7 @@ a:hover { text-decoration: underline; }
   bottom: 0;
   width: min(420px, 100%);
   height: 1px;
-  background: linear-gradient(90deg, rgba(76, 219, 18, 0.6), rgba(34, 211, 238, 0.3) 55%, transparent);
+  background: linear-gradient(90deg, rgba(5, 150, 105, 0.55), rgba(8, 145, 178, 0.3) 55%, transparent);
 }
 .encabezado h1 { margin-bottom: 0.15rem; }
 
@@ -161,10 +168,8 @@ a:hover { text-decoration: underline; }
   gap: 1rem;
   flex-wrap: wrap;
 }
-.mt-1 { margin-top: 1rem; }
 /* EXPLICACIÓN: alineación a la derecha + nowrap => las celdas de acción no parten el botón */
 .der { text-align: right; white-space: nowrap; }
-.mr-1 { margin-right: 0.5rem; }
 /* EXPLICACIÓN: dato suelto (%, fechas, IDs) en mono => coherencia con los KPIs */
 .dato {
   font-family: var(--fuente-mono);
@@ -178,7 +183,6 @@ a:hover { text-decoration: underline; }
 }
 .texto-suave { color: var(--texto-suave); }
 .sin-margen { margin-top: 0; }
-.m-0 { margin: 0; }
 /* EXPLICACIÓN: `.fila` gestiona el layout y resetea el margen de `.campo` dentro,
    así los formularios horizontales no necesitan style="flex:1; margin-bottom:0" */
 .fila {
@@ -193,7 +197,6 @@ a:hover { text-decoration: underline; }
 /* ---- Modificadores frecuentes (antes style="...") ---- */
 .tarjeta-flush { padding: 0; }
 .separada { margin-bottom: 0.9rem; }
-.mb-1 { margin-bottom: 0.5rem; }
 .mono { font-family: var(--fuente-mono); }
 .centrado { text-align: center; }
 .ancho-min { min-width: 160px; }
@@ -215,18 +218,7 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--sombra), var(--linea-superior);
   padding: 1.25rem;
 }
-/* EXPLICACIÓN: hilo de luz superior => tarjetas con acabado "premium" estilo dashboard SaaS */
-.tarjeta::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 8%;
-  right: 8%;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(76, 219, 18, 0.35), transparent);
-}
-
+/* EXPLICACIÓN: sin hilo luminoso superior => tarjetas blancas limpias (guía UI) */
 .tarjeta + .tarjeta { margin-top: 1rem; }
 
 .rejilla {
@@ -259,8 +251,8 @@ a:hover { text-decoration: underline; }
   transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s;
 }
 .btn:hover {
-  background: #1c2530;
-  border-color: #37455a;
+  background: #f1f5f9; /* slate-100 */
+  border-color: #94a3b8; /* slate-400 */
   text-decoration: none;
 }
 .btn:active { transform: translateY(1px); }
@@ -269,20 +261,20 @@ a:hover { text-decoration: underline; }
 .btn-primario {
   background: linear-gradient(180deg, var(--verde), var(--verde-oscuro));
   border-color: transparent;
-  color: #04140a;
+  color: #ffffff;
 }
 .btn-primario:hover {
-  background: linear-gradient(180deg, #57ea1a, var(--verde));
+  background: linear-gradient(180deg, #10b981, var(--verde));
   box-shadow: var(--glow);
 }
 .btn-primario:disabled { box-shadow: none; }
 
 .btn-peligro {
   background: var(--rojo-suave);
-  border-color: rgba(240, 82, 82, 0.4);
+  border-color: rgba(225, 29, 72, 0.35);
   color: var(--rojo);
 }
-.btn-peligro:hover { background: rgba(240, 82, 82, 0.22); filter: none; }
+.btn-peligro:hover { background: rgba(225, 29, 72, 0.15); filter: none; }
 
 .btn-suave {
   background: var(--verde-suave);
@@ -290,7 +282,7 @@ a:hover { text-decoration: underline; }
   color: var(--verde);
 }
 .btn-suave:hover {
-  background: rgba(76, 219, 18, 0.22);
+  background: rgba(5, 150, 105, 0.15);
   border-color: transparent;
 }
 
@@ -330,13 +322,13 @@ a:hover { text-decoration: underline; }
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .campo input::placeholder,
-.campo textarea::placeholder { color: #5d6b7c; }
+.campo textarea::placeholder { color: #94a3b8; } /* slate-400 */
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
   outline: none;
   border-color: var(--verde);
-  box-shadow: 0 0 0 3px rgba(76, 219, 18, 0.18);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
 }
 
 /* EXPLICACIÓN: accent-color pinta radios/checkbox del SO con la marca => sin SVG propio */
@@ -375,18 +367,18 @@ input[type='checkbox'] {
 .tabla th {
   text-align: left;
   padding: 0.75rem 1rem;
-  background: var(--fondo-2);
+  background: var(--fondo-2); /* slate-50 */
   border-bottom: 1px solid var(--borde);
-  font-family: var(--fuente-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem; /* text-xs (guía UI) */
+  font-weight: 600; /* font-semibold (guía UI) */
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--texto-suave);
+  color: var(--texto-suave); /* slate-500 */
   white-space: nowrap;
 }
 .tabla td {
   padding: 0.7rem 1rem;
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid #f1f5f9; /* slate-100: divide-y más suave */
   vertical-align: middle;
 }
 .tabla tr:last-child td { border-bottom: none; }
@@ -411,25 +403,24 @@ input[type='checkbox'] {
   white-space: nowrap;
   border: 1px solid transparent;
 }
-/* EXPLICACIÓN: punto con glow => se distingue el estado sin leer el texto */
+/* EXPLICACIÓN: punto de color => se distingue el estado sin leer el texto */
 .badge::before {
   content: '';
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 6px currentColor;
 }
-.badge-aprobada { background: var(--verde-suave); color: var(--verde); border-color: rgba(76, 219, 18, 0.3); }
-.badge-pendiente { background: var(--cian-suave); color: var(--cian); border-color: rgba(34, 211, 238, 0.3); }
-.badge-ajuste { background: var(--ambar-suave); color: var(--ambar); border-color: rgba(245, 158, 11, 0.3); }
-.badge-vencida { background: var(--rojo-suave); color: var(--rojo); border-color: rgba(240, 82, 82, 0.3); }
+.badge-aprobada { background: #ecfdf5; color: #047857; border-color: #a7f3d0; } /* emerald */
+.badge-pendiente { background: #fffbeb; color: #b45309; border-color: #fde68a; } /* amber */
+.badge-ajuste { background: #fff1f2; color: #be123c; border-color: #fecdd3; } /* rose */
+.badge-vencida { background: #fef2f2; color: #dc2626; border-color: #fecaca; } /* red */
 
 /* ---------- Alertas / errores ---------- */
 .alerta-error {
   background: var(--rojo-suave);
-  color: #ffb3b3;
-  border: 1px solid rgba(240, 82, 82, 0.35);
+  color: #be123c; /* rose-700 */
+  border: 1px solid rgba(225, 29, 72, 0.25);
   border-radius: var(--radio-sm);
   padding: 0.7rem 0.9rem;
   font-size: 0.88rem;
@@ -438,8 +429,8 @@ input[type='checkbox'] {
 
 .alerta-info {
   background: var(--azul-suave);
-  color: #a9c6ff;
-  border: 1px solid rgba(77, 141, 255, 0.35);
+  color: #1d4ed8; /* blue-700 */
+  border: 1px solid rgba(37, 99, 235, 0.25);
   border-radius: var(--radio-sm);
   padding: 0.7rem 0.9rem;
   font-size: 0.88rem;
@@ -466,7 +457,7 @@ input[type='checkbox'] {
 
 .topbar {
   grid-area: topbar;
-  background: rgba(10, 14, 19, 0.82);
+  background: rgba(255, 255, 255, 0.9); /* barra clara (guía UI) */
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--borde);
   display: flex;
@@ -517,7 +508,7 @@ input[type='checkbox'] {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(76, 219, 18, 0.35), rgba(34, 211, 238, 0.25));
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.25), rgba(8, 145, 178, 0.2));
   border: 1px solid var(--borde-fuerte);
   font-family: var(--fuente-mono);
   font-size: 0.78rem;
@@ -540,7 +531,7 @@ input[type='checkbox'] {
   background: var(--superficie-alta);
   color: var(--texto);
   text-decoration: none;
-  border-color: #37455a;
+  border-color: #94a3b8; /* slate-400 */
 }
 .campana-badge {
   position: absolute;
@@ -575,9 +566,9 @@ input[type='checkbox'] {
 
 .sidebar {
   grid-area: sidebar;
-  background: linear-gradient(180deg, #0c1219, #070a0e);
-  border-right: 1px solid var(--borde);
-  color: #d7e5dd;
+  background: #0f172a; /* slate-900 (guía UI) */
+  border-right: 1px solid #1e293b; /* slate-800 */
+  color: #cbd5e1; /* slate-300 */
   padding: 1.1rem 0.8rem;
   display: flex;
   flex-direction: column;
@@ -600,14 +591,13 @@ input[type='checkbox'] {
   align-items: center;
   gap: 0.55rem;
 }
-.sidebar-logo span { color: var(--verde); text-shadow: 0 0 12px rgba(76, 219, 18, 0.6); }
 
 .sidebar-version {
   font-family: var(--fuente-mono);
   font-size: 0.64rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6d7f8e;
+  color: #94a3b8; /* slate-400 */
   padding: 0 0.7rem 1rem;
 }
 
@@ -616,7 +606,7 @@ input[type='checkbox'] {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #63757f;
+  color: #94a3b8; /* slate-400 */
   padding: 0.9rem 0.7rem 0.35rem;
 }
 
@@ -624,7 +614,7 @@ input[type='checkbox'] {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  color: #b9c7d4;
+  color: #cbd5e1; /* slate-300 */
   padding: 0.6rem 0.7rem;
   border-radius: var(--radio-sm);
   font-size: 0.9rem;
@@ -634,30 +624,37 @@ input[type='checkbox'] {
 }
 .sidebar a svg { flex: none; opacity: 0.75; }
 .sidebar a:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: rgba(148, 163, 184, 0.12); /* slate-400/12 */
+  color: #f8fafc; /* slate-50 */
   text-decoration: none;
 }
-/* EXPLICACIÓN: activa = indicador izquierdo + tinte verde => jerarquía tipo panel de control */
+/* EXPLICACIÓN: activa = fondo slate-800 + barra esmeralda => jerarquía clara (guía UI) */
 .sidebar a.router-link-exact-active {
-  background: linear-gradient(90deg, rgba(76, 219, 18, 0.18), rgba(76, 219, 18, 0.03));
-  color: #fff;
+  background: #1e293b; /* slate-800 */
+  color: #f8fafc;
   font-weight: 600;
   box-shadow: inset 3px 0 0 var(--verde);
 }
 .sidebar a.router-link-exact-active svg {
-  color: var(--verde);
+  color: #34d399; /* emerald-400 */
   opacity: 1;
 }
 
 .sidebar-pie {
   margin-top: auto;
   padding: 0.9rem 0.7rem 0.2rem;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid #1e293b; /* slate-800 */
   font-family: var(--fuente-mono);
   font-size: 0.64rem;
   letter-spacing: 0.08em;
-  color: #63757f;
+  color: #94a3b8; /* slate-400 */
+}
+
+/* EXPLICACIÓN: dentro del sidebar el botón hamburguesa no debe usar la superficie clara */
+.sidebar .menu-toggle {
+  background: transparent;
+  border-color: #334155; /* slate-700 */
+  color: #cbd5e1;
 }
 
 .contenido {
@@ -696,11 +693,12 @@ input[type='checkbox'] {
   justify-content: space-between;
   gap: 2rem;
   padding: 3.5rem;
+  color: #e2e8f0; /* slate-200: texto sobre el panel de marca oscuro */
   background:
-    radial-gradient(circle at 18% 12%, rgba(76, 219, 18, 0.2), transparent 55%),
-    radial-gradient(circle at 85% 85%, rgba(34, 211, 238, 0.14), transparent 55%),
-    linear-gradient(160deg, #0d141c, #070a0e);
-  border-right: 1px solid var(--borde);
+    radial-gradient(circle at 18% 12%, rgba(5, 150, 105, 0.25), transparent 55%),
+    radial-gradient(circle at 85% 85%, rgba(8, 145, 178, 0.18), transparent 55%),
+    linear-gradient(160deg, #0f172a, #0f172a); /* slate-900 */
+  border-right: 1px solid #1e293b; /* slate-800 */
 }
 /* EXPLICACIÓN: rejilla + máscara radial => profundidad de panel técnico sin imágenes */
 .auth-marca::before {
@@ -715,14 +713,7 @@ input[type='checkbox'] {
 }
 .auth-marca > * { position: relative; }
 
-.auth-logo {
-  font-family: var(--fuente-mono);
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: #fff;
-}
-.auth-logo span { color: var(--verde); text-shadow: 0 0 16px rgba(76, 219, 18, 0.7); }
+/* EXPLICACIÓN: .auth-logo se reemplazó por <LogoSGEP> (currentColor), así evita el blanco sobre tarjeta blanca */
 
 .auth-lema {
   font-size: 2rem;
@@ -732,7 +723,7 @@ input[type='checkbox'] {
   max-width: 15ch;
   margin: 0.8rem 0 0;
 }
-.auth-lema em { font-style: normal; color: var(--verde); }
+.auth-lema em { font-style: normal; color: #34d399; } /* emerald-400: legible sobre slate-900 */
 
 .auth-features {
   list-style: none;
@@ -746,16 +737,16 @@ input[type='checkbox'] {
   align-items: center;
   gap: 0.7rem;
   font-size: 0.92rem;
-  color: #c4d1dd;
+  color: #cbd5e1; /* slate-300 */
 }
-.auth-features svg { color: var(--verde); flex: none; }
+.auth-features svg { color: #34d399; flex: none; } /* emerald-400 sobre panel oscuro */
 
 .auth-meta {
   font-family: var(--fuente-mono);
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #63757f;
+  color: #94a3b8; /* slate-400 */
 }
 
 .auth-form-wrap {
@@ -771,12 +762,12 @@ input[type='checkbox'] {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 16px;
-  /* EXPLICACIÓN: sombra alta + halo verde => el formulario "resalta" sobre el panel oscuro */
+  /* EXPLICACIÓN: halo esmeralda sutil => la tarjeta blanca "resalta" sobre la página */
   box-shadow:
     var(--sombra-alta),
     var(--linea-superior),
-    0 0 0 1px rgba(76, 219, 18, 0.1),
-    0 28px 64px rgba(76, 219, 18, 0.07);
+    0 0 0 1px rgba(5, 150, 105, 0.08),
+    0 28px 64px rgba(5, 150, 105, 0.06);
   padding: 2rem;
 }
 .auth-sub {
@@ -816,7 +807,7 @@ input[type='checkbox'] {
 }
 .pestanas button:hover { color: var(--texto); }
 .pestanas button.activa {
-  background: var(--superficie-alta);
+  background: #ffffff; /* pestaña activa = tarjeta blanca */
   color: var(--verde);
   box-shadow: var(--sombra);
 }
@@ -833,7 +824,7 @@ input[type='checkbox'] {
   height: 100%;
   background: linear-gradient(90deg, var(--verde), var(--cian));
   border-radius: 999px;
-  box-shadow: 0 0 14px rgba(76, 219, 18, 0.5);
+  box-shadow: 0 0 14px rgba(5, 150, 105, 0.4);
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -860,12 +851,12 @@ input[type='checkbox'] {
   border-radius: 10px;
   background: var(--verde-suave);
   color: var(--verde);
-  border: 1px solid rgba(76, 219, 18, 0.25);
+  border: 1px solid rgba(5, 150, 105, 0.25);
 }
-.kpi-ico.azul { background: var(--azul-suave); color: var(--azul); border-color: rgba(77, 141, 255, 0.25); }
-.kpi-ico.cian { background: var(--cian-suave); color: var(--cian); border-color: rgba(34, 211, 238, 0.25); }
-.kpi-ico.ambar { background: var(--ambar-suave); color: var(--ambar); border-color: rgba(245, 158, 11, 0.25); }
-.kpi-ico.rojo { background: var(--rojo-suave); color: var(--rojo); border-color: rgba(240, 82, 82, 0.25); }
+.kpi-ico.azul { background: var(--azul-suave); color: var(--azul); border-color: rgba(37, 99, 235, 0.25); }
+.kpi-ico.cian { background: var(--cian-suave); color: var(--cian); border-color: rgba(8, 145, 178, 0.25); }
+.kpi-ico.ambar { background: var(--ambar-suave); color: var(--ambar); border-color: rgba(217, 119, 6, 0.25); }
+.kpi-ico.rojo { background: var(--rojo-suave); color: var(--rojo); border-color: rgba(225, 29, 72, 0.25); }
 
 .kpi-valor {
   font-family: var(--fuente-mono);
@@ -911,7 +902,7 @@ input[type='checkbox'] {
 .lista-item:last-child { border-bottom: none; }
 .lista-item:hover { background: var(--superficie-alta); }
 .lista-item.sin-leer {
-  background: rgba(76, 219, 18, 0.05);
+  background: rgba(5, 150, 105, 0.06);
   box-shadow: inset 3px 0 0 var(--verde);
 }
 .lista-item h4 { margin: 0; font-size: 0.92rem; }
@@ -964,3 +955,4 @@ input[type='checkbox'] {
   backdrop-filter: blur(2px);
   z-index: 25;
 }
+} /* fin @layer components */

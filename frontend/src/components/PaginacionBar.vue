@@ -17,7 +17,8 @@ const total = () => Math.max(props.totalPaginas, 1)
 </script>
 
 <template>
-  <div class="paginacion">
+  <div class="paginacion border-t border-slate-100">
+    <!-- EXPLICACIÓN: borde superior => separa la paginación de la tabla dentro de la tarjeta -->
     <button
       class="btn"
       type="button"

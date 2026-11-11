@@ -1,0 +1,11 @@
+/* src/styles/tailwind.css
+   EXPLICACIÓN: importamos SOLO theme + utilities (sin preflight) porque el
+   reset base de Tailwind alteraría el tema oscuro global de main.css.
+   EXPLICACIÓN: @theme reemplaza la pila sans por la Inter del proyecto =>
+   los botones/inputs heredan la tipografía corporativa sin font-family manual. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}

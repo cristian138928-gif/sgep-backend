@@ -2,7 +2,7 @@
 // src/views/aprendiz/MisEvidenciasView.vue
 // EXPLICACIÓN: subida Multipart/form-data + descarga con Bearer => 2 casos de uso del RF01
 import { computed, onMounted, reactive, ref } from 'vue'
-import { FileDown, MessageSquareText, Upload } from 'lucide-vue-next'
+import { FileDown, MessageSquareText, Upload, X } from 'lucide-vue-next'
 
 import { api, descargar, ApiError } from '../../api/client'
 import type { Evidencia, Retroalimentacion } from '../../api/types'
@@ -10,6 +10,14 @@ import vacioDocumentos from '../../assets/imagenes/vacio-documentos.svg'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 import Esqueleto from '../../components/Esqueleto.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
+import {
+  btnPrimario,
+  btnSecundario,
+  etiquetaCampo,
+  inputCampo,
+  thTabla,
+  trTabla,
+} from '../../styles/ui-classes'
 
 const evidencias = ref<Evidencia[]>([])
 const cargando = ref(true)
@@ -34,9 +42,69 @@ const form = reactive({
   archivo: null as File | null,
 })
 
+// ---- Zona de arrastre (drag & drop) ----
+const MAXIMO_ARCHIVO = 10 * 1024 * 1024
+// EXPLICACIÓN: RF01 ampliado => documento, paquete comprimido o video corto
+const EXTENSIONES_OK = ['.pdf', '.zip', '.mp4', '.mov', '.webm']
+
+const arrastrando = ref(false)
+const inputArchivo = ref<HTMLInputElement | null>(null)
+
+const extension = computed(() => {
+  const nombre = form.archivo?.name ?? ''
+  return nombre.includes('.') ? (nombre.split('.').pop() ?? '').toUpperCase() : ''
+})
+
+function validarArchivo(archivo: File): string {
+  const nombre = archivo.name.toLowerCase()
+  const valido =
+    EXTENSIONES_OK.some((ext) => nombre.endsWith(ext)) || archivo.type.startsWith('video/')
+  if (!valido) return 'Formato no admitido: usa PDF, ZIP o un video corto (MP4, MOV o WEBM).'
+  if (archivo.size > MAXIMO_ARCHIVO) return 'El archivo supera el límite de 10 MB.'
+  return ''
+}
+
+/** EXPLICACIÓN: una sola puerta de entrada => el selector y el drop validan igual */
+function asignarArchivo(archivo: File | null | undefined): boolean {
+  if (!archivo) return false
+  const problema = validarArchivo(archivo)
+  if (problema) {
+    error.value = problema
+    form.archivo = null
+    return false
+  }
+  error.value = ''
+  form.archivo = archivo
+  return true
+}
+
 function seleccionarArchivo(event: Event): void {
   const input = event.target as HTMLInputElement
-  form.archivo = input.files?.[0] ?? null
+  if (!asignarArchivo(input.files?.[0])) input.value = ''
+}
+
+function alEntrar(): void {
+  arrastrando.value = true
+}
+
+function alSalir(event: DragEvent): void {
+  const actual = event.currentTarget as HTMLElement
+  const destino = event.relatedTarget as Node | null
+  // EXPLICACIÓN: dragleave salta al entrar en un hijo => se ignora para no parpadear
+  if (destino && actual.contains(destino)) return
+  arrastrando.value = false
+}
+
+function alSoltar(event: DragEvent): void {
+  arrastrando.value = false
+  if (!asignarArchivo(event.dataTransfer?.files?.[0]) && inputArchivo.value) {
+    inputArchivo.value.value = ''
+  }
+}
+
+function quitarArchivo(): void {
+  form.archivo = null
+  if (inputArchivo.value) inputArchivo.value.value = ''
 }
 
 async function subir(): Promise<void> {
@@ -44,7 +112,7 @@ async function subir(): Promise<void> {
   info.value = ''
 
   if (!form.archivo) {
-    error.value = 'Selecciona un archivo PDF.'
+    error.value = 'Selecciona un archivo PDF, ZIP o video corto.'
     return
   }
 
@@ -61,7 +129,7 @@ async function subir(): Promise<void> {
     info.value = `Evidencia "${form.titulo}" subida correctamente.`
     form.titulo = ''
     form.fecha_deadline = ''
-    form.archivo = null
+    quitarArchivo()
     await cargar()
   } catch (e) {
     error.value =
@@ -128,28 +196,69 @@ function fechaCorta(iso: string | null): string {
 </script>
 
 <template>
-  <div>
-    <div class="encabezado">
-      <div>
-        <div class="migas">Aprendiz · Etapa práctica</div>
-        <h1>Mis evidencias</h1>
+  <div class="min-h-full bg-slate-50 font-sans text-slate-900">
+    <!-- EXPLICACIÓN: .alerta-error/.alerta-info (main.css) ya usa la paleta rose/blue de la guía -->
+    <div v-if="error" role="alert" class="alerta-error">{{ error }}</div>
+    <div v-if="info" role="status" class="alerta-info">{{ info }}</div>
+
+    <header class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+      <div class="flex items-center gap-3">
+        <span
+          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
+          aria-hidden="true"
+        >
+          <Upload :size="20" />
+        </span>
+        <div>
+          <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Aprendiz · Etapa práctica
+          </p>
+          <!-- EXPLICACIÓN: utilities > components (layers.css) => sin '!' -->
+          <h1 class="text-2xl font-bold m-0 text-slate-900">Mis evidencias</h1>
+          <p class="m-0 mt-2 text-sm text-slate-500">
+            Sube tus evidencias y consulta su estado de revisión.
+          </p>
+        </div>
       </div>
-    </div>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm"
+      >
+        <Upload :size="13" class="text-emerald-600" aria-hidden="true" />
+        {{ evidencias.length }} registros
+      </span>
+    </header>
 
-    <div v-if="error" class="alerta-error">{{ error }}</div>
-    <div v-if="info" class="alerta-info">{{ info }}</div>
+    <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div class="mb-4 flex items-center gap-3">
+        <span
+          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
+          aria-hidden="true"
+        >
+          <Upload :size="20" />
+        </span>
+        <div>
+          <h2 class="m-0 text-base font-semibold text-slate-900">Subir nueva evidencia</h2>
+          <p class="m-0 mt-0.5 text-sm text-slate-500">
+            Adjunta un PDF, un ZIP o un video corto de tu evidencia.
+          </p>
+        </div>
+      </div>
 
-    <div class="tarjeta">
-      <h2>Subir nueva evidencia</h2>
-      <form @submit.prevent="subir">
-        <div class="rejilla rejilla-2">
-          <div class="campo">
-            <label for="titulo">Título</label>
-            <input id="titulo" v-model.trim="form.titulo" type="text" required />
+      <form class="space-y-4" @submit.prevent="subir">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <label for="titulo" :class="etiquetaCampo">Título</label>
+            <input
+              id="titulo"
+              v-model.trim="form.titulo"
+              type="text"
+              required
+              :class="inputCampo"
+            />
           </div>
-          <div class="campo">
-            <label for="tipo">Tipo de formato</label>
-            <select id="tipo" v-model="form.tipo_formato">
+          <div>
+            <label for="tipo" :class="etiquetaCampo">Tipo de formato</label>
+            <select id="tipo" v-model="form.tipo_formato" :class="inputCampo">
               <option>Bitacora</option>
               <option>F023</option>
               <option>F028</option>
@@ -157,78 +266,136 @@ function fechaCorta(iso: string | null): string {
               <option>Otro</option>
             </select>
           </div>
-          <div class="campo">
-            <label for="deadline">Fecha límite (opcional)</label>
-            <input id="deadline" v-model="form.fecha_deadline" type="date" />
-          </div>
-          <div class="campo">
-            <label for="archivo">Archivo PDF (máx. 10 MB)</label>
-            <input id="archivo" type="file" accept=".pdf" required @change="seleccionarArchivo" />
+          <div>
+            <label for="deadline" :class="etiquetaCampo">Fecha límite (opcional)</label>
+            <input id="deadline" v-model="form.fecha_deadline" type="date" :class="inputCampo" />
           </div>
         </div>
-        <button class="btn btn-primario" type="submit" :disabled="subiendo">
+
+        <div>
+          <span :class="etiquetaCampo">Archivo · PDF, ZIP o video (máx. 10 MB)</span>
+          <label
+            for="archivo"
+            class="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors"
+            :class="
+              arrastrando
+                ? 'border-emerald-500 bg-emerald-50'
+                : 'border-slate-300 bg-slate-50 hover:border-emerald-400 hover:bg-emerald-50/40'
+            "
+            @dragenter.prevent="alEntrar"
+            @dragover.prevent="alEntrar"
+            @dragleave.prevent="alSalir"
+            @drop.prevent="alSoltar"
+          >
+            <Upload :size="26" class="text-emerald-600" aria-hidden="true" />
+            <span class="text-sm font-medium text-slate-700">
+              Arrastra aquí tu archivo o
+              <span class="text-emerald-600 underline">selecciónalo</span>
+            </span>
+            <span class="text-xs text-slate-500">PDF · ZIP · MP4 / MOV / WEBM</span>
+            <input
+              id="archivo"
+              ref="inputArchivo"
+              type="file"
+              class="sr-only"
+              accept=".pdf,.zip,video/mp4,video/quicktime,video/webm"
+              @change="seleccionarArchivo"
+            />
+          </label>
+
+          <div
+            v-if="form.archivo"
+            class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
+          >
+            <div class="flex min-w-0 items-center gap-2">
+              <span
+                class="flex-none rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold uppercase text-emerald-700"
+              >
+                {{ extension }}
+              </span>
+              <span class="truncate text-sm font-medium text-slate-700">
+                {{ form.archivo.name }}
+              </span>
+              <span class="flex-none text-xs text-slate-500">
+                {{ (form.archivo.size / 1024).toFixed(1) }} KB
+              </span>
+            </div>
+            <button :class="btnSecundario" type="button" @click="quitarArchivo">
+              <X :size="14" />
+              Quitar
+            </button>
+          </div>
+        </div>
+
+        <button :class="btnPrimario" type="submit" :disabled="subiendo">
           <Upload v-if="!subiendo" :size="15" />
           {{ subiendo ? 'Subiendo…' : 'Subir evidencia' }}
         </button>
       </form>
-    </div>
+    </section>
 
-    <div class="tarjeta tarjeta-flush mt-1">
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
         v-else-if="evidencias.length === 0"
         :icono="Upload"
         :ilustracion="vacioDocumentos"
         titulo="Aún no has subido evidencias"
-        texto="Usa el formulario superior para adjuntar tu primera evidencia."
+        texto="Usa la zona superior para adjuntar tu primera evidencia."
       />
 
-      <div v-else class="tabla-contenedor tabla-plana">
-        <table class="tabla">
+      <div v-else class="overflow-x-auto">
+        <table class="w-full min-w-[860px] border-collapse text-left text-sm">
           <thead>
             <tr>
-              <th>Título</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-              <th>Cargada</th>
-              <th>Límite</th>
-              <th></th>
-              <th></th>
+              <th :class="thTabla">Título</th>
+              <th :class="thTabla">Tipo</th>
+              <th :class="thTabla">Estado</th>
+              <th :class="thTabla">Cargada</th>
+              <th :class="thTabla">Límite</th>
+              <th :class="[thTabla, 'text-right']">Archivo</th>
+              <th :class="[thTabla, 'text-right']">Retroalimentación</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-100">
             <template v-for="e in evidencias" :key="e.id_evidencia">
-              <tr>
-                <td>{{ e.titulo }}</td>
-                <td>{{ e.tipo_formato }}</td>
-                <td><EstadoBadge :estado="e.estado" /></td>
-                <td>{{ fechaCorta(e.fecha_carga) }}</td>
-                <td>{{ fechaCorta(e.fecha_deadline) }}</td>
-                <td class="der">
-                  <button class="btn btn-suave" type="button" @click="descargarEvidencia(e)">
+              <tr :class="trTabla">
+                <td class="px-4 py-3 font-medium text-slate-900">{{ e.titulo }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ e.tipo_formato }}</td>
+                <td class="px-4 py-3">
+                  <EstadoBadge :estado="e.estado" />
+                </td>
+                <td class="px-4 py-3 tabular-nums text-slate-600">{{ fechaCorta(e.fecha_carga) }}</td>
+                <td class="px-4 py-3 tabular-nums text-slate-600">
+                  {{ fechaCorta(e.fecha_deadline) }}
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-right">
+                  <button :class="btnSecundario" type="button" @click="descargarEvidencia(e)">
                     <FileDown :size="15" />
                     PDF
                   </button>
                 </td>
-                <td class="der">
-                  <button class="btn btn-suave" type="button" @click="alternarRetro(e)">
+                <td class="whitespace-nowrap px-4 py-3 text-right">
+                  <button :class="btnSecundario" type="button" @click="alternarRetro(e)">
                     <MessageSquareText :size="15" />
                     {{ retroAbierta === e.id_evidencia ? 'Ocultar' : 'Retroalimentación' }}
                   </button>
                 </td>
               </tr>
-              <tr v-if="retroAbierta === e.id_evidencia">
-                <td colspan="7" class="fila-expandida">
-                  <p v-if="cargandoRetro === e.id_evidencia">Cargando retroalimentación…</p>
-                  <p v-else-if="retroVisible === 'sin'">
+              <tr v-if="retroAbierta === e.id_evidencia" class="bg-slate-50/70">
+                <td colspan="7" class="px-4 py-3 text-sm text-slate-600">
+                  <p v-if="cargandoRetro === e.id_evidencia" class="m-0">
+                    Cargando retroalimentación…
+                  </p>
+                  <p v-else-if="retroVisible === 'sin'" class="m-0">
                     Aún no hay retroalimentación para esta evidencia.
                   </p>
                   <div v-else-if="typeof retroVisible === 'object'">
-                    <p>
+                    <p class="m-0">
                       <strong>{{ retroVisible.estado_evaluacion }}</strong>
                       · {{ fechaCorta(retroVisible.fecha_revision) }}
                     </p>
-                    <p>{{ retroVisible.observaciones }}</p>
+                    <p class="m-0 mt-2">{{ retroVisible.observaciones }}</p>
                   </div>
                 </td>
               </tr>
@@ -236,6 +403,6 @@ function fechaCorta(iso: string | null): string {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   </div>
 </template>

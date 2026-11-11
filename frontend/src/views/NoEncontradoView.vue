@@ -3,6 +3,8 @@
 import { FileQuestion } from 'lucide-vue-next'
 
 import AuthPanel from '../components/AuthPanel.vue'
+// EXPLICACIÓN: logo real del proyecto (Vite lo emite con hash en dist/assets)
+import sgepLogo from '../assets/imagenes/sgep-logo.jpg'
 
 const features = [
   { icono: FileQuestion, texto: 'Revisa la dirección o vuelve al panel principal' },
@@ -14,7 +16,11 @@ const features = [
 <template>
   <AuthPanel lema="Ruta no encontrada," resaltado="vuelve al panel" :features="features">
     <div class="auth-tarjeta centrado">
-      <div class="auth-logo logo-sm">SGE<span>P</span></div>
+      <img
+        :src="sgepLogo"
+        alt="SGEP"
+        class="mx-auto h-24 w-auto rounded-xl border border-slate-200 object-cover"
+      />
       <h1 class="mono">404</h1>
       <p class="auth-sub">La página que buscas no existe.</p>
       <router-link class="btn btn-primario" to="/">Volver al inicio</router-link>

@@ -91,6 +91,13 @@ const router = createRouter({
           meta: { roles: ['coordinador'] },
         },
         {
+          // EXPLICACIÓN: listado dedicado de bitácoras (tipo_formato fijo en la vista)
+          path: 'coordinador/bitacoras',
+          name: 'bitacoras-coordinador',
+          component: () => import('../views/coordinador/BitacorasView.vue'),
+          meta: { roles: ['coordinador'] },
+        },
+        {
           path: 'coordinador/aprendices',
           name: 'aprendices',
           component: () => import('../views/coordinador/AprendicesView.vue'),

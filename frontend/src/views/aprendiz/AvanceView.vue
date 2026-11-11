@@ -71,7 +71,7 @@ onMounted(async () => {
         </p>
       </div>
 
-      <div class="rejilla rejilla-3 mt-1">
+      <div class="rejilla rejilla-3 mt-4">
         <KpiTarjeta
           etiqueta="Evidencias"
           :valor="avance.total_evidencias"
@@ -92,7 +92,7 @@ onMounted(async () => {
         />
       </div>
 
-      <div class="tarjeta mt-1">
+      <div class="tarjeta mt-4">
         <div class="cabecera-fila separada">
           <h2 class="m-0">
             <Bell :size="16" class="ico-aviso" />

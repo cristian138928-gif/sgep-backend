@@ -10,6 +10,13 @@ import AvatarNombre from '../../components/AvatarNombre.vue'
 import Esqueleto from '../../components/Esqueleto.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
+import {
+  btnPrimario,
+  btnSecundario,
+  inputBase,
+  thTabla,
+  trTabla,
+} from '../../styles/ui-classes'
 
 const aprendices = ref<AvanceAprendiz[]>([])
 const paginaActual = ref(1)
@@ -103,27 +110,50 @@ onMounted(cargar)
 </script>
 
 <template>
-  <div>
-    <div class="encabezado">
-      <div>
-        <div class="migas">Coordinación · Seguimiento RF05</div>
-        <h1>Asignaciones de seguimiento</h1>
-        <p class="texto-suave sin-margen">
-          Vincula cada aprendiz con su instructor seguidor.
-        </p>
-      </div>
-      <div class="acciones">
-        <span class="migas">
-          <UserCheck :size="14" class="ico-migas" />
-          {{ asignaciones.length }} asignadas
-        </span>
-      </div>
+  <div class="min-h-full bg-slate-50 font-sans text-slate-900">
+    <div
+      v-if="error"
+      role="alert"
+      class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700"
+    >
+      {{ error }}
+    </div>
+    <div
+      v-if="info"
+      role="status"
+      class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700"
+    >
+      {{ info }}
     </div>
 
-    <div v-if="error" class="alerta-error">{{ error }}</div>
-    <div v-if="info" class="alerta-info">{{ info }}</div>
+    <header class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+      <div class="flex items-center gap-3">
+        <span
+          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
+          aria-hidden="true"
+        >
+          <UserCheck :size="20" />
+        </span>
+        <div>
+          <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Coordinación · Seguimiento RF05
+          </p>
+          <!-- EXPLICACIÓN: utilities > components (layers.css) => sin '!' -->
+          <h1 class="text-2xl font-bold m-0 text-slate-900">Asignaciones de seguimiento</h1>
+          <p class="m-0 mt-2 text-sm text-slate-500">
+            Vincula cada aprendiz con su instructor seguidor.
+          </p>
+        </div>
+      </div>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm"
+      >
+        <UserCheck :size="13" class="text-emerald-600" aria-hidden="true" />
+        {{ asignaciones.length }} asignadas
+      </span>
+    </header>
 
-    <div class="tarjeta tarjeta-flush">
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
         v-else-if="aprendices.length === 0"
@@ -132,30 +162,33 @@ onMounted(cargar)
         texto="No hay aprendices registrados en el sistema."
       />
 
-      <div v-else class="tabla-contenedor tabla-plana">
-        <table class="tabla">
+      <div v-else class="overflow-x-auto">
+        <table class="w-full min-w-[720px] border-collapse text-left text-sm">
           <thead>
             <tr>
-              <th>Aprendiz</th>
-              <th>Ficha</th>
-              <th>Instructor seguidor</th>
-              <th></th>
+              <th :class="thTabla">Aprendiz</th>
+              <th :class="thTabla">Ficha</th>
+              <th :class="thTabla">Instructor seguidor</th>
+              <th :class="[thTabla, 'text-right']">Acción</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="a in aprendices" :key="a.id_usuario">
-              <td><AvatarNombre :nombre="a.nombre_completo" /></td>
-              <td>{{ a.numero_ficha }}</td>
-              <td>
-                <template v-if="porAprendiz.get(a.id_usuario)">
-                  <AvatarNombre :nombre="porAprendiz.get(a.id_usuario)!.nombre_instructor" />
-                </template>
-                <span v-else><small class="texto-suave">Sin asignar</small></span>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="a in aprendices" :key="a.id_usuario" :class="trTabla">
+              <td class="px-4 py-3">
+                <AvatarNombre :nombre="a.nombre_completo" />
               </td>
-              <td class="der">
+              <td class="px-4 py-3 tabular-nums text-slate-600">{{ a.numero_ficha }}</td>
+              <td class="px-4 py-3">
+                <AvatarNombre
+                  v-if="porAprendiz.get(a.id_usuario)"
+                  :nombre="porAprendiz.get(a.id_usuario)!.nombre_instructor"
+                />
+                <span v-else class="text-sm text-slate-500">Sin asignar</span>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-right">
                 <template v-if="porAprendiz.get(a.id_usuario)">
                   <button
-                    class="btn btn-suave"
+                    :class="btnSecundario"
                     type="button"
                     :disabled="ocupado === a.id_usuario"
                     @click="quitar(a.id_usuario)"
@@ -168,7 +201,7 @@ onMounted(cargar)
                   <select
                     v-model="elegidos[a.id_usuario]"
                     :aria-label="`Instructor para ${a.nombre_completo}`"
-                    class="mr-1"
+                    :class="[inputBase, 'mr-2']"
                   >
                     <option :value="undefined" disabled>Seleccione…</option>
                     <option v-for="i in instructores" :key="i.id_usuario" :value="i.id_usuario">
@@ -176,7 +209,7 @@ onMounted(cargar)
                     </option>
                   </select>
                   <button
-                    class="btn btn-primario"
+                    :class="btnPrimario"
                     type="button"
                     :disabled="ocupado === a.id_usuario || !elegidos[a.id_usuario]"
                     @click="asignar(a.id_usuario)"
@@ -186,16 +219,16 @@ onMounted(cargar)
                   </button>
                 </template>
               </td>
-              </tr>
-            </tbody>
-          </table>
-          <PaginacionBar
-            :pagina="paginaActual"
-            :total-paginas="totalPaginas"
-            :pagina-actual="paginaActual"
-            @cambiar="cambiarPagina"
-          />
-        </div>
+            </tr>
+          </tbody>
+        </table>
+        <PaginacionBar
+          :pagina="paginaActual"
+          :total-paginas="totalPaginas"
+          :pagina-actual="paginaActual"
+          @cambiar="cambiarPagina"
+        />
       </div>
-    </div>
+    </section>
+  </div>
 </template>

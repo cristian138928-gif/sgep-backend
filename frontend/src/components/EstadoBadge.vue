@@ -1,17 +1,16 @@
 <script setup lang="ts">
 // src/components/EstadoBadge.vue
-// EXPLICACIÓN: un solo componente => colores de estado consistentes en toda la UI
+// EXPLICACIÓN: píldora de estado compartida => misma paleta de guía en todas las vistas
 import type { EstadoEvidencia } from '../api/types'
+import { clasesEstado, pillBase } from '../styles/ui-classes'
 
 const props = defineProps<{ estado: EstadoEvidencia }>()
-
-const clases: Record<EstadoEvidencia, string> = {
-  Aprobada: 'badge badge-aprobada',
-  Pendiente: 'badge badge-pendiente',
-  'Ajuste Requerido': 'badge badge-ajuste',
-}
 </script>
 
 <template>
-  <span :class="clases[props.estado]">{{ props.estado }}</span>
+  <span :class="[pillBase, clasesEstado[props.estado]]">
+    <!-- EXPLICACIÓN: punto con color actual => se distingue el estado sin leer el texto -->
+    <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+    {{ props.estado }}
+  </span>
 </template>

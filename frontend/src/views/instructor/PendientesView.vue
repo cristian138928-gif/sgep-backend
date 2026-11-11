@@ -85,7 +85,7 @@ onMounted(cargar)
       />
     </div>
 
-    <div class="tarjeta mt-1">
+    <div class="tarjeta mt-4">
       <div class="cabecera-fila separada">
         <h2 class="m-0">Evidencias por evaluar</h2>
         <span v-if="pagina" class="migas">{{ pagina.total }} en cola</span>
@@ -146,7 +146,7 @@ onMounted(cargar)
       </template>
     </div>
 
-    <div class="tarjeta mt-1">
+    <div class="tarjeta mt-4">
       <div class="cabecera-fila separada">
         <h2 class="m-0">
           <Bell :size="16" class="ico-aviso" />

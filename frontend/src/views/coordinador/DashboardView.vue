@@ -113,7 +113,7 @@ onMounted(async () => {
         />
       </div>
 
-      <div class="tarjeta mt-1">
+      <div class="tarjeta mt-4">
         <div class="cabecera-fila separada">
           <div>
             <div class="migas">Cumplimiento global</div>
@@ -128,7 +128,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="tarjeta mt-1">
+      <div class="tarjeta mt-4">
         <div class="migas">Seguimiento</div>
         <h2>Alertas de vencimiento (todo el centro)</h2>
         <AlertaLista :alertas="alertas" mostrar-aprendiz />

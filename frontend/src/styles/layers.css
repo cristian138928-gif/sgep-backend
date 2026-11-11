@@ -1,0 +1,5 @@
+/* src/styles/layers.css
+   EXPLICACIÓN: declaración única del orden de capas del proyecto. Sin ella el
+   orden lo decide el primer archivo que declare cada nombre y utilities (Tailwind)
+   podría perder frente a main.css => volvemos al bug de '.m-0' anulando '.mt-1'. */
+@layer theme, base, components, utilities;

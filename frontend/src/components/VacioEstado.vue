@@ -49,7 +49,7 @@ withDefaults(
 }
 .vacio-ico.girando {
   color: var(--cian);
-  border-color: rgba(34, 211, 238, 0.35);
+  border-color: rgba(8, 145, 178, 0.35); /* cyan-600 coherente con el token claro */
   animation: pulso 1.1s ease-in-out infinite;
 }
 @keyframes pulso {

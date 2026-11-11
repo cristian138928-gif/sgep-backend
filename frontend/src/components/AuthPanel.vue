@@ -5,6 +5,7 @@
 import type { Component } from 'vue'
 // EXPLICACIÓN: Vite convierte la importación de SVG en URL estática (fingerprint en build)
 import heroAuth from '../assets/imagenes/hero-auth.svg'
+import LogoSGEP from './LogoSGEP.vue'
 
 // EXPLICACIÓN: interface sin `export` porque <script setup> no admite exports de módulo
 interface FeatureAuth {
@@ -27,7 +28,7 @@ withDefaults(
   <div class="auth">
     <section class="auth-marca">
       <div>
-        <div class="auth-logo">SGE<span>P</span></div>
+        <LogoSGEP class="text-white" :fuente="32" />
         <p class="auth-lema">{{ lema }} <em>{{ resaltado }}</em>.</p>
         <img class="auth-hero" :src="heroAuth" alt="" aria-hidden="true" />
       </div>

@@ -11,6 +11,15 @@ import AvatarNombre from '../../components/AvatarNombre.vue'
 import Esqueleto from '../../components/Esqueleto.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
+import {
+  btnPrimario,
+  btnSecundario,
+  btnSuave,
+  etiquetaCampo,
+  inputCampo,
+  thTabla,
+  trTabla,
+} from '../../styles/ui-classes'
 
 const pagina = ref<Pagina<AvanceAprendiz> | null>(null)
 const paginaActual = ref(1)
@@ -65,35 +74,67 @@ onMounted(cargar)
 </script>
 
 <template>
-  <div>
-    <div class="encabezado">
-      <div>
-        <div class="migas">Coordinación · Reportes</div>
-        <h1>Aprendices y avance</h1>
+  <div class="min-h-full bg-slate-50 font-sans text-slate-900">
+    <div
+      v-if="error"
+      role="alert"
+      class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700"
+    >
+      {{ error }}
+    </div>
+
+    <header class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+      <div class="flex items-center gap-3">
+        <span
+          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
+          aria-hidden="true"
+        >
+          <Users :size="20" />
+        </span>
+        <div>
+          <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Coordinación · Reportes
+          </p>
+          <!-- EXPLICACIÓN: utilities > components (layers.css) => sin '!' -->
+          <h1 class="text-2xl font-bold m-0 text-slate-900">Aprendices y avance</h1>
+          <p class="m-0 mt-2 text-sm text-slate-500">
+            Avance de evidencias por aprendiz y reporte RF07.
+          </p>
+        </div>
       </div>
-      <div class="acciones">
-        <button class="btn btn-suave" type="button" :disabled="exportando" @click="exportarAvance">
+      <div class="flex flex-wrap items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm"
+        >
+          <Users :size="13" class="text-emerald-600" aria-hidden="true" />
+          {{ pagina?.total ?? 0 }} aprendices
+        </span>
+        <button :class="btnSuave" type="button" :disabled="exportando" @click="exportarAvance">
           <Download :size="15" />
           {{ exportando ? 'Generando…' : 'Exportar avance (RF07)' }}
         </button>
       </div>
-    </div>
+    </header>
 
-    <div v-if="error" class="alerta-error">{{ error }}</div>
-
-    <div class="tarjeta">
-      <form class="fila fila-fin" @submit.prevent="aplicarFiltro">
-        <div class="campo">
-          <label for="programa">Filtrar por programa</label>
-          <input id="programa" v-model.trim="programa" type="text" placeholder="ADSO…" />
+    <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <form class="flex flex-wrap items-end gap-3" @submit.prevent="aplicarFiltro">
+        <div class="min-w-[220px] flex-1">
+          <label for="programa" :class="etiquetaCampo">Filtrar por programa</label>
+          <input
+            id="programa"
+            v-model.trim="programa"
+            type="text"
+            placeholder="ADSO…"
+            :class="inputCampo"
+          />
         </div>
-        <button class="btn btn-primario" type="submit">
+        <button :class="btnPrimario" type="submit">
           <Search :size="15" />
           Buscar
         </button>
         <button
           v-if="programa"
-          class="btn"
+          :class="btnSecundario"
           type="button"
           @click="programa = ''; aplicarFiltro()"
         >
@@ -101,9 +142,9 @@ onMounted(cargar)
           Limpiar
         </button>
       </form>
-    </div>
+    </section>
 
-    <div class="tarjeta tarjeta-flush mt-1">
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <Esqueleto v-if="cargando" :filas="5" />
       <VacioEstado
         v-else-if="!pagina || pagina.items.length === 0"
@@ -114,26 +155,28 @@ onMounted(cargar)
       />
 
       <template v-else>
-        <div class="tabla-contenedor tabla-plana">
-          <table class="tabla">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Ficha</th>
-                <th>Programa</th>
-                <th>Evidencias</th>
-                <th>Aprobadas</th>
-                <th>Avance</th>
+                <th :class="thTabla">Nombre</th>
+                <th :class="thTabla">Ficha</th>
+                <th :class="thTabla">Programa</th>
+                <th :class="thTabla">Evidencias</th>
+                <th :class="thTabla">Aprobadas</th>
+                <th :class="thTabla">Avance</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="a in pagina.items" :key="a.id_usuario">
-                <td><AvatarNombre :nombre="a.nombre_completo" /></td>
-                <td>{{ a.numero_ficha }}</td>
-                <td>{{ a.programa }}</td>
-                <td>{{ a.total_evidencias }}</td>
-                <td>{{ a.aprobadas }}</td>
-                <td class="ancho-min">
+            <tbody class="divide-y divide-slate-100">
+              <tr v-for="a in pagina.items" :key="a.id_usuario" :class="trTabla">
+                <td class="px-4 py-3">
+                  <AvatarNombre :nombre="a.nombre_completo" />
+                </td>
+                <td class="px-4 py-3 tabular-nums text-slate-600">{{ a.numero_ficha }}</td>
+                <td class="px-4 py-3 text-slate-600">{{ a.programa }}</td>
+                <td class="px-4 py-3 tabular-nums text-slate-600">{{ a.total_evidencias }}</td>
+                <td class="px-4 py-3 tabular-nums text-slate-600">{{ a.aprobadas }}</td>
+                <td class="min-w-[160px] px-4 py-3">
                   <div class="barra-progreso">
                     <div :style="{ width: `${a.porcentaje_avance}%` }" />
                   </div>
@@ -142,14 +185,14 @@ onMounted(cargar)
               </tr>
             </tbody>
           </table>
-          <PaginacionBar
-            :pagina="pagina.page"
-            :total-paginas="pagina.total_pages"
-            :pagina-actual="paginaActual"
-            @cambiar="cambiarPagina"
-          />
         </div>
+        <PaginacionBar
+          :pagina="pagina.page"
+          :total-paginas="pagina.total_pages"
+          :pagina-actual="paginaActual"
+          @cambiar="cambiarPagina"
+        />
       </template>
-    </div>
+    </section>
   </div>
 </template>

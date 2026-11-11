@@ -1,10 +1,11 @@
 <script setup lang="ts">
 // src/views/PerfilView.vue
-// EXPLICACIÓN: perfil de los 3 roles — nombre editable + cambio de contraseña (PUT /auth/me)
-import { onMounted, reactive, ref } from 'vue'
-import { KeyRound, Save, ShieldCheck } from 'lucide-vue-next'
+// EXPLICACIÓN: perfil de los 3 roles — foto local + nombre editable + cambio de contraseña
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { Camera, KeyRound, Save, ShieldCheck, Trash2, Upload } from 'lucide-vue-next'
 
 import { api, ApiError } from '../api/client'
+import { borrarFoto, escribirFoto, leerFoto, recortarAvatar } from '../api/foto'
 import type { Instructor, Perfil } from '../api/types'
 import { useAuthStore } from '../stores/auth'
 
@@ -23,12 +24,26 @@ const clave = reactive({ actual: '', nueva: '', confirmar: '' })
 const guardandoNombre = ref(false)
 const guardandoClave = ref(false)
 
+// EXPLICACIÓN: foto = archivo elegido (aún sin guardar) + URL de vista previa circular
+const archivoFoto = ref<File | null>(null)
+const fotoUrl = ref('')
+const urlPendiente = ref('')
+const MAXIMO_FOTO = 2 * 1024 * 1024
+
 const etiquetaRol = () => auth.rol ?? 'usuario'
+
+/** EXPLICACIÓN: respaldo con iniciales mientras no haya foto (mismo lenguaje que el navbar) */
+const iniciales = computed(() => {
+  const partes = (nombre.value || perfil.value?.nombre_completo || '').trim().split(/\s+/).slice(0, 2)
+  if (!partes[0]) return '??'
+  return partes.map((p) => p[0]?.toUpperCase() ?? '').join('')
+})
 
 onMounted(async () => {
   try {
     perfil.value = await api<Perfil>('/api/v1/auth/me')
     nombre.value = perfil.value.nombre_completo
+    fotoUrl.value = leerFoto(perfil.value.id_usuario)
     if (auth.rol === 'instructor') {
       // EXPLICACIÓN: endpoint propio del rol; solo el instructor lo consume
       perfilInstructor.value = await api<Instructor>('/api/v1/instructor/perfil')
@@ -39,6 +54,70 @@ onMounted(async () => {
     cargando.value = false
   }
 })
+
+// EXPLICACIÓN: liberar el objectURL evita fuga de memoria en cada cambio de foto
+function liberarUrlPendiente(): void {
+  if (urlPendiente.value) {
+    URL.revokeObjectURL(urlPendiente.value)
+    urlPendiente.value = ''
+  }
+}
+
+onBeforeUnmount(liberarUrlPendiente)
+
+function seleccionarFoto(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const archivo = input.files?.[0] ?? null
+  error.value = ''
+  info.value = ''
+  if (!archivo) return
+  if (!archivo.type.startsWith('image/')) {
+    error.value = 'Selecciona un archivo de imagen (JPG, PNG o WEBP).'
+    input.value = ''
+    return
+  }
+  if (archivo.size > MAXIMO_FOTO) {
+    error.value = 'La fotografía no puede superar 2 MB.'
+    input.value = ''
+    return
+  }
+  archivoFoto.value = archivo
+  liberarUrlPendiente()
+  // EXPLICACIÓN: objectURL => vista previa instantánea sin leer el archivo en el hilo principal
+  urlPendiente.value = URL.createObjectURL(archivo)
+  fotoUrl.value = urlPendiente.value
+}
+
+async function guardarFoto(): Promise<void> {
+  error.value = ''
+  info.value = ''
+  if (!archivoFoto.value || !perfil.value) {
+    error.value = 'Selecciona una fotografía primero.'
+    return
+  }
+  try {
+    // EXPLICACIÓN: recorte a 256px antes de persistir => cuota mínima y recorte circular exacto
+    const dataUrl = await recortarAvatar(archivoFoto.value)
+    if (!escribirFoto(perfil.value.id_usuario, dataUrl)) {
+      error.value = 'No se pudo guardar la fotografía (almacenamiento local no disponible).'
+      return
+    }
+    liberarUrlPendiente()
+    fotoUrl.value = dataUrl
+    archivoFoto.value = null
+    info.value = 'Fotografía actualizada. Ya se muestra en tu navbar.'
+  } catch {
+    error.value = 'No se pudo procesar la fotografía.'
+  }
+}
+
+function quitarFoto(): void {
+  if (perfil.value) borrarFoto(perfil.value.id_usuario)
+  liberarUrlPendiente()
+  archivoFoto.value = null
+  fotoUrl.value = ''
+  info.value = 'Fotografía eliminada.'
+}
 
 async function guardarNombre(): Promise<void> {
   error.value = ''
@@ -107,6 +186,68 @@ async function cambiarClave(): Promise<void> {
     <div v-if="info" class="alerta-info">{{ info }}</div>
 
     <div class="tarjeta">
+      <h2><Camera :size="17" /> Fotografía de perfil</h2>
+      <div class="flex flex-wrap items-center gap-5">
+        <!-- EXPLICACIÓN: preview circular con las mismas clases del avatar del navbar -->
+        <div class="flex-none">
+          <img
+            v-if="fotoUrl"
+            :src="fotoUrl"
+            alt="Vista previa de tu fotografía"
+            class="h-24 w-24 rounded-full border border-slate-200 object-cover bg-slate-50"
+          />
+          <span
+            v-else
+            class="flex h-24 w-24 items-center justify-center rounded-full border border-slate-200 bg-slate-200 text-2xl font-semibold text-slate-700"
+            aria-hidden="true"
+          >
+            {{ iniciales }}
+          </span>
+        </div>
+
+        <div class="ancho-max">
+          <p class="texto-suave sin-margen">
+            JPG, PNG o WEBP de máximo 2 MB. Se recorta en círculo para el navbar y las listas.
+          </p>
+          <div class="acciones mt-4">
+            <label class="btn btn-suave" for="foto">
+              <Upload :size="15" />
+              Elegir archivo
+              <input
+                id="foto"
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                @change="seleccionarFoto"
+              />
+            </label>
+            <button
+              v-if="archivoFoto"
+              class="btn btn-primario"
+              type="button"
+              @click="guardarFoto"
+            >
+              <Save :size="15" />
+              Guardar foto
+            </button>
+            <button
+              v-if="fotoUrl && !archivoFoto"
+              class="btn"
+              type="button"
+              @click="quitarFoto"
+            >
+              <Trash2 :size="15" />
+              Quitar
+            </button>
+          </div>
+          <p class="dato mt-2">
+            {{ archivoFoto ? archivoFoto.name : fotoUrl ? 'Foto guardada en este dispositivo' : 'Sin fotografía' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta">
       <h2>Datos de la cuenta</h2>
       <form @submit.prevent="guardarNombre">
         <div class="rejilla rejilla-2">
@@ -145,7 +286,7 @@ async function cambiarClave(): Promise<void> {
       </form>
     </div>
 
-    <div class="tarjeta tarjeta-flush mt-1">
+    <div class="tarjeta tarjeta-flush mt-4">
       <h2><ShieldCheck :size="17" /> Cambiar contraseña</h2>
       <form @submit.prevent="cambiarClave">
         <div class="rejilla rejilla-2">
