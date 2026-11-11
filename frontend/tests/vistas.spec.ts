@@ -270,6 +270,39 @@ describe('PerfilView', () => {
     expect(wrapper.find('.alerta-error').text()).toContain('al menos 8 caracteres')
     expect(fetchMock).not.toHaveBeenCalled()
   })
+
+  // EXPLICACIÓN: foto local => el selector pinta una vista previa circular antes de guardar
+  it('seleccionar una imagen muestra la vista previa circular', async () => {
+    fetchMock.mockResolvedValue(respuesta(200, perfil))
+    const wrapper = mount(PerfilView)
+    await flushPromises()
+
+    const foto = new File(['img-falsa'], 'yo.jpg', { type: 'image/jpeg' })
+    const input = wrapper.find('#foto').element as HTMLInputElement
+    Object.defineProperty(input, 'files', { value: [foto], configurable: true })
+    await wrapper.find('#foto').trigger('change')
+
+    const img = wrapper.find('img[alt="Vista previa de tu fotografía"]')
+    expect(img.exists()).toBe(true)
+    expect(img.classes()).toContain('rounded-full')
+    expect(img.classes()).toContain('object-cover')
+  })
+
+  it('una imagen mayor a 2 MB se rechaza con error', async () => {
+    fetchMock.mockResolvedValue(respuesta(200, perfil))
+    const wrapper = mount(PerfilView)
+    await flushPromises()
+
+    const pesada = new File([new Uint8Array(3 * 1024 * 1024)], 'pesada.jpg', {
+      type: 'image/jpeg',
+    })
+    const input = wrapper.find('#foto').element as HTMLInputElement
+    Object.defineProperty(input, 'files', { value: [pesada], configurable: true })
+    await wrapper.find('#foto').trigger('change')
+
+    expect(wrapper.find('.alerta-error').text()).toContain('2 MB')
+    expect(wrapper.find('img[alt="Vista previa de tu fotografía"]').exists()).toBe(false)
+  })
 })
 
 describe('AprendicesView (coordinador)', () => {

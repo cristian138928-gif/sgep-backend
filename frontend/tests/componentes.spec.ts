@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import EstadoBadge from '../src/components/EstadoBadge.vue'
 import AuthPanel from '../src/components/AuthPanel.vue'
+import AvatarCirculo from '../src/components/AvatarCirculo.vue'
 import AvatarNombre from '../src/components/AvatarNombre.vue'
 import Esqueleto from '../src/components/Esqueleto.vue'
 import KpiTarjeta from '../src/components/KpiTarjeta.vue'
@@ -35,24 +36,27 @@ describe('AuthPanel', () => {
 })
 
 describe('EstadoBadge', () => {
-  it('Aprobada usa la clase verde', () => {
+  it('Aprobada usa la píldora esmeralda', () => {
     const wrapper = mount(EstadoBadge, { props: { estado: 'Aprobada' } })
 
-    expect(wrapper.classes()).toContain('badge-aprobada')
+    expect(wrapper.classes()).toContain('bg-emerald-50')
+    expect(wrapper.classes()).toContain('border-emerald-200')
     expect(wrapper.text()).toBe('Aprobada')
   })
 
-  it('Ajuste Requerido usa la clase roja', () => {
+  it('Ajuste Requerido usa la píldora rosa', () => {
     const wrapper = mount(EstadoBadge, { props: { estado: 'Ajuste Requerido' } })
 
-    expect(wrapper.classes()).toContain('badge-ajuste')
+    expect(wrapper.classes()).toContain('bg-rose-50')
+    expect(wrapper.classes()).toContain('border-rose-200')
     expect(wrapper.text()).toBe('Ajuste Requerido')
   })
 
-  it('Pendiente usa la clase ámbar', () => {
+  it('Pendiente usa la píldora ámbar', () => {
     const wrapper = mount(EstadoBadge, { props: { estado: 'Pendiente' } })
 
-    expect(wrapper.classes()).toContain('badge-pendiente')
+    expect(wrapper.classes()).toContain('bg-amber-50')
+    expect(wrapper.classes()).toContain('border-amber-200')
   })
 })
 
@@ -153,19 +157,85 @@ describe('Esqueleto', () => {
   })
 })
 
+describe('AvatarCirculo', () => {
+  it('sin foto => iniciales en círculo neutro (slate)', () => {
+    const wrapper = mount(AvatarCirculo, { props: { nombre: 'Ana Gómez' } })
+
+    const iniciales = wrapper.find('.avatar-iniciales')
+    expect(iniciales.text()).toBe('AG')
+    expect(iniciales.classes()).toContain('bg-slate-200')
+    expect(iniciales.classes()).toContain('text-slate-700')
+    expect(iniciales.classes()).toContain('font-semibold')
+    expect(iniciales.classes()).toContain('rounded-full')
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
+
+  it('con foto => <img> circular con object-cover y borde suave', () => {
+    const wrapper = mount(AvatarCirculo, {
+      props: { nombre: 'Ana Gómez', foto: '/fotos/ana.jpg' },
+    })
+
+    const img = wrapper.find('img.avatar-foto')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe('/fotos/ana.jpg')
+    expect(img.classes()).toContain('w-9')
+    expect(img.classes()).toContain('h-9')
+    expect(img.classes()).toContain('object-cover')
+    expect(img.classes()).toContain('border-slate-200')
+    expect(wrapper.find('.avatar-iniciales').exists()).toBe(false)
+  })
+
+  it('pinta el punto verde de sesión activa por defecto', () => {
+    const wrapper = mount(AvatarCirculo, { props: { nombre: 'Ana' } })
+
+    const punto = wrapper.find('.avatar-estado')
+    expect(punto.exists()).toBe(true)
+    expect(punto.classes()).toContain('bg-emerald-500')
+    // EXPLICACIÓN: inset >= 6px => el punto queda DENTRO del arco, no flotando afuera
+    expect(punto.classes()).toContain('bottom-1.5')
+    expect(punto.classes()).toContain('right-1.5')
+  })
+
+  it('enLinea=false oculta el punto', () => {
+    const wrapper = mount(AvatarCirculo, { props: { nombre: 'Ana', enLinea: false } })
+
+    expect(wrapper.find('.avatar-estado').exists()).toBe(false)
+  })
+
+  it('foto rota (error de carga) cae al respaldo de iniciales', async () => {
+    const wrapper = mount(AvatarCirculo, {
+      props: { nombre: 'Ana Gómez', foto: '/fotos/rota.jpg' },
+    })
+
+    await wrapper.find('img').trigger('error')
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.find('.avatar-iniciales').text()).toBe('AG')
+  })
+})
+
 describe('AvatarNombre', () => {
   it('muestra iniciales y nombre completo', () => {
     const wrapper = mount(AvatarNombre, { props: { nombre: 'Juan David Pérez' } })
 
     // EXPLICACIÓN: 2 primeras palabras => JD (nombre + primer apellido)
-    expect(wrapper.find('.avatar').text()).toBe('JD')
+    expect(wrapper.find('.avatar-iniciales').text()).toBe('JD')
     expect(wrapper.text()).toContain('Juan David Pérez')
   })
 
   it('nombre vacío usa marcador ??', () => {
     const wrapper = mount(AvatarNombre, { props: { nombre: '   ' } })
 
-    expect(wrapper.find('.avatar').text()).toBe('??')
+    expect(wrapper.find('.avatar-iniciales').text()).toBe('??')
+  })
+
+  it('propaga foto y enLinea al círculo', () => {
+    const wrapper = mount(AvatarNombre, {
+      props: { nombre: 'Ana Gómez', foto: '/f.jpg', enLinea: false },
+    })
+
+    expect(wrapper.find('img.avatar-foto').exists()).toBe(true)
+    expect(wrapper.find('.avatar-estado').exists()).toBe(false)
   })
 })
 

@@ -229,6 +229,36 @@ describe('MisEvidenciasView (aprendiz)', () => {
     expect(llamada[1]?.body).toBeInstanceOf(FormData)
     expect(wrapper.find('.alerta-info').text()).toContain('subida correctamente')
   })
+
+  // EXPLICACIÓN: drag & drop => el drop entra por la misma puerta que el selector
+  it('la zona de arrastre acepta .zip y muestra la ficha del archivo', async () => {
+    fetchMock.mockResolvedValue(respuesta(200, [evidencia]))
+    const wrapper = mount(MisEvidenciasView)
+    await flushPromises()
+
+    const zip = new File(['PK-falso'], 'evidencias.zip', { type: 'application/zip' })
+    await wrapper.find('label[for="archivo"]').trigger('drop', {
+      dataTransfer: { files: [zip] },
+    })
+
+    expect(wrapper.text()).toContain('evidencias.zip')
+    expect(wrapper.text()).toContain('ZIP')
+  })
+
+  it('un formato no admitido muestra error y no sube nada', async () => {
+    fetchMock.mockResolvedValue(respuesta(200, [evidencia]))
+    const wrapper = mount(MisEvidenciasView)
+    await flushPromises()
+    fetchMock.mockClear()
+
+    const exe = new File(['x'], 'virus.exe', { type: 'application/octet-stream' })
+    await wrapper.find('label[for="archivo"]').trigger('drop', {
+      dataTransfer: { files: [exe] },
+    })
+
+    expect(wrapper.find('.alerta-error').text()).toContain('Formato no admitido')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('EvaluarView (instructor)', () => {
