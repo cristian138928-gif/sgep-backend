@@ -508,7 +508,7 @@ input[type='checkbox'] {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(5, 150, 105, 0.25), rgba(8, 145, 178, 0.2));
+  background: var(--verde-suave);
   border: 1px solid var(--borde-fuerte);
   font-family: var(--fuente-mono);
   font-size: 0.78rem;
@@ -664,17 +664,13 @@ input[type='checkbox'] {
   width: 100%;
 }
 
-/* EXPLICACIÓN: z-index negativo => rejilla detrás del contenido, nunca sobre el texto */
+/* EXPLICACIÓN: fondo limpio corporativo sin texturas decorativas */
 .fondo-tecnico {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 46px 46px;
-  mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 75%);
+  background: var(--fondo);
 }
 
 /* ---------- Auth (login/registro/404) ---------- */
@@ -693,23 +689,9 @@ input[type='checkbox'] {
   justify-content: space-between;
   gap: 2rem;
   padding: 3.5rem;
-  color: #e2e8f0; /* slate-200: texto sobre el panel de marca oscuro */
-  background:
-    radial-gradient(circle at 18% 12%, rgba(5, 150, 105, 0.25), transparent 55%),
-    radial-gradient(circle at 85% 85%, rgba(8, 145, 178, 0.18), transparent 55%),
-    linear-gradient(160deg, #0f172a, #0f172a); /* slate-900 */
+  color: #e2e8f0; /* slate-200: texto sobre panel oscuro */
+  background: #0f172a; /* slate-900 */
   border-right: 1px solid #1e293b; /* slate-800 */
-}
-/* EXPLICACIÓN: rejilla + máscara radial => profundidad de panel técnico sin imágenes */
-.auth-marca::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: radial-gradient(circle at 30% 40%, #000, transparent 78%);
 }
 .auth-marca > * { position: relative; }
 
@@ -872,7 +854,7 @@ input[type='checkbox'] {
   color: var(--texto-suave);
   margin-top: 0.35rem;
 }
-/* EXPLICACIÓN: barra de acento inferior => ancla visual que conecta el KPI con su color */
+/* EXPLICACIÓN: barra de acento inferior sólida por tono */
 .kpi::after {
   content: '';
   position: absolute;
@@ -880,13 +862,13 @@ input[type='checkbox'] {
   right: 0;
   bottom: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--verde), transparent 70%);
+  background: var(--verde);
   opacity: 0.7;
 }
-.kpi.azul::after { background: linear-gradient(90deg, var(--azul), transparent 70%); }
-.kpi.cian::after { background: linear-gradient(90deg, var(--cian), transparent 70%); }
-.kpi.ambar::after { background: linear-gradient(90deg, var(--ambar), transparent 70%); }
-.kpi.rojo::after { background: linear-gradient(90deg, var(--rojo), transparent 70%); }
+.kpi.azul::after { background: var(--azul); }
+.kpi.cian::after { background: var(--cian); }
+.kpi.ambar::after { background: var(--ambar); }
+.kpi.rojo::after { background: var(--rojo); }
 
 /* ---------- Listas de alertas/notificaciones ---------- */
 .lista-item {
