@@ -24,7 +24,7 @@ jobs:
       SECRET_KEY: ci-secret-de-pruebas-min-32-caracteres
       DATABASE_URL: sqlite+aiosqlite:///./test.db
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Instalar uv (Rust)
         uses: astral-sh/setup-uv@v6
@@ -51,10 +51,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Node 22 + caché npm
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

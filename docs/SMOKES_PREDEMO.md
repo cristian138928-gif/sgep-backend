@@ -33,3 +33,12 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 
 ## 5. Evidencia de ejecución
 - Registrar fecha, entorno (local/docker), commit, y resultado (OK/Falla + notas).
+
+
+## 6. Ejecuci?n registrada (autom?tica/manual)
+- **Fecha/entorno**: 2026-11-14 17:10 Hora est. Pacífico, Sudamérica ? local dev (SQLite, `DATABASE_URL=sqlite+aiosqlite:///./dev.db`) ? API `:8000`, front `:5173`.
+- **Commit base**: `21e2a03` (previo a este registro; ver historial para commit de cierre).
+- **Script**: `PYTHONPATH=. uv run python scripts/smoke_pre_demo.py` ? **TOTAL 20/20 OK** (health, login 3 roles, RF02 upload+visible, RF03/RF04 evaluar+retro, RF05 asignaciones, RF06 avance, RF07 dashboard+CSV, RBAC 401/403, descarga due?o/401, refresh rotaci?n+logout+reuse rechazada, rate limit 429).
+- **Calidad**: `uv run ruff check .` OK ? `uv run pytest -q` 197 passed ? `frontend npm run typecheck` OK ? `npm test` 111 passed.
+- **Docker E2E (Postgres, `:3000`)**: **PENDIENTE/BLOQUEADO** en esta m?quina (Docker daemon no disponible). Ejecutar con Docker activo: `docker compose up --build -d && docker compose exec api python scripts/seed_demo.py` y smoke UI en `http://localhost:3000`.
+- **Notas**: seed demo aplicado en SQLite local; smoke de rate limit ejecutado al final (ventana agotada temporalmente durante la prueba).
