@@ -61,22 +61,22 @@ en CI y localmente.
 
 ## Frontend (Vue 3 + TypeScript)
 
-SPA en `frontend/` construida con Vite, tipada con `vue-tsc` y sin framework CSS (tokens propios en `src/styles/main.css`).
+SPA en `frontend/` (Vite + Vue 3 + Pinia + Vue Router + TypeScript), estilos con Tailwind CSS v4 y tokens/clases centralizadas en `src/styles/ui-classes.ts` y `src/styles/main.css`.
 
 ```bash
 cd frontend
-npm install        # dependencias (vue, vue-router, pinia, vite)
+npm install        # dependencias
 npm run dev        # desarrollo con proxy /api -> http://localhost:8000
 npm run typecheck  # vue-tsc --noEmit
-npm test           # vitest (91 tests, entorno happy-dom)
+npm test           # vitest (entorno happy-dom)
 npm run build      # typecheck + build de producción en dist/
 ```
 
-- **Tests**: `frontend/tests/*.spec.ts` cubren cliente HTTP (mutex del refresh, errores, `nombreSeguro`), JWT/session, stores de pinia, guards del router y montaje de vistas (`vistas.spec.ts` + `vistas2.spec.ts`).
-- **Auth**: cliente `fetch` propio (`src/api/client.ts`) con rotación de refresh tokens y mutex de reintento (un solo refresh ante N peticiones en 401).
-- **Guards**: rol leído del claim JWT del token (`meta.roles` en rutas); acceso equivocado redirige al home del propio rol.
-- **Vistas por rol**: aprendiz (avance + alertas + evidencias con retroalimentación RF04), instructor (bandeja + evaluar + historial), coordinador (dashboard + evidencias con filtros + aprendices con CSV + asignaciones RF05), notificaciones para los 3 roles.
-- **Descargas autenticadas**: PDFs y CSV se solicitan con `Authorization` y se guardan vía Blob.
+- **Tests**: `frontend/tests/*.spec.ts` cubren cliente HTTP (mutex del refresh, errores, `nombreSeguro`), JWT/session, stores, guards del router y montaje de vistas.
+- **Auth**: cliente `fetch` propio (`src/api/client.ts`) con rotación de refresh tokens y mutex de reintento.
+- **Guards**: rol leído del claim JWT (`meta.roles`); acceso indebido redirige al home del rol.
+- **Vistas por rol**: aprendiz (avance + alertas + evidencias/RF04), instructor (bandeja + evaluar + historial), coordinador (dashboard + evidencias + aprendices/CSV + asignaciones RF05), notificaciones.
+- **Descargas autenticadas**: PDFs y CSV vía `Authorization` y Blob.
 
 ## Calidad de Código
 
@@ -138,67 +138,40 @@ El frontend usa Vitest por separado (`cd frontend && npm test`); ambos jobs corr
 
 ## Estructura
 
-```
+`
 app/
-├── main.py              # Entry point FastAPI + CORS + cabeceras OWASP + lifespan alertas
-├── config.py            # Settings tipados + validación fail-fast de .env
-├── models/usuario.py    # SQLAlchemy models (POO) + Notificacion
-├── routes/              # Endpoints por rol (+ notificaciones + retroalimentación)
-├── schemas/             # Pydantic validation (ConfigDict v2)
-├── security/            # Rate limiting (ventana deslizante)
-├── services/            # Business logic (+ email, notificaciones)
-├── dependencies.py      # JWT auth (PyJWT, claims type=access/refresh)
-└── database/            # Connection config
+├─ core/            # config (settings, fail-fast .env), dependencies (JWT/RBAC)
+├─ db/              # sesión/engine async (session.py)
+├─ api/routers/     # endpoints por dominio/rol
+├─ models/          # SQLAlchemy (POO) + entidades
+├─ schemas/         # Pydantic (validación/DTOs)
+├─ services/        # lógica de negocio (auth, evidencias, email, notificaciones, etc.)
+├─ security/        # rate limiting
+└─ main.py          # FastAPI, CORS, cabeceras, lifespan (migraciones/alertas/purga)
+
 tests/
-├── conftest.py          # Fixtures + helpers
-├── test_auth.py         # 18 tests
-├── test_config.py       # 4 tests (validación de .env)
-├── test_refresh.py      # 10 tests (rotación de tokens)
-├── test_rate_limit.py   # 5 tests (429 + cabeceras OWASP)
-├── test_notificaciones.py # 9 tests (in-app + dedupe de vencimientos)
-├── test_email.py        # 3 tests (consola + SMTP fake)
-├── test_reportes.py     # 3 tests (CSV expedientes RF07)
-├── test_evidencias.py   # 9 tests
-├── test_instructor.py   # 16 tests
-├── test_coordinador.py  # 14 tests (incluye paginación)
-├── test_asignacion.py   # 15 tests (incluye listado global RF05)
-├── test_retroalimentacion.py # 17 tests (incluye RBAC de lectura RF04)
-├── test_aprendiz.py     # 3 tests
-├── test_descarga.py     # 8 tests
-├── test_alertas.py      # 9 tests
-├── test_alertas_roles.py # 9 tests
-├── test_main.py         # 4 tests (lifespan + cabeceras)
-├── test_models_poo.py   # 15 tests (herencia/polimorfismo)
-├── test_perfil.py       # 7 tests (PUT /auth/me: nombre + contraseña)
-├── test_logout.py       # 7 tests (POST /auth/logout + purga de caducados)
-├── test_migraciones.py  # Alembic (revisiones SQLite)
-└── test_connection.py   # 1 test
-frontend/
-├── src/api/client.ts    # cliente HTTP (rotación refresh + mutex)
-├── src/router/index.ts  # guards por rol
-└── tests/               # vitest (91 tests, happy-dom)
-    ├── helpers.ts       # fabricarToken() para JWT de mentira
-    ├── jwt.spec.ts / session.spec.ts / client.spec.ts
-    ├── auth.spec.ts / notificaciones.spec.ts
-    ├── router.spec.ts / componentes.spec.ts
-    └── vistas.spec.ts / vistas2.spec.ts (montaje de 12 vistas)
-```
+├─ auth/            # auth, refresh, logout, perfil, rate limit
+├─ evidencias/      # evidencias, retroalimentación, descargas, alertas
+├─ gestion/         # aprendiz, instructor, coordinador, asignación, reportes, notificaciones
+└─ core/            # config, conexión, email, main/lifespan, migraciones, modelos
+
+frontend/            # SPA Vue 3 + TS + Vite + Tailwind v4 (src/api, router, stores, styles, views)
+docs/                # documentación funcional/arquitectura y UI
+scripts/             # utilidades (seed_demo.py)
+alembic/             # migraciones
+`
 
 ## Tests
 
-```bash
-# Backend: todos los tests (196)
-uv run pytest tests/ -v
+`ash
+# Backend (197 tests)
+uv run pytest -q
+# o con cobertura (CI exige >=95%)
+uv run pytest --cov=app --cov-report=term --cov-fail-under=95 -q
 
-# Solo auth
-uv run pytest tests/test_auth.py -v
-
-# Con coverage (98%, CI exige >=95%)
-uv run pytest tests/ --cov=app
-
-# Frontend (91)
+# Frontend (111 tests)
 cd frontend && npm test
-```
+`
 
 ## Seguridad
 
@@ -206,7 +179,7 @@ cd frontend && npm test
 - **Logout real**: `POST /auth/logout` borra el `jti` del refresh en BD (idempotente; la SPA lo llama antes de limpiar localStorage).
 - **Purga de caducados**: tarea en `lifespan` (`REFRESH_PURGA_INTERVALO_MINUTOS`, 60 en compose) que borra `refresh_tokens` vencidos.
 - **Rate limiting**: ventana deslizante en endpoints públicos → `429` + `Retry-After` (configurable con `RATE_LIMIT_*`).
-- **Fail-fast de entorno**: `app/config.py` valida `.env` al importar y lista todos los errores de una vez.
+- **Fail-fast de entorno**: `app/core/config.py` valida `.env` al importar y lista todos los errores de una vez.
 - **Cabeceras OWASP**: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` en toda respuesta.
 - **RBAC**: 3 roles con verificación por endpoint; descarga de PDFs con validación de propiedad.
 

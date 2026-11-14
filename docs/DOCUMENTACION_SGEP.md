@@ -45,23 +45,23 @@ El SGEP es una solución web orientada a la gestión documental y académica que
 | **RNF03** | **Arquitectura Limpia:** Separación estricta de capas mediante Python (FastAPI) y SQLAlchemy. |
 | **RNF04** | **Usabilidad y Rendimiento:** Vistas con tiempos de respuesta < 2s y diseño responsivo. |
 
-## 3. Stack Tecnológico Seleccionado
+## 3. Stack Tecnológico
 
 | Categoría | Tecnología / Herramienta | Rol en SGEP |
 |-----------|--------------------------|-------------|
-| Frontend | HTML5 / CSS3 / JavaScript | Interfaz de Usuario Web Responsiva |
-| Backend Base | Python 3.12+ | Lenguaje principal POO |
-| Framework API | FastAPI | Construcción de la API REST de alto rendimiento |
-| ORM / Datos | SQLAlchemy | Mapeo Objeto-Relacional para entidades |
-| Base de Datos | PostgreSQL / pgAdmin 4 | Persistencia relacional de expedientes |
-| Seguridad | Passlib (bcrypt) + JWT | Cifrado de claves y control de tokens de acceso |
-| Entorno / CI | Docker, VS Code, Git/GitHub | Entorno de desarrollo contenerizado y control de versiones |
+| Frontend | Vue 3 + TypeScript + Vite, Pinia, Vue Router, Tailwind CSS v4 | SPA por roles (aprendiz/instructor/coordinador) |
+| Backend | Python 3.12+, FastAPI (async) | API REST y reglas de negocio |
+| ORM / Datos | SQLAlchemy 2.x (async) | Persistencia y modelos POO |
+| Base de Datos | PostgreSQL 16 (prod/Docker), SQLite (dev/tests) | Almacenamiento relacional |
+| Seguridad | bcrypt + PyJWT (access/refresh con rotación), RBAC, rate limiting | Autenticación, autorización y protección |
+| Calidad / CI | pytest + httpx, vitest + vue-tsc, ruff, GitHub Actions | Pruebas, lint y gates (cobertura backend ≥95%) |
+| DevOps | Docker, docker-compose, Alembic, uv/npm | Entorno reproducible y migraciones |
 
-## 4. Arquitectura en Tres Capas
+## 4. Arquitectura
 
-- **Capa de Presentación (UI):** Frontend web en HTML5/JS (Vistas para Aprendiz, Instructor y Admin). Comunicación mediante peticiones HTTP/JSON (REST).
-- **Capa de Lógica de Negocio (Backend):** Servidor FastAPI (Python) con Middlewares JWT, Enrutadores, Controladores de Evidencias y Servicios de Reglas de Negocio.
-- **Capa de Persistencia (Datos):** Mapeo ORM mediante SQLAlchemy conectado a PostgreSQL. Almacenamiento directo de archivos PDF en disco seguro.
+- **Presentación (SPA):** `frontend/` (Vue 3 + TS) consume la API REST; guards por rol y cliente HTTP con refresh/rotación de tokens.
+- **Backend (API):** FastAPI organizado en `app/core` (config/dependencias), `app/api/routers` (endpoints), `app/services` (negocio), `app/schemas` (validación), `app/security` (rate limit) y `app/main.py` (CORS, cabeceras, lifespan).
+- **Persistencia:** `app/db` (sesión async), `app/models` (ORM/POO), Alembic para migraciones; PostgreSQL en despliegue y SQLite en dev/tests. Archivos PDF en almacenamiento seguro (`uploads/`, acceso controlado por RBAC).
 
 ## 5. Diseño Orientado a Objetos (POO)
 
