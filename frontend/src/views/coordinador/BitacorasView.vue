@@ -2,21 +2,16 @@
 // src/views/coordinador/BitacorasView.vue
 // EXPLICACIÓN: panel claro autocontenido (UI_GUIDELINES.md) dentro del shell oscuro
 import { onMounted, reactive, ref } from 'vue'
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  FileDown,
-  FileSearch,
-  Filter,
-  Sparkles,
-} from 'lucide-vue-next'
+import { BookOpen, FileDown, FileSearch, Filter, Sparkles } from 'lucide-vue-next'
 
 import { api, descargar } from '../../api/client'
 import type { Evidencia, Pagina } from '../../api/types'
 // EXPLICACIÓN: un solo módulo de clases => esta vista y el resto comparten botones
 import { btnPrimario, btnSecundario, thTabla, trTabla } from '../../styles/ui-classes'
+import Esqueleto from '../../components/Esqueleto.vue'
 import EstadoBadge from '../../components/EstadoBadge.vue'
+import PaginacionBar from '../../components/PaginacionBar.vue'
+import VacioEstado from '../../components/VacioEstado.vue'
 
 const filtros = reactive({
   estado: '',
@@ -187,28 +182,13 @@ onMounted(cargar)
     </section>
 
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div v-if="cargando" class="space-y-3 p-4" aria-hidden="true">
-        <span class="sr-only">Cargando bitácoras…</span>
-        <div
-          v-for="n in 5"
-          :key="n"
-          class="h-4 animate-pulse rounded bg-slate-100"
-          :class="n % 2 ? 'w-11/12' : 'w-8/12'"
-        />
-      </div>
-
-      <div v-else-if="!pagina || pagina.items.length === 0" class="px-6 py-14 text-center">
-        <span
-          class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400"
-          aria-hidden="true"
-        >
-          <FileSearch :size="22" />
-        </span>
-        <h2 class="text-base font-semibold m-0 text-slate-900">Sin bitácoras registradas</h2>
-        <p class="m-0 mt-2 text-sm text-slate-500">
-          Ninguna bitácora coincide con los filtros aplicados.
-        </p>
-      </div>
+      <Esqueleto v-if="cargando" :filas="5" />
+      <VacioEstado
+        v-else-if="!pagina || pagina.items.length === 0"
+        :icono="FileSearch"
+        titulo="Sin bitácoras registradas"
+        texto="Ninguna bitácora coincide con los filtros aplicados."
+      />
 
       <template v-else>
         <div class="overflow-x-auto">
@@ -244,7 +224,12 @@ onMounted(cargar)
                   {{ fechaCorta(e.fecha_deadline) }}
                 </td>
                 <td class="px-4 py-3 text-right">
-                  <button :class="btnSecundario" type="button" @click="descargarPdf(e)">
+                  <button
+                    :class="btnSecundario"
+                    type="button"
+                    :aria-label="`Descargar bitácora ${e.titulo}`"
+                    @click="descargarPdf(e)"
+                  >
                     <FileDown :size="15" />
                     PDF
                   </button>
@@ -253,36 +238,12 @@ onMounted(cargar)
             </tbody>
           </table>
         </div>
-
-        <nav
-          class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-500"
-          aria-label="Paginación"
-        >
-          <span>
-            Página <b class="font-semibold text-slate-700">{{ pagina.page }}</b> de
-            <b class="font-semibold text-slate-700">{{ Math.max(pagina.total_pages, 1) }}</b>
-          </span>
-          <div class="flex gap-2">
-            <button
-              :class="btnSecundario"
-              type="button"
-              :disabled="paginaActual === 1"
-              @click="cambiarPagina(-1)"
-            >
-              <ChevronLeft :size="15" />
-              Anterior
-            </button>
-            <button
-              :class="btnSecundario"
-              type="button"
-              :disabled="paginaActual >= Math.max(pagina.total_pages, 1)"
-              @click="cambiarPagina(1)"
-            >
-              Siguiente
-              <ChevronRight :size="15" />
-            </button>
-          </div>
-        </nav>
+        <PaginacionBar
+          :pagina="pagina.page"
+          :total-paginas="pagina.total_pages"
+          :pagina-actual="paginaActual"
+          @cambiar="cambiarPagina"
+        />
       </template>
     </section>
   </div>

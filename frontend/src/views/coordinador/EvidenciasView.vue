@@ -205,7 +205,12 @@ onMounted(cargar)
                   {{ e.fecha_deadline ? e.fecha_deadline.slice(0, 10) : '—' }}
                 </td>
                 <td class="whitespace-nowrap px-4 py-3 text-right">
-                  <button :class="btnSecundario" type="button" @click="descargarPdf(e)">
+                  <button
+                    :class="btnSecundario"
+                    type="button"
+                    :aria-label="`Descargar ${e.titulo}`"
+                    @click="descargarPdf(e)"
+                  >
                     <FileDown :size="15" />
                     PDF
                   </button>

@@ -370,13 +370,24 @@ function fechaCorta(iso: string | null): string {
                   {{ fechaCorta(e.fecha_deadline) }}
                 </td>
                 <td class="whitespace-nowrap px-4 py-3 text-right">
-                  <button :class="btnSecundario" type="button" @click="descargarEvidencia(e)">
+                  <button
+                    :class="btnSecundario"
+                    type="button"
+                    :aria-label="`Descargar ${e.titulo}`"
+                    @click="descargarEvidencia(e)"
+                  >
                     <FileDown :size="15" />
                     PDF
                   </button>
                 </td>
                 <td class="whitespace-nowrap px-4 py-3 text-right">
-                  <button :class="btnSecundario" type="button" @click="alternarRetro(e)">
+                  <button
+                    :class="btnSecundario"
+                    type="button"
+                    :aria-expanded="retroAbierta === e.id_evidencia"
+                    :aria-label="`${retroAbierta === e.id_evidencia ? 'Ocultar' : 'Ver'} retroalimentación de ${e.titulo}`"
+                    @click="alternarRetro(e)"
+                  >
                     <MessageSquareText :size="15" />
                     {{ retroAbierta === e.id_evidencia ? 'Ocultar' : 'Retroalimentación' }}
                   </button>
