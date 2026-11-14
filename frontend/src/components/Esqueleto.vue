@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // src/components/Esqueleto.vue
-// EXPLICACIÓN: skeleton shimmer genérico => la carga se ve "viva" estilo
-// Linear/Notion en vez del círculo giratorio dentro de VacioEstado.
+// EXPLICACIÓN: skeleton de carga con pulso suave (sin gradientes recargados)
+// en lugar del círculo giratorio dentro de VacioEstado.
 withDefaults(
   defineProps<{
     /** Número de líneas/ranuras a pintar */
