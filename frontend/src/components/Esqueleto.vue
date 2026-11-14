@@ -26,18 +26,17 @@ withDefaults(
 .esqueleto-linea {
   height: 14px;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--superficie-alta) 25%, var(--borde) 50%, var(--superficie-alta) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.3s linear infinite;
+  background: var(--borde);
+  animation: pulso 1.4s ease-in-out infinite;
 }
-/* EXPLICACIÓN: anchos irregulares => simula contenido real, no un bloque monótono */
 .esqueleto-linea:nth-child(5n + 1) { width: 100%; }
 .esqueleto-linea:nth-child(5n + 2) { width: 92%; }
 .esqueleto-linea:nth-child(5n + 3) { width: 78%; }
 .esqueleto-linea:nth-child(5n + 4) { width: 96%; }
 .esqueleto-linea:nth-child(5n + 5) { width: 64%; }
-@keyframes shimmer {
-  to { background-position: -200% 0; }
+@keyframes pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 @media (prefers-reduced-motion: reduce) {
   .esqueleto-linea { animation: none; }

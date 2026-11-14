@@ -218,7 +218,7 @@ function cerrarSesion(): void {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--verde), var(--cian));
+  background: var(--verde);
   transform-origin: left;
   transform: scaleX(0);
   animation: subida-ruta 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;

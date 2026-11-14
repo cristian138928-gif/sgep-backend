@@ -80,7 +80,7 @@ npm run build      # typecheck + build de producción en dist/
 
 ## Calidad de Código
 
-Configuración única en `pyproject.toml` (ruff + pytest + coverage):
+Dependencias Python: `uv` (`pyproject.toml` + `uv.lock`, fuente única; `requirements.txt` compatibilidad). Configuración en `pyproject.toml` (ruff + pytest + coverage):
 
 ```bash
 uv run ruff check .            # lint (reglas E,F,W,I,UP,B,SIM,C4,RET,PIE,PTH)

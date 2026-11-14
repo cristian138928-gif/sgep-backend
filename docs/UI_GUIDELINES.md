@@ -1,4 +1,6 @@
-# Directrices de Diseño UI - SGEP (Sistema de Gestión de Evidencias)
+# Directrices de Diseño UI - SGEP (referencia)
+
+> **Fuente normativa:** `AGENTS.md`. Implementación canónica: `frontend/src/styles/ui-classes.ts`, `frontend/src/styles/main.css`, `frontend/src/styles/tailwind.css`.
 
 ## 1. Filosofía Visual
 
