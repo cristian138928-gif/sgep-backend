@@ -8,8 +8,8 @@ Evaluacion de evidencias, historial, estadisticas personales.
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.connection import get_db
-from app.dependencies import get_current_user
+from app.core.dependencies import get_current_user
+from app.db.session import get_db
 from app.models.usuario import UsuarioBase
 from app.schemas.coordinador_schema import PaginacionSchema
 from app.schemas.evidencia_schema import (

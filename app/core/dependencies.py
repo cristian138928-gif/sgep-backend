@@ -11,8 +11,8 @@ from jwt import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
-from app.database.connection import get_db
+from app.core.config import settings
+from app.db.session import get_db
 from app.models.usuario import UsuarioBase
 
 # EXPLICACIÓN: HTTPBearer extrae el token del header Authorization: Bearer <token>

@@ -1,23 +1,21 @@
-# tests/test_connection.py
-"""
-Tests de app/database/connection.py (inyección de sesión).
-"""
+# tests/core/test_connection.py
+"""Tests de app/db/session.py (inyección de sesión)."""
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.connection import get_db
+from app.db.session import get_db
 
 
 @pytest.mark.asyncio
 async def test_get_db_entrega_sesion_y_cierra_en_finally(monkeypatch):
-    """Test: get_db entrega una sesión y SIEMPRE la cierra al salir (finally)."""
+    """Test: get_db entrega una sesión y SIEMPRE la cierra al salir."""
     from tests.conftest import TestSessionLocal
 
     # EXPLICACIÓN: engine de test; el de prod no existe en CI
-    monkeypatch.setattr("app.database.connection.AsyncSessionLocal", TestSessionLocal)
+    monkeypatch.setattr("app.db.session.AsyncSessionLocal", TestSessionLocal)
 
-    # EXPLICACIÓN: espiamos close() para probar el finally sin dependir del estado interno
+    # EXPLICACIÓN: espiamos close() para probar el cierre sin depender del estado interno
     cierres: list[int] = []
     close_original = AsyncSession.close
 

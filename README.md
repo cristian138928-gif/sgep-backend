@@ -12,29 +12,24 @@ API REST para gestionar evidencias de aprendices SENA durante su etapa práctica
 
 ## Quick Start
 
+**Requisitos:** Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+. Copia `.env.example` a `.env` y define `SECRET_KEY` (>=32 chars). Por defecto usa SQLite local (`dev.db`, sin Docker).
+
 ```bash
-# Instalar dependencias (uv resuelve desde pyproject.toml)
+# 1) Backend (migraciones se aplican al iniciar)
 uv sync
+uv run uvicorn app.main:app --reload --port 8000   # http://localhost:8000
 
-# Ejecutar tests
-uv run pytest tests/ -v
+# 2) Frontend (nueva terminal, proxy /api -> :8000)
+cd frontend && npm install && npm run dev          # http://localhost:5173
 
-# Ejecutar API
-uv run uvicorn app.main:app --reload --port 8000
+# Tests
+uv run pytest -q
+cd frontend && npm run typecheck && npm test
 
-# Frontend (SPA Vue 3, proxy /api -> :8000)
-cd frontend && npm install && npm run dev   # http://localhost:5173
-
-# Migraciones (Alembic)
-uv run alembic revision --autogenerate -m "descripcion"   # generar desde modelos
-uv run alembic upgrade head                               # aplicar
-uv run alembic downgrade -1                               # retroceder una revisión
-
-# Docker (producción local: db + api + frontend en :3000, migraciones solas al arrancar)
+# Docker (Postgres + API + Nginx en :3000; requiere Docker Desktop)
+# Ajusta DATABASE_URL/credenciales según docker-compose.yml
 docker compose up --build -d
-
-# Docker desarrollo (hot reload: editas app/*.py y uvicorn recarga solo)
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose exec api python scripts/seed_demo.py
 ```
 
 ## Demo en 1 minuto (presentación)
@@ -44,7 +39,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker compose up --build -d
 
 # 2. Sembrar datos de demo (idempotente: no pisa nada si ya existe)
-docker compose exec api python seed_demo.py
+docker compose exec api python scripts/seed_demo.py
 
 # 3. Abrir la SPA
 #    http://localhost:3000

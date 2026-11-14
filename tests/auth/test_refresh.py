@@ -182,7 +182,7 @@ async def test_refresh_sin_jti_rechazado(client: AsyncClient):
     # EXPLICACIÓN: decodificamos el refresh para reconstruir los claims sin jti
     from jwt import decode as jwt_decode
 
-    from app.config import settings
+    from app.core.config import settings
 
     payload = jwt_decode(
         tokens["refresh_token"], settings.secret_key, algorithms=[settings.algorithm]

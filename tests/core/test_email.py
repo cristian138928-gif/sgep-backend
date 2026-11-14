@@ -6,7 +6,7 @@ Cubre: modo consola, envío SMTP con backend falso, asunto de evaluación.
 
 import logging
 
-from app.config import settings
+from app.core.config import settings
 from app.services import email_service
 
 

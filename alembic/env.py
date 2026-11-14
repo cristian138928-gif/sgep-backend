@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 
 # EXPLICACIÓN: prepend_sys_path=. en alembic.ini permite importar app.* desde aquí
-from app.config import settings
+from app.core.config import settings
 from app.models.refresh_token import RefreshToken  # noqa: F401 - registra la tabla en Base.metadata
 from app.models.usuario import Base
 

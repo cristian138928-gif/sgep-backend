@@ -14,7 +14,7 @@ from pathlib import Path
 
 from app.models import Base
 
-RAIZ = Path(__file__).resolve().parents[1]
+RAIZ = Path(__file__).resolve().parents[2]
 
 
 def test_registry_modelos_registra_todas_las_tablas() -> None:

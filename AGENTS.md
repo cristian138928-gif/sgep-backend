@@ -56,7 +56,7 @@ Antes de entregar cualquier etapa, ejecutar y anexar el resultado literal:
 
 # NORMAS UI — FUENTE ÚNICA
 
-1. Este archivo define los **invariantes**; el detalle de la spec vive en `app/UI_GUIDELINES.md` (referencia histórica, no norma).
+1. Este archivo define los **invariantes**; el detalle de la spec vive en `docs/UI_GUIDELINES.md` (referencia histórica, no norma).
 2. Las clases utility del proyecto se centralizan en `src/styles/ui-classes.ts`: no reescribir cadenas de color/espaciado en las vistas.
 3. `src/styles/main.css` está en capas (`@layer base/components`): las utilities de Tailwind ganan sin usar `!`.
 

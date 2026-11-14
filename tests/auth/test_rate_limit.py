@@ -7,7 +7,7 @@ Cubre: unidad del limiter, 429 por IP, desactivación, headers OWASP.
 import pytest
 from httpx import AsyncClient
 
-from app.config import settings
+from app.core.config import settings
 from app.security.rate_limit import SlidingWindowLimiter, limiter
 
 LOGIN_MALO = {

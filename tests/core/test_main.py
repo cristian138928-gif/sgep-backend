@@ -8,7 +8,7 @@ import asyncio
 import pytest
 from httpx import AsyncClient
 
-from app.config import settings
+from app.core.config import settings
 from app.main import _loop_alertas_vencimiento, _loop_purga_refresh, app, lifespan
 
 # ====================================

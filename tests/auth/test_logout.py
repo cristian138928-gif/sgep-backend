@@ -15,7 +15,7 @@ from sqlalchemy import select
 from app.models.refresh_token import RefreshToken
 from app.models.usuario import UsuarioBase
 from app.services.auth_service import AuthService
-from tests.test_refresh import REGISTRO, _login
+from tests.auth.test_refresh import REGISTRO, _login
 
 OTRO_CORREO = "otro.usuario@test.com"
 
@@ -105,7 +105,7 @@ async def test_logout_con_refresh_vencido_tambien_revoca(client: AsyncClient):
     from jwt import decode as jwt_decode
     from jwt import encode as jwt_encode
 
-    from app.config import settings
+    from app.core.config import settings
 
     tokens = await _login(client)
     payload = jwt_decode(

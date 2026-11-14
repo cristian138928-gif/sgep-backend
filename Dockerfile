@@ -22,8 +22,8 @@ COPY app ./app
 # EXPLICACIÓN: alembic necesario en runtime (lifespan ejecuta `alembic upgrade head`)
 COPY alembic ./alembic
 COPY alembic.ini ./
-# EXPLICACIÓN: seed de demo ejecutable con docker compose exec api python seed_demo.py
-COPY seed_demo.py ./
+# EXPLICACIÓN: seed de demo ejecutable con docker compose exec api python scripts/seed_demo.py
+COPY scripts ./scripts
 
 # EXPLICACIÓN: uploads debe existir y ser escribible por el usuario no-root
 RUN mkdir -p /app/uploads && chown -R nobody:nogroup /app

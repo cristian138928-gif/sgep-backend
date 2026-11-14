@@ -19,7 +19,7 @@ os.environ["BCRYPT_ROUNDS"] = "4"
 # rate limiting bajan el límite con monkeypatch)
 os.environ["RATE_LIMIT_MAX"] = "1000000"
 
-from app.database.connection import get_db  # noqa: E402
+from app.db.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.usuario import Base  # noqa: E402
 

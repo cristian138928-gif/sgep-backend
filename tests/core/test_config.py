@@ -1,16 +1,16 @@
-# tests/test_config.py
+﻿# tests/test_config.py
 """
-Tests de validación del entorno (app.config - etapa D3).
+Tests de validaciÃ³n del entorno (app.config - etapa D3).
 Cubre: fail-fast, reporte acumulado de errores, tipos.
 """
 
 import pytest
 
-from app.config import ConfigError, load_settings
+from app.core.config import ConfigError, load_settings
 
 
 def _entorno_valido(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Deja un entorno mínimo válido para aislar el error de cada test."""
+    """Deja un entorno mÃ­nimo vÃ¡lido para aislar el error de cada test."""
     monkeypatch.setenv("SECRET_KEY", "x" * 32)
     monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
     monkeypatch.setenv("ALGORITHM", "HS256")
@@ -29,7 +29,7 @@ def test_entorno_valido_genera_settings(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_secret_key_corta_rechazada(monkeypatch: pytest.MonkeyPatch):
-    """SECRET_KEY < 32 caracteres → ConfigError (no arranca la app)."""
+    """SECRET_KEY < 32 caracteres â†’ ConfigError (no arranca la app)."""
     _entorno_valido(monkeypatch)
     monkeypatch.setenv("SECRET_KEY", "corta")
 
@@ -56,7 +56,7 @@ def test_reporte_acumula_todos_los_errores(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_entero_invalido_reportado(monkeypatch: pytest.MonkeyPatch):
-    """Variable no numǸrica ��' error claro con el nombre de la variable."""
+    """Variable no numÇ¸rica ï¿½ï¿½' error claro con el nombre de la variable."""
     _entorno_valido(monkeypatch)
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "muchas")
 
@@ -74,3 +74,4 @@ def test_purga_intervalo_con_minimo_cero(monkeypatch: pytest.MonkeyPatch):
     cfg = load_settings()
 
     assert cfg.refresh_purga_intervalo_minutos == 0
+

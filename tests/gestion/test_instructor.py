@@ -1,4 +1,4 @@
-# tests/test_instructor.py
+﻿# tests/test_instructor.py
 """
 Tests para endpoints del instructor.
 Cubre: perfil, estadisticas, evaluar, historial.
@@ -125,11 +125,11 @@ async def test_estadisticas_con_evaluaciones(client: AsyncClient, db_session):
     ev = await crear_evidencia_pendiente(db_session, aprendiz.id_usuario)
 
     # Decodificar token para obtener ID
-    # EXPLICACIÓN: settings (app.config) es la única fuente de SECRET_KEY/ALGORITHM;
+    # EXPLICACIÃ“N: settings (app.config) es la Ãºnica fuente de SECRET_KEY/ALGORITHM;
     # os.getenv("ALGORITHM") es None sin .env y PyJWT lanza InvalidAlgorithmError
     import jwt
 
-    from app.config import settings
+    from app.core.config import settings
 
     payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     instructor_id_num = payload["id"]
@@ -278,7 +278,7 @@ async def test_evaluar_evidencia_inexistente_404(client: AsyncClient, db_session
     )
 
     assert response.status_code == 404
-    # EXPLICACIÓN: El 404 del service viaja tal cual por la capa de ruta
+    # EXPLICACIÃ“N: El 404 del service viaja tal cual por la capa de ruta
     assert "no encontrada" in response.json()["detail"]
 
 
@@ -419,3 +419,4 @@ async def test_aprendiz_no_puede_acceder_instructor(client: AsyncClient, db_sess
     )
 
     assert response.status_code == 403
+

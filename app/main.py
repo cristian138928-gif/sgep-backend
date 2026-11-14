@@ -13,16 +13,16 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
-from app.database.connection import AsyncSessionLocal
-from app.routes.aprendiz_routes import router as aprendiz_router
-from app.routes.asignacion_routes import router as asignacion_router
-from app.routes.auth_routes import router as auth_router
-from app.routes.coordinador_routes import router as coordinador_router
-from app.routes.evidencia_routes import router as evidencia_router
-from app.routes.instructor_routes import router as instructor_router
-from app.routes.notificacion_routes import router as notificacion_router
-from app.routes.retroalimentacion_routes import router as retroalimentacion_router
+from app.api.routers.aprendiz_routes import router as aprendiz_router
+from app.api.routers.asignacion_routes import router as asignacion_router
+from app.api.routers.auth_routes import router as auth_router
+from app.api.routers.coordinador_routes import router as coordinador_router
+from app.api.routers.evidencia_routes import router as evidencia_router
+from app.api.routers.instructor_routes import router as instructor_router
+from app.api.routers.notificacion_routes import router as notificacion_router
+from app.api.routers.retroalimentacion_routes import router as retroalimentacion_router
+from app.core.config import settings
+from app.db.session import AsyncSessionLocal
 from app.services.auth_service import AuthService
 from app.services.notificacion_service import NotificacionService
 

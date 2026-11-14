@@ -18,8 +18,8 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from app.config import settings
-from app.database.connection import AsyncSessionLocal
+from app.core.config import settings
+from app.db.session import AsyncSessionLocal
 from app.models.usuario import (
     Aprendiz,
     AsignacionSeguimiento,

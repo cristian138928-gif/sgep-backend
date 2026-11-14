@@ -16,7 +16,7 @@ env/
 # Variables de entorno (sensibles)
 .env
 
-# EXPLICACIÓN: Config local de opencode con API keys → nunca al repositorio
+# Config local de opencode con API keys (nunca al repositorio)
 opencode.json
 
 # IDE / Editor
@@ -48,18 +48,22 @@ htmlcov/
 # Logs
 *.log
 
-# Test DB
-test.db
+# Bases de datos y sidecars SQLite locales
+*.db
+*.db-wal
+*.db-shm
 
 # Uploads (archivos subidos por usuarios)
 uploads/
 
-# Skills externas (instaladas vía npx skills, no parte del código del proyecto)
+# Skills externas (instaladas fuera del proyecto)
 SKILL.md/
 
-# Archivos generados
+# Frontend build/cache
+frontend/dist/
+frontend/devserver.log
+frontend/.vite/
+
+# Artefactos Python
 __pycache__/
-*.db
-# EXPLICACIÓN: Sidecars WAL de SQLite (se generan con journal_mode=WAL)
-*.db-wal
-*.db-shm
+*.py[cod]

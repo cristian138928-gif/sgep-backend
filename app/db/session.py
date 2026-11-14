@@ -8,7 +8,7 @@ SQLAlchemy Async + PostgreSQL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.config import settings
+from app.core.config import settings
 
 # EXPLICACIÓN: Una sola fuente de verdad (app.config) valida DATABASE_URL antes de usarla
 DATABASE_URL = settings.database_url

@@ -1,20 +1,3 @@
-# EXPLICACIÓN: Dependencias del backend SGEP fijadas al estado real del venv
-# (reproducibilidad: requirements = entorno ejecutado, sin drift).
-fastapi==0.142.2 # Web framework ASGI con OpenAPI/Swagger incluido.
-uvicorn[standard]==0.54.0 # Servidor ASGI para FastAPI.
-sqlalchemy[asyncio]==2.1.3 # ORM async (SQLAlchemy 2.x; extra asyncio trae greenlet).
-psycopg2-binary==2.9.9 # Adaptador sync para PostgreSQL.
-asyncpg==0.31.0 # EXPLICACIÓN: Adaptador async para PostgreSQL.
-pydantic[email]==2.13.5 # EXPLICACIÓN: Validación de datos + EmailStr.
-python-dotenv==1.2.4 # Carga de variables de entorno (.env).
-bcrypt==5.0.0 # EXPLICACIÓN: Hashing de contraseñas (import directo en models).
-PyJWT==2.15.1 # EXPLICACIÓN: JWT moderno y mantenido (sustituye a python-jose).
-python-multipart==0.0.32 # EXPLICACIÓN: Parsing de form-data (uploads de PDFs).
-
-# EXPLICACIÓN: Herramientas de desarrollo para calidad de código y testing.
-ruff==0.16.10 # Linter y formateador de código.
-pytest==9.1.1 # Framework para escribir tests.
-pytest-asyncio==1.4.0 # EXPLICACIÓN: Soporte para tests async en pytest.
-httpx==0.28.1 # EXPLICACIÓN: Cliente HTTP async para tests de endpoints.
-aiosqlite==0.22.1 # EXPLICACIÓN: SQLite async para tests (no depende de PostgreSQL).
-pytest-cov==7.1.0 # EXPLICACIÓN: Reporte de cobertura (pytest --cov=app).
+﻿# EXPLICACIÓN: Dependencias gestionadas en pyproject.toml (uv). Este archivo es solo compatibilidad.
+# Para instalar: uv sync
+# Para exportar lock: uv export -o requirements.txt --no-hashes

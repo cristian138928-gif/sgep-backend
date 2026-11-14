@@ -12,7 +12,7 @@ from jwt import PyJWTError, decode, encode
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
+from app.core.config import settings
 from app.models.refresh_token import RefreshToken
 from app.models.usuario import Aprendiz, Coordinador, Instructor, UsuarioBase
 from app.schemas.usuario_schema import (
