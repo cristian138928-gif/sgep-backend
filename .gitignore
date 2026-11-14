@@ -54,6 +54,9 @@ test.db
 # Uploads (archivos subidos por usuarios)
 uploads/
 
+# Skills externas (instaladas vía npx skills, no parte del código del proyecto)
+SKILL.md/
+
 # Archivos generados
 __pycache__/
 *.db
