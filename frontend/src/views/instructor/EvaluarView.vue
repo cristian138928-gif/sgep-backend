@@ -90,7 +90,7 @@ async function enviar(): Promise<void> {
       </div>
       <p v-else class="texto-suave">Cargando metadatos…</p>
 
-      <div v-if="error" class="alerta-error">{{ error }}</div>
+      <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
       <form @submit.prevent="enviar">
         <div class="campo">

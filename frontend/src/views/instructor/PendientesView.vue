@@ -62,7 +62,7 @@ onMounted(cargar)
         <h1>Bandeja de pendientes</h1>
       </div>
     </div>
-    <div v-if="error" class="alerta-error">{{ error }}</div>
+    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
     <div v-if="estadisticas" class="rejilla rejilla-3">
       <KpiTarjeta

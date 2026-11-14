@@ -128,7 +128,7 @@ async function enviar(): Promise<void> {
         </button>
       </div>
 
-      <div v-if="error" class="alerta-error">{{ error }}</div>
+      <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
       <form @submit.prevent="enviar">
         <div class="campo">

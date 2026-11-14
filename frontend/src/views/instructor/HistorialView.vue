@@ -53,7 +53,7 @@ onMounted(cargar)
         <h1>Historial de evaluaciones</h1>
       </div>
     </div>
-    <div v-if="error" class="alerta-error">{{ error }}</div>
+    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
     <div class="tarjeta tarjeta-flush">
       <Esqueleto v-if="cargando" :filas="5" />

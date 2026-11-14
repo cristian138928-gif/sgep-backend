@@ -61,7 +61,7 @@ async function enviar(): Promise<void> {
       />
       <p class="auth-sub">Inicia sesión para gestionar tus evidencias</p>
 
-      <div v-if="error" class="alerta-error">{{ error }}</div>
+      <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
       <form @submit.prevent="enviar">
         <div class="campo">

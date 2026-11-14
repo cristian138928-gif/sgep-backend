@@ -182,8 +182,8 @@ async function cambiarClave(): Promise<void> {
       </div>
     </div>
 
-    <div v-if="error" class="alerta-error">{{ error }}</div>
-    <div v-if="info" class="alerta-info">{{ info }}</div>
+    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
+    <div v-if="info" class="alerta-info" role="status">{{ info }}</div>
 
     <div class="tarjeta">
       <h2><Camera :size="17" /> Fotografía de perfil</h2>

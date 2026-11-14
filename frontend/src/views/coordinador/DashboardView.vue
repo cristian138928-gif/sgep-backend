@@ -70,7 +70,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div v-if="error" class="alerta-error">{{ error }}</div>
+    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
     <template v-if="stats">
       <img class="banner-avance" :src="bannerAvance" alt="" aria-hidden="true" />

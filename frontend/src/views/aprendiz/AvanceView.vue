@@ -43,7 +43,7 @@ onMounted(async () => {
         <h1>Mi avance</h1>
       </div>
     </div>
-    <div v-if="error" class="alerta-error">{{ error }}</div>
+    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
     <template v-if="avance">
       <div class="tarjeta">
@@ -98,7 +98,7 @@ onMounted(async () => {
             <Bell :size="16" class="ico-aviso" />
             Alertas de vencimiento
           </h2>
-          <select v-model.number="ventana" class="btn" @change="cargarAlertas">
+          <select v-model.number="ventana" class="btn" aria-label="Ventana de alertas" @change="cargarAlertas">
             <option :value="7">Próximos 7 días</option>
             <option :value="14">Próximos 14 días</option>
             <option :value="30">Próximos 30 días</option>
