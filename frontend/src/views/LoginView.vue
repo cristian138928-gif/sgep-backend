@@ -6,7 +6,6 @@ import { FileCheck2, Lock, ShieldCheck, TrendingUp } from 'lucide-vue-next'
 
 import { ApiError } from '../api/client'
 import AuthPanel from '../components/AuthPanel.vue'
-// EXPLICACIÓN: logo real del proyecto (Vite lo emite con hash en dist/assets)
 import sgepLogo from '../assets/imagenes/sgep-logo.jpg'
 import { rutaPorRol } from '../router'
 import { useAuthStore } from '../stores/auth'
@@ -16,13 +15,13 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const features = [
-  { icono: FileCheck2, texto: 'Carga y seguimiento de bitácoras y formatos F023/F028' },
-  { icono: ShieldCheck, texto: 'Evaluación con retroalimentación y control de accesos' },
+  { icono: FileCheck2, texto: 'Carga y seguimiento de bit\u00e1coras y formatos F023/F028' },
+  { icono: ShieldCheck, texto: 'Evaluaci\u00f3n con retroalimentaci\u00f3n y control de accesos' },
   { icono: TrendingUp, texto: 'Avance porcentual y alertas de vencimiento en tiempo real' },
 ]
 
 const correo = ref('')
-const contraseña = ref('')
+const contrasena = ref('')
 const error = ref('')
 const cargando = ref(false)
 
@@ -30,12 +29,12 @@ async function enviar(): Promise<void> {
   error.value = ''
   cargando.value = true
   try {
-    const rol = await auth.login(correo.value, contraseña.value)
+    const rol = await auth.login(correo.value, contrasena.value)
     const destino = route.query.redirigir
     await router.push(typeof destino === 'string' ? destino : rutaPorRol(rol))
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
-      error.value = 'Correo o contraseña incorrectos.'
+      error.value = 'Correo o contrase\u00f1a incorrectos.'
     } else if (e instanceof ApiError && e.status === 429) {
       error.value = e.detail
     } else {
@@ -49,7 +48,7 @@ async function enviar(): Promise<void> {
 
 <template>
   <AuthPanel
-    lema="Tus evidencias de etapa práctica,"
+    lema="Tus evidencias de etapa pr\u00e1ctica,"
     resaltado="bajo control"
     :features="features"
   >
@@ -59,7 +58,7 @@ async function enviar(): Promise<void> {
         alt="SGEP"
         class="mb-2 h-24 w-auto rounded-xl border border-slate-200 object-cover"
       />
-      <p class="auth-sub">Inicia sesión para gestionar tus evidencias</p>
+      <p class="auth-sub">Inicia sesi\u00f3n para gestionar tus evidencias</p>
 
       <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
 
@@ -78,10 +77,10 @@ async function enviar(): Promise<void> {
         </div>
 
         <div class="campo">
-          <label for="contraseña">Contraseña</label>
+          <label for="contraseña">Contrase\u00f1a</label>
           <input
             id="contraseña"
-            v-model="contraseña"
+            v-model="contrasena"
             type="password"
             required
             autocomplete="current-password"
@@ -90,13 +89,13 @@ async function enviar(): Promise<void> {
 
         <button class="btn btn-primario btn-ancho" type="submit" :disabled="cargando">
           <Lock v-if="!cargando" :size="15" />
-          {{ cargando ? 'Ingresando…' : 'Ingresar' }}
+          {{ cargando ? 'Ingresando\u2026' : 'Ingresar' }}
         </button>
       </form>
 
       <p class="auth-pie">
-        ¿No tienes cuenta?
-        <router-link to="/registro">Regístrate aquí</router-link>
+        \u00bfNo tienes cuenta?
+        <router-link to="/registro">Reg\u00edstrate aqu\u00ed</router-link>
       </p>
     </div>
   </AuthPanel>
