@@ -46,10 +46,15 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - **Stack**: `docker compose up --build -d` → servicios `sgep_db`, `sgep_api` (healthy), `sgep_frontend` activos.
 - **Seed**: ejecución inicial reportó `ModuleNotFoundError` por contexto de `PYTHONPATH`; corregido fijando `PYTHONPATH=/app` en la imagen. Datos de demo presentes en volumen Postgres (seed idempotente).
 - **Smoke API vía Nginx :3000**: **TOTAL 18/18 OK** (login 3 roles, RF02 upload+visible, RF03/RF04 evaluar+retro, RF05 asignaciones, RF06 avance, RF07 dashboard+CSV, RBAC 401/403, descarga owner/401, refresh+logout+reuse rechazada). Rate limit no re-ejecutado para no bloquear ventana.
-- **Smoke UI manual (:3000)**: pendiente de revalidación visual interactiva por rol (login/navegación/acciones principales) en próxima sesión con navegador; paridad funcional cubierta por smoke API y suite automatizada.
+
+### 5.3 Revalidación local automática (SQLite)
+- **Fecha/entorno**: 2026-11-15 — local dev (SQLite `dev.db`) — API `http://127.0.0.1:8000` levantada con `uv run uvicorn`.
+- **Commit**: `75250c1` (re-ejecución sobre cierre funcional).
+- **Seed**: `PYTHONPATH=. uv run python scripts/seed_demo.py` → idempotente (datos demo ya presentes).
+- **Script**: `PYTHONPATH=. uv run python scripts/smoke_pre_demo.py` → **TOTAL 20/20 OK** (health, login 3 roles, RF02 upload+visible, RF03/RF04 evaluar+retro, RF05 asignaciones, RF06 avance, RF07 dashboard+CSV, RBAC 401/403, descarga dueño/401, refresh rotación+logout+reuse rechazada, rate limit 429).
 
 ## 6. Estado de cierre funcional
-- [x] Gates automatizados verdes (backend + frontend).
-- [x] Smokes RF02-RF07 y seguridad ejecutados y registrados (local 20/20, Docker API 18/18).
+- [x] Gates automatizados verdes (backend + frontend): `ruff` OK, `pytest` 197 passed, `vue-tsc` OK, `vitest` 111 passed.
+- [x] Smokes RF02-RF07 y seguridad ejecutados y registrados (local 20/20, Docker API 18/18, revalidación local 20/20).
 - [x] Seed demo reproducible en Docker/entorno limpio (imagen con `PYTHONPATH=/app`).
-- [ ] Smoke UI manual completo en `:3000` con evidencia visual (capturas/notas) — último paso de verificación humana antes de demo presencial.
+- [ ] **Smoke UI manual completo en `:3000` con evidencia visual (3 roles)** — pendiente; bloqueado en esta máquina (Docker daemon inactivo). Requiere: `docker compose up --build -d` (rebuild con Dockerfile actualizado), abrir SPA en `http://localhost:3000`, validar login/flujo principal de aprendiz, instructor y coordinador, y anexar capturas/notas. Paridad funcional ya cubierta por smokes API automatizados.
