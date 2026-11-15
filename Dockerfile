@@ -32,7 +32,9 @@ RUN mkdir -p /app/uploads && chown -R nobody:nogroup /app
 USER nobody
 
 # EXPLICACIÓN: solo el venv de producción en el PATH (sin uv ni herramientas dev)
+# EXPLICACIÓN: PYTHONPATH=/app permite ejecutar scripts (seed/smoke) como `python scripts/seed_demo.py`
 ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app" \
     PYTHONUNBUFFERED=1
 
 EXPOSE 8000
