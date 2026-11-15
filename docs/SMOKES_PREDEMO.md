@@ -26,9 +26,10 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - [x] Frontend: `cd frontend && npm run typecheck && npm test`.
 
 ## 4. Docker (Postgres)
-- [x] `docker compose up --build -d` (servicios healthy).
-- [x] `docker compose exec api python scripts/seed_demo.py` (reproducible con `PYTHONPATH=/app` en imagen; idempotente).
-- [x] Smoke API/UI en `http://localhost:3000` con credenciales demo de `README.md`.
+- [x] `docker compose up --build -d` (servicios healthy) — rebuild verificado con Dockerfile actualizado (`PYTHONPATH=/app`).
+- [x] `docker compose exec api python scripts/seed_demo.py` (reproducible, idempotente).
+- [x] Smoke API en `http://localhost:3000` con credenciales demo de `README.md`.
+- [ ] Smoke UI manual en `http://localhost:3000` con credenciales demo (evidencia visual por rol).
 - [x] Paridad básica vs SQLite (login, evidencia, evaluación, CSV) verificada por smoke API.
 
 ## 5. Evidencia de ejecución
@@ -53,8 +54,16 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - **Seed**: `PYTHONPATH=. uv run python scripts/seed_demo.py` → idempotente (datos demo ya presentes).
 - **Script**: `PYTHONPATH=. uv run python scripts/smoke_pre_demo.py` → **TOTAL 20/20 OK** (health, login 3 roles, RF02 upload+visible, RF03/RF04 evaluar+retro, RF05 asignaciones, RF06 avance, RF07 dashboard+CSV, RBAC 401/403, descarga dueño/401, refresh rotación+logout+reuse rechazada, rate limit 429).
 
+### 5.4 Verificación stack Docker (#8)
+- **Fecha/entorno**: 2026-11-15 — Docker Desktop/WSL reparado, stack activo en local.
+- **Commit**: `a8c92bf`.
+- **Estado**: `sgep_db` healthy (`:5433`), `sgep_api` healthy (`:8000`), `sgep_frontend` up (`:3000`) — `docker compose ps`.
+- **Checks**: SPA `GET http://localhost:3000/` → 200; login demo vía proxy `POST /api/v1/auth/login` (coordinador) → 200. Seed `scripts/seed_demo.py` ejecutado correctamente (usuarios/evidencias demo).
+- **Resultado**: #8 cerrado (rebuild/stack/seed verificados). #9 (smoke UI manual con evidencia visual) pendiente de ejecución humana.
+
 ## 6. Estado de cierre funcional
 - [x] Gates automatizados verdes (backend + frontend): `ruff` OK, `pytest` 197 passed, `vue-tsc` OK, `vitest` 111 passed.
 - [x] Smokes RF02-RF07 y seguridad ejecutados y registrados (local 20/20, Docker API 18/18, revalidación local 20/20).
 - [x] Seed demo reproducible en Docker/entorno limpio (imagen con `PYTHONPATH=/app`).
-- [ ] **Smoke UI manual completo en `:3000` con evidencia visual (3 roles)** — pendiente; bloqueado en esta máquina (Docker daemon inactivo). Requiere: `docker compose up --build -d` (rebuild con Dockerfile actualizado), abrir SPA en `http://localhost:3000`, validar login/flujo principal de aprendiz, instructor y coordinador, y anexar capturas/notas. Paridad funcional ya cubierta por smokes API automatizados.
+- [x] Stack Docker rebuild/healthy verificado en `:3000` (`sgep_db`, `sgep_api`, `sgep_frontend`) y seed ejecutado (#8).
+- [ ] **Smoke UI manual completo en `:3000` con evidencia visual (3 roles)** — pendiente (#9): validar login/flujo principal por rol y anexar capturas/notas en §5.5 o §6. Paridad funcional ya cubierta por smokes API automatizados.
