@@ -2,3 +2,9 @@
 node_modules/
 dist/
 *.local
+
+# EXPLICACIÓN: reportes y trazas de Playwright (evidencia E2E regenerable)
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/

@@ -29,7 +29,7 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - [x] `docker compose up --build -d` (servicios healthy) — rebuild verificado con Dockerfile actualizado (`PYTHONPATH=/app`).
 - [x] `docker compose exec api python scripts/seed_demo.py` (reproducible, idempotente).
 - [x] Smoke API en `http://localhost:3000` con credenciales demo de `README.md`.
-- [ ] Smoke UI manual en `http://localhost:3000` con credenciales demo (evidencia visual por rol).
+- [x] Smoke UI automatizado (Playwright E2E, 3 roles) en `http://localhost:3000` con credenciales demo.
 - [x] Paridad básica vs SQLite (login, evidencia, evaluación, CSV) verificada por smoke API.
 
 ## 5. Evidencia de ejecución
@@ -59,11 +59,21 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - **Commit**: `a8c92bf`.
 - **Estado**: `sgep_db` healthy (`:5433`), `sgep_api` healthy (`:8000`), `sgep_frontend` up (`:3000`) — `docker compose ps`.
 - **Checks**: SPA `GET http://localhost:3000/` → 200; login demo vía proxy `POST /api/v1/auth/login` (coordinador) → 200. Seed `scripts/seed_demo.py` ejecutado correctamente (usuarios/evidencias demo).
-- **Resultado**: #8 cerrado (rebuild/stack/seed verificados). #9 (smoke UI manual con evidencia visual) pendiente de ejecución humana.
+- **Resultado**: #8 cerrado (rebuild/stack/seed verificados).
+
+### 5.5 Smoke UI automatizado E2E (#9, Playwright)
+- **Fecha/entorno**: 2026-11-15 — contra stack Docker en `http://localhost:3000` (db/api healthy, frontend up).
+- **Commit**: cierre #9 (E2E Playwright 3 roles).
+- **Comando**: `cd frontend && npx playwright test` → **3 passed (47.7s)**, 0 failed.
+- **Cobertura (credenciales demo `Demo1234!`)**:
+  - Aprendiz `aprendiz.demo@sena.edu.co`: login → `/app/avance` ("Mi avance") → `/app/mis-evidencias` ("Mis evidencias").
+  - Instructor `instructor.demo@sena.edu.co`: login → `/app/instructor/pendientes` ("Bandeja de pendientes") → `/app/instructor/historial` ("Historial de evaluaciones").
+  - Coordinador `coordinador.demo@sena.edu.co`: login → `/app/coordinador/dashboard` ("Dashboard") → `/app/coordinador/asignaciones` ("Asignaciones de seguimiento").
+- **Evidencia**: reporte HTML/trazas regenerables (`npm run test:e2e`, `playwright-report/`, `test-results/` ignorados en git); ejecución determinista contra stack real.
 
 ## 6. Estado de cierre funcional
 - [x] Gates automatizados verdes (backend + frontend): `ruff` OK, `pytest` 197 passed, `vue-tsc` OK, `vitest` 111 passed.
 - [x] Smokes RF02-RF07 y seguridad ejecutados y registrados (local 20/20, Docker API 18/18, revalidación local 20/20).
 - [x] Seed demo reproducible en Docker/entorno limpio (imagen con `PYTHONPATH=/app`).
 - [x] Stack Docker rebuild/healthy verificado en `:3000` (`sgep_db`, `sgep_api`, `sgep_frontend`) y seed ejecutado (#8).
-- [ ] **Smoke UI manual completo en `:3000` con evidencia visual (3 roles)** — pendiente (#9): validar login/flujo principal por rol y anexar capturas/notas en §5.5 o §6. Paridad funcional ya cubierta por smokes API automatizados.
+- [x] Smoke UI por rol automatizado y con evidencia reproducible en `:3000` (Playwright E2E, 3/3) — #9 cerrado de raíz.
