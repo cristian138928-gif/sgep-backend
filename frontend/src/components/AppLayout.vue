@@ -25,8 +25,6 @@ import { useNotificacionesStore } from '../stores/notificaciones'
 import { leerFoto, versionFoto } from '../api/foto'
 import AvatarCirculo from './AvatarCirculo.vue'
 import LogoSGEP from './LogoSGEP.vue'
-// EXPLICACIÓN: asset local (Vite lo resuelve a URL con hash) => demo estable sin depender de la red
-import avatarPrueba from '../assets/imagenes/avatar-instructor.jpg'
 
 const router = useRouter()
 const route = useRoute()
@@ -176,11 +174,10 @@ function cerrarSesion(): void {
           <b>{{ auth.nombre || auth.perfil?.correo_institucional }}</b>
           <span>{{ etiquetaRol }}</span>
         </span>
-        <!-- EXPLICACIÓN: enLinea por defecto = el usuario actual SIEMPRE tiene sesión activa -->
-        <!-- EXPLICACIÓN: foto del perfil > imagen de prueba > iniciales (si falla la carga) -->
+        <!-- EXPLICACIÓN: foto del perfil si existe; sin foto => iniciales (AvatarCirculo) -->
         <AvatarCirculo
           :nombre="auth.nombre || auth.perfil?.correo_institucional || ''"
-          :foto="fotoUsuario || avatarPrueba"
+          :foto="fotoUsuario"
         />
 
         <button class="btn" type="button" @click="cerrarSesion">
