@@ -42,3 +42,11 @@ Checklist rápido para validar antes de demo/despliegue. Ejecutar en local (SQLi
 - **Calidad**: `uv run ruff check .` OK ? `uv run pytest -q` 197 passed ? `frontend npm run typecheck` OK ? `npm test` 111 passed.
 - **Docker E2E (Postgres, `:3000`)**: **PENDIENTE/BLOQUEADO** en esta m?quina (Docker daemon no disponible). Ejecutar con Docker activo: `docker compose up --build -d && docker compose exec api python scripts/seed_demo.py` y smoke UI en `http://localhost:3000`.
 - **Notas**: seed demo aplicado en SQLite local; smoke de rate limit ejecutado al final (ventana agotada temporalmente durante la prueba).
+
+## 7. Ejecución Docker E2E (Postgres)
+- **Fecha/entorno**: 2026-11-15 00:24 -05:00 · Docker compose (Postgres 16, api, frontend nginx) · UI http://localhost:3000, DB :5433.
+- **Commit**: $commit.
+- **Stack**: docker compose up --build -d → servicios sgep_db, sgep_api (healthy), sgep_frontend activos.
+- **Seed**: intento docker compose exec ... python scripts/seed_demo.py en imagen sin pp en PYTHONPATH por defecto (ModuleNotFoundError); datos de demo ya presentes en volumen Postgres.
+- **Smoke API vía Nginx :3000**: **TOTAL 18/18 OK** (login 3 roles, RF02 upload+visible, RF03/RF04 evaluar+retro, RF05 asignaciones, RF06 avance, RF07 dashboard+CSV, RBAC 401/403, descarga owner/401, refresh+logout+reuse rechazada). Rate limit no re-ejecutado para no bloquear ventana.
+- **Nota**: paridad funcional Postgres verificada por smoke API; pendiente smoke UI manual completo en :3000 si se requiere evidencia visual adicional.
