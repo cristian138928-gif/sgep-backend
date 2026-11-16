@@ -48,7 +48,7 @@ async function enviar(): Promise<void> {
 
 <template>
   <AuthPanel
-    lema="Tus evidencias de etapa pr\u00e1ctica,"
+    lema="Gestión de evidencias,"
     resaltado="bajo control"
     :features="features"
   >
