@@ -1,13 +1,25 @@
 <script setup lang="ts">
 // src/views/coordinador/BitacorasView.vue
-// EXPLICACIÓN: panel claro autocontenido (UI_GUIDELINES.md) dentro del shell oscuro
+// EXPLICACI�"N: panel claro autocontenido (UI_GUIDELINES.md) dentro del shell oscuro
 import { onMounted, reactive, ref } from 'vue'
 import { BookOpen, FileDown, FileSearch, Filter, Sparkles } from 'lucide-vue-next'
 
 import { api, descargar } from '../../api/client'
 import type { Evidencia, Pagina } from '../../api/types'
-// EXPLICACIÓN: un solo módulo de clases => esta vista y el resto comparten botones
-import { btnPrimario, btnSecundario, thTabla, trTabla } from '../../styles/ui-classes'
+import {
+  alertaError,
+  btnPrimario,
+  btnSecundario,
+  cabeceraPagina,
+  chipNeutro,
+  etiquetaCampo,
+  iconoCaja,
+  inputCampo,
+  paginaWrap,
+  tarjeta,
+  thTabla,
+  trTabla,
+} from '../../styles/ui-classes'
 import Esqueleto from '../../components/Esqueleto.vue'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
@@ -86,63 +98,43 @@ onMounted(cargar)
 </script>
 
 <template>
-  <div class="min-h-full rounded-xl border border-slate-200 bg-slate-50 p-5 font-sans text-slate-900 sm:p-7">
-    <div
-      v-if="error"
-      role="alert"
-      class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700"
-    >
+  <div :class="paginaWrap">
+    <div v-if="error" role="alert" :class="alertaError">
       {{ error }}
     </div>
 
-    <header class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+    <header :class="cabeceraPagina">
       <div class="flex items-center gap-3">
-        <span
-          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
-          aria-hidden="true"
-        >
+        <span :class="iconoCaja" aria-hidden="true">
           <BookOpen :size="20" />
         </span>
         <div>
           <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Coordinación · Documentos
           </p>
-          <!-- EXPLICACIÓN: utilities > components (layers.css) => sin '!' -->
-          <h1 class="text-2xl font-bold m-0 text-slate-900">Bitácoras</h1>
+          <h1 class="m-0 text-2xl font-bold text-slate-900">Bitácoras</h1>
           <p class="m-0 mt-2 text-sm text-slate-500">
             Bitácoras cargadas por los aprendices y su estado de revisión.
           </p>
         </div>
       </div>
-      <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm"
-      >
+      <span :class="chipNeutro">
         <Sparkles :size="13" class="text-emerald-600" aria-hidden="true" />
         {{ pagina?.total ?? 0 }} registros
       </span>
     </header>
 
-    <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section :class="['mb-5', tarjeta]">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
         <div>
-          <span class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Tipo de formato
-          </span>
-          <span
-            class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"
-          >
+          <span :class="etiquetaCampo">Tipo de formato</span>
+          <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
             Bitácora <span class="font-normal text-emerald-600/70">(fijo)</span>
           </span>
         </div>
         <div>
-          <label for="estado" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Estado
-          </label>
-          <select
-            id="estado"
-            v-model="filtros.estado"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-sans text-sm text-slate-900 shadow-sm transition-colors outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-          >
+          <label for="estado" :class="etiquetaCampo">Estado</label>
+          <select id="estado" v-model="filtros.estado" :class="inputCampo">
             <option value="">Todos</option>
             <option>Pendiente</option>
             <option>Aprobada</option>
@@ -150,26 +142,12 @@ onMounted(cargar)
           </select>
         </div>
         <div>
-          <label for="desde" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Cargada desde
-          </label>
-          <input
-            id="desde"
-            v-model="filtros.fecha_desde"
-            type="date"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-sans text-sm text-slate-900 shadow-sm transition-colors outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-          />
+          <label for="desde" :class="etiquetaCampo">Cargada desde</label>
+          <input id="desde" v-model="filtros.fecha_desde" type="date" :class="inputCampo" />
         </div>
         <div>
-          <label for="hasta" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Cargada hasta
-          </label>
-          <input
-            id="hasta"
-            v-model="filtros.fecha_hasta"
-            type="date"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-sans text-sm text-slate-900 shadow-sm transition-colors outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-          />
+          <label for="hasta" :class="etiquetaCampo">Cargada hasta</label>
+          <input id="hasta" v-model="filtros.fecha_hasta" type="date" :class="inputCampo" />
         </div>
       </div>
       <div class="mt-4 flex flex-wrap gap-2">

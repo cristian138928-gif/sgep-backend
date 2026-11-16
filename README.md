@@ -14,6 +14,14 @@ API REST para gestionar evidencias de aprendices SENA durante su etapa práctica
 
 **Requisitos:** Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+. Copia `.env.example` a `.env` y define `SECRET_KEY` (>=32 chars). Por defecto usa SQLite local (`dev.db`, sin Docker).
 
+**Arranque rápido (recomendado, auto-detecta Docker/local):**
+```powershell
+# Un solo comando: levanta servicios, espera healthchecks y (opcional) seed
+.\scripts\start.ps1            # auto: Docker si el daemon está activo, si no local
+.\scripts\start.ps1 -Mode docker  # fuerza Docker (:3000)
+.\scripts\start.ps1 -Mode local -Seed  # fuerza local (:5173) + seed demo
+```
+
 ```bash
 # 1) Backend (migraciones se aplican al iniciar)
 uv sync

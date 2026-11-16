@@ -11,9 +11,15 @@ import Esqueleto from '../../components/Esqueleto.vue'
 import PaginacionBar from '../../components/PaginacionBar.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
 import {
+  alertaError,
+  alertaInfo,
   btnPrimario,
   btnSecundario,
+  cabeceraPagina,
+  chipNeutro,
+  iconoCaja,
   inputBase,
+  paginaWrap,
   thTabla,
   trTabla,
 } from '../../styles/ui-classes'
@@ -110,44 +116,30 @@ onMounted(cargar)
 </script>
 
 <template>
-  <div class="min-h-full bg-slate-50 font-sans text-slate-900">
-    <div
-      v-if="error"
-      role="alert"
-      class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700"
-    >
+  <div :class="paginaWrap">
+    <div v-if="error" role="alert" :class="alertaError">
       {{ error }}
     </div>
-    <div
-      v-if="info"
-      role="status"
-      class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700"
-    >
+    <div v-if="info" role="status" :class="alertaInfo">
       {{ info }}
     </div>
 
-    <header class="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+    <header :class="cabeceraPagina">
       <div class="flex items-center gap-3">
-        <span
-          class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700"
-          aria-hidden="true"
-        >
+        <span :class="iconoCaja" aria-hidden="true">
           <UserCheck :size="20" />
         </span>
         <div>
           <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Coordinación · Seguimiento RF05
           </p>
-          <!-- EXPLICACIÓN: utilities > components (layers.css) => sin '!' -->
-          <h1 class="text-2xl font-bold m-0 text-slate-900">Asignaciones de seguimiento</h1>
+          <h1 class="m-0 text-2xl font-bold text-slate-900">Asignaciones de seguimiento</h1>
           <p class="m-0 mt-2 text-sm text-slate-500">
             Vincula cada aprendiz con su instructor seguidor.
           </p>
         </div>
       </div>
-      <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm"
-      >
+      <span :class="chipNeutro">
         <UserCheck :size="13" class="text-emerald-600" aria-hidden="true" />
         {{ asignaciones.length }} asignadas
       </span>

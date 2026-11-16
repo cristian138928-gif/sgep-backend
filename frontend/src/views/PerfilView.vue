@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // src/views/PerfilView.vue
-// EXPLICACI?N: perfil de los 3 roles - foto local + nombre editable + cambio de contrase?a
+// EXPLICACIÓN: perfil de los 3 roles - foto local + nombre editable + cambio de contraseña
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { Camera, KeyRound, Mail, Save, ShieldCheck, Trash2, Upload, User } from 'lucide-vue-next'
 
@@ -8,6 +8,20 @@ import { api, ApiError } from '../api/client'
 import { borrarFoto, escribirFoto, leerFoto, recortarAvatar } from '../api/foto'
 import type { Instructor, Perfil } from '../api/types'
 import { useAuthStore } from '../stores/auth'
+import {
+  alertaError,
+  alertaInfo,
+  btnPrimario,
+  btnSecundario,
+  btnSuave,
+  cabeceraPagina,
+  chipNeutro,
+  etiquetaCampo,
+  iconoCaja,
+  inputCampo,
+  paginaWrap,
+  tarjeta,
+} from '../styles/ui-classes'
 
 const auth = useAuthStore()
 
@@ -72,7 +86,7 @@ function seleccionarFoto(event: Event): void {
     return
   }
   if (archivo.size > MAXIMO_FOTO) {
-    error.value = 'La fotograf?a no puede superar 2 MB.'
+    error.value = 'La fotografía no puede superar 2 MB.'
     input.value = ''
     return
   }
@@ -86,21 +100,21 @@ async function guardarFoto(): Promise<void> {
   error.value = ''
   info.value = ''
   if (!archivoFoto.value || !perfil.value) {
-    error.value = 'Selecciona una fotograf?a primero.'
+    error.value = 'Selecciona una fotografía primero.'
     return
   }
   try {
     const dataUrl = await recortarAvatar(archivoFoto.value)
     if (!escribirFoto(perfil.value.id_usuario, dataUrl)) {
-      error.value = 'No se pudo guardar la fotograf?a (almacenamiento local no disponible).'
+      error.value = 'No se pudo guardar la fotografía (almacenamiento local no disponible).'
       return
     }
     liberarUrlPendiente()
     fotoUrl.value = dataUrl
     archivoFoto.value = null
-    info.value = 'Fotograf?a actualizada. Ya se muestra en tu barra superior.'
+    info.value = 'Fotografía actualizada. Ya se muestra en tu barra superior.'
   } catch {
-    error.value = 'No se pudo procesar la fotograf?a.'
+    error.value = 'No se pudo procesar la fotografía.'
   }
 }
 
@@ -109,7 +123,7 @@ function quitarFoto(): void {
   liberarUrlPendiente()
   archivoFoto.value = null
   fotoUrl.value = ''
-  info.value = 'Fotograf?a eliminada.'
+  info.value = 'Fotografía eliminada.'
 }
 
 async function guardarNombre(): Promise<void> {
@@ -135,11 +149,11 @@ async function cambiarClave(): Promise<void> {
   info.value = ''
 
   if (clave.nueva.length < 8) {
-    error.value = 'La contrase?a nueva debe tener al menos 8 caracteres.'
+    error.value = 'La contraseña nueva debe tener al menos 8 caracteres.'
     return
   }
   if (clave.nueva !== clave.confirmar) {
-    error.value = 'La confirmaci?n no coincide con la contrase?a nueva.'
+    error.value = 'La confirmación no coincide con la contraseña nueva.'
     return
   }
 
@@ -155,9 +169,9 @@ async function cambiarClave(): Promise<void> {
     clave.actual = ''
     clave.nueva = ''
     clave.confirmar = ''
-    info.value = 'Contrase?a actualizada. Los dem?s dispositivos deber?n iniciar sesi?n de nuevo.'
+    info.value = 'Contraseña actualizada. Los demás dispositivos deberán iniciar sesión de nuevo.'
   } catch (e) {
-    error.value = e instanceof ApiError ? e.detail : 'No se pudo cambiar la contrase?a.'
+    error.value = e instanceof ApiError ? e.detail : 'No se pudo cambiar la contraseña.'
   } finally {
     guardandoClave.value = false
   }
@@ -165,134 +179,184 @@ async function cambiarClave(): Promise<void> {
 </script>
 
 <template>
-  <div class="perfil-view">
-    <header class="hero">
-      <div>
-        <div class="migas">Cuenta ? {{ etiquetaRol() }}</div>
-        <h1>Mi perfil</h1>
-        <p class="hero-sub">Gestiona tu informaci?n personal, fotograf?a y seguridad de acceso.</p>
+  <div :class="paginaWrap">
+    <header :class="cabeceraPagina">
+      <div class="flex items-center gap-3">
+        <span :class="iconoCaja" aria-hidden="true"><User :size="20" /></span>
+        <div>
+          <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Cuenta · {{ etiquetaRol() }}
+          </p>
+          <h1 class="m-0 text-2xl font-bold text-slate-900">Mi perfil</h1>
+          <p class="m-0 mt-2 text-sm text-slate-500">
+            Gestiona tu información personal, fotografía y seguridad de acceso.
+          </p>
+        </div>
       </div>
-      <div class="hero-chip"><ShieldCheck :size="14" /> Sesi?n segura</div>
+      <span :class="chipNeutro"><ShieldCheck :size="13" class="text-emerald-600" /> Sesión segura</span>
     </header>
 
-    <div v-if="error" class="alerta-error" role="alert">{{ error }}</div>
-    <div v-if="info" class="alerta-info" role="status">{{ info }}</div>
+    <div v-if="error" role="alert" class="alerta-error" :class="alertaError">{{ error }}</div>
+    <div v-if="info" role="status" class="alerta-info" :class="alertaInfo">{{ info }}</div>
 
-    <div class="perfil-grid">
-      <section class="tarjeta perfil-card">
-        <div class="card-head">
-          <h2><Camera :size="17" /> Fotograf?a de perfil</h2>
-          <p>Imagen visible en la barra superior y listados.</p>
-        </div>
-        <div class="foto-wrap">
-          <div class="avatar-preview">
-            <img v-if="fotoUrl" :src="fotoUrl" alt="Vista previa de tu fotografía" class="avatar-img rounded-full object-cover" />
-            <span v-else class="avatar-fallback" aria-hidden="true">{{ iniciales }}</span>
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section :class="tarjeta">
+        <div class="mb-4 flex items-center gap-3">
+          <span :class="iconoCaja" aria-hidden="true"><Camera :size="18" /></span>
+          <div>
+            <h2 class="m-0 text-base font-semibold text-slate-900">Fotografía de perfil</h2>
+            <p class="m-0 mt-0.5 text-sm text-slate-500">Imagen visible en la barra superior y listados.</p>
           </div>
-          <div class="foto-info">
-            <p class="texto-suave">JPG, PNG o WEBP de m?ximo 2 MB. Se recorta autom?ticamente en formato circular.</p>
-            <div class="acciones mt-3">
-              <label class="btn btn-suave" for="foto">
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="h-24 w-24 flex-none">
+            <img
+              v-if="fotoUrl"
+              :src="fotoUrl"
+              alt="Vista previa de tu fotografía"
+              class="h-24 w-24 rounded-full border border-slate-200 object-cover"
+            />
+            <span
+              v-else
+              class="flex h-24 w-24 items-center justify-center rounded-full border border-slate-200 bg-slate-200 text-2xl font-bold text-slate-700"
+              aria-hidden="true"
+            >{{ iniciales }}</span>
+          </div>
+          <div class="min-w-[240px] flex-1">
+            <p class="m-0 text-sm text-slate-500">
+              JPG, PNG o WEBP de máximo 2 MB. Se recorta automáticamente en formato circular.
+            </p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <label :class="btnSuave" for="foto">
                 <Upload :size="15" /> Elegir archivo
                 <input id="foto" type="file" accept="image/*" class="sr-only" @change="seleccionarFoto" />
               </label>
-              <button v-if="archivoFoto" class="btn btn-primario" type="button" @click="guardarFoto">
+              <button v-if="archivoFoto" :class="btnPrimario" type="button" @click="guardarFoto">
                 <Save :size="15" /> Guardar foto
               </button>
-              <button v-if="fotoUrl && !archivoFoto" class="btn" type="button" @click="quitarFoto">
+              <button v-if="fotoUrl && !archivoFoto" :class="btnSecundario" type="button" @click="quitarFoto">
                 <Trash2 :size="15" /> Quitar
               </button>
             </div>
-            <p class="dato mt-2">
-              {{ archivoFoto ? archivoFoto.name : fotoUrl ? 'Foto guardada en este dispositivo' : 'Sin fotograf?a' }}
+            <p class="m-0 mt-2 text-xs text-slate-500">
+              {{ archivoFoto ? archivoFoto.name : fotoUrl ? 'Foto guardada en este dispositivo' : 'Sin fotografía' }}
             </p>
           </div>
         </div>
       </section>
 
-      <section class="tarjeta perfil-card">
-        <div class="card-head">
-          <h2><User :size="17" /> Datos de la cuenta</h2>
-          <p>Informaci?n b?sica asociada a tu usuario.</p>
+      <section :class="tarjeta">
+        <div class="mb-4 flex items-center gap-3">
+          <span :class="iconoCaja" aria-hidden="true"><User :size="18" /></span>
+          <div>
+            <h2 class="m-0 text-base font-semibold text-slate-900">Datos de la cuenta</h2>
+            <p class="m-0 mt-0.5 text-sm text-slate-500">Información básica asociada a tu usuario.</p>
+          </div>
         </div>
         <form @submit.prevent="guardarNombre">
-          <div class="rejilla rejilla-2">
-            <div class="campo">
-              <label for="nombre">Nombre completo</label>
-              <input id="nombre" v-model.trim="nombre" type="text" minlength="5" maxlength="150" required :disabled="cargando" />
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label for="nombre" :class="etiquetaCampo">Nombre completo</label>
+              <input
+                id="nombre"
+                v-model.trim="nombre"
+                type="text"
+                minlength="5"
+                maxlength="150"
+                required
+                :disabled="cargando"
+                :class="inputCampo"
+              />
             </div>
-            <div class="campo">
-              <label for="correo"><Mail :size="13" class="inline-icon" /> Correo institucional</label>
-              <input id="correo" :value="perfil?.correo_institucional ?? '?'" type="email" disabled />
+            <div>
+              <label for="correo" :class="etiquetaCampo">
+                <Mail :size="12" class="mr-1 inline -translate-y-px" /> Correo institucional
+              </label>
+              <input
+                id="correo"
+                :value="perfil?.correo_institucional ?? '—'"
+                type="email"
+                disabled
+                :class="[inputCampo, 'bg-slate-50 text-slate-500']"
+              />
             </div>
             <template v-if="perfilInstructor">
-              <div class="campo">
-                <label for="centro">Centro de formaci?n</label>
-                <input id="centro" :value="perfilInstructor.centro_formacion" type="text" disabled />
+              <div>
+                <label for="centro" :class="etiquetaCampo">Centro de formación</label>
+                <input id="centro" :value="perfilInstructor.centro_formacion" type="text" disabled :class="[inputCampo, 'bg-slate-50 text-slate-500']" />
               </div>
-              <div class="campo">
-                <label for="especialidad">Especialidad</label>
-                <input id="especialidad" :value="perfilInstructor.especialidad" type="text" disabled />
+              <div>
+                <label for="especialidad" :class="etiquetaCampo">Especialidad</label>
+                <input id="especialidad" :value="perfilInstructor.especialidad" type="text" disabled :class="[inputCampo, 'bg-slate-50 text-slate-500']" />
               </div>
             </template>
           </div>
-          <p class="hint">El correo institucional es tu identificador de acceso y no se puede modificar.</p>
-          <button class="btn btn-primario" type="submit" :disabled="guardandoNombre || cargando">
+          <p class="mb-3 mt-2 text-xs text-slate-500">
+            El correo institucional es tu identificador de acceso y no se puede modificar.
+          </p>
+          <button :class="btnPrimario" type="submit" :disabled="guardandoNombre || cargando">
             <Save v-if="!guardandoNombre" :size="15" />
-            {{ guardandoNombre ? 'Guardando?' : 'Guardar nombre' }}
+            {{ guardandoNombre ? 'Guardando…' : 'Guardar nombre' }}
           </button>
         </form>
       </section>
 
-      <section class="tarjeta perfil-card full">
-        <div class="card-head">
-          <h2><ShieldCheck :size="17" /> Seguridad y contrase?a</h2>
-          <p>Actualiza tu contrase?a para mantener tu cuenta protegida.</p>
+      <section :class="[tarjeta, 'lg:col-span-2']">
+        <div class="mb-4 flex items-center gap-3">
+          <span :class="iconoCaja" aria-hidden="true"><ShieldCheck :size="18" /></span>
+          <div>
+            <h2 class="m-0 text-base font-semibold text-slate-900">Seguridad y contraseña</h2>
+            <p class="m-0 mt-0.5 text-sm text-slate-500">Actualiza tu contraseña para mantener tu cuenta protegida.</p>
+          </div>
         </div>
         <form @submit.prevent="cambiarClave">
-          <div class="rejilla rejilla-3">
-            <div class="campo">
-              <label for="actual">Contrase?a actual</label>
-              <input id="actual" v-model="clave.actual" type="password" required minlength="8" autocomplete="current-password" />
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <label for="actual" :class="etiquetaCampo">Contraseña actual</label>
+              <input
+                id="actual"
+                v-model="clave.actual"
+                type="password"
+                required
+                minlength="8"
+                autocomplete="current-password"
+                :class="inputCampo"
+              />
             </div>
-            <div class="campo">
-              <label for="nueva">Contrase?a nueva</label>
-              <input id="nueva" v-model="clave.nueva" type="password" required minlength="8" autocomplete="new-password" />
+            <div>
+              <label for="nueva" :class="etiquetaCampo">Contraseña nueva</label>
+              <input
+                id="nueva"
+                v-model="clave.nueva"
+                type="password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                :class="inputCampo"
+              />
             </div>
-            <div class="campo">
-              <label for="confirmar">Confirmar contrase?a nueva</label>
-              <input id="confirmar" v-model="clave.confirmar" type="password" required minlength="8" autocomplete="new-password" />
+            <div>
+              <label for="confirmar" :class="etiquetaCampo">Confirmar contraseña nueva</label>
+              <input
+                id="confirmar"
+                v-model="clave.confirmar"
+                type="password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                :class="inputCampo"
+              />
             </div>
           </div>
-          <p class="hint">M?nimo 8 caracteres. Al cambiarla, los dem?s dispositivos deber?n iniciar sesi?n de nuevo.</p>
-          <button class="btn btn-primario" type="submit" :disabled="guardandoClave">
+          <p class="mb-3 mt-2 text-xs text-slate-500">
+            Mínimo 8 caracteres. Al cambiarla, los demás dispositivos deberán iniciar sesión de nuevo.
+          </p>
+          <button :class="btnPrimario" type="submit" :disabled="guardandoClave">
             <KeyRound v-if="!guardandoClave" :size="15" />
-            {{ guardandoClave ? 'Actualizando?' : 'Cambiar contrase?a' }}
+            {{ guardandoClave ? 'Actualizando…' : 'Cambiar contraseña' }}
           </button>
         </form>
       </section>
     </div>
   </div>
 </template>
-
-<style scoped>
-.perfil-view { display: grid; gap: 0; }
-.hero { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--borde); }
-.hero h1 { margin:.1rem 0 .2rem; font-size:1.55rem; }
-.hero-sub { margin:0; color:var(--texto-suave); font-size:.9rem; }
-.hero-chip { display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .7rem; border-radius:999px; border:1px solid #a7f3d0; background:#ecfdf5; color:#047857; font-size:.78rem; font-weight:700; }
-.perfil-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:1rem; }
-.perfil-card.full { grid-column: 1 / -1; }
-.card-head { margin-bottom: .9rem; }
-.card-head h2 { display:flex; align-items:center; gap:.45rem; margin:0 0 .2rem; font-size:1rem; }
-.card-head p { margin:0; color:var(--texto-suave); font-size:.85rem; }
-.foto-wrap { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
-.avatar-preview { width:96px; height:96px; flex:none; }
-.avatar-img, .avatar-fallback { width:96px; height:96px; border-radius:999px; border:1px solid #e2e8f0; object-fit:cover; }
-.avatar-fallback { display:flex; align-items:center; justify-content:center; background:#e2e8f0; color:#334155; font-size:1.7rem; font-weight:700; }
-.foto-info { flex:1; min-width:240px; }
-.hint { margin:.1rem 0 .8rem; font-size:.8rem; color:var(--texto-suave); }
-.inline-icon { vertical-align:-2px; margin-right:2px; }
-.mt-3 { margin-top: .75rem; }
-@media (max-width: 900px) { .perfil-grid { grid-template-columns: 1fr; } .perfil-card.full { grid-column: auto; } }
-</style>

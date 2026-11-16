@@ -9,7 +9,21 @@ import vacioDocumentos from '../../assets/imagenes/vacio-documentos.svg'
 import EstadoBadge from '../../components/EstadoBadge.vue'
 import Esqueleto from '../../components/Esqueleto.vue'
 import VacioEstado from '../../components/VacioEstado.vue'
-import { btnPrimario, btnSecundario, etiquetaCampo, inputCampo, thTabla, trTabla } from '../../styles/ui-classes'
+import {
+  alertaError,
+  alertaInfo,
+  btnPrimario,
+  btnSecundario,
+  cabeceraPagina,
+  chipNeutro,
+  etiquetaCampo,
+  iconoCaja,
+  inputCampo,
+  paginaWrap,
+  tarjeta,
+  thTabla,
+  trTabla,
+} from '../../styles/ui-classes'
 
 const evidencias = ref<Evidencia[]>([])
 const cargando = ref(true)
@@ -154,25 +168,25 @@ function fechaCorta(iso: string | null): string { return iso ? iso.slice(0, 10) 
 </script>
 
 <template>
-  <div class="min-h-full bg-slate-50 font-sans text-slate-900">
-    <div v-if="error" role="alert" class="alerta-error">{{ error }}</div>
-    <div v-if="info" role="status" class="alerta-info">{{ info }}</div>
+  <div :class="paginaWrap">
+    <div v-if="error" role="alert" class="alerta-error" :class="alertaError">{{ error }}</div>
+    <div v-if="info" role="status" class="alerta-info" :class="alertaInfo">{{ info }}</div>
 
-    <header class="hero">
-      <div class="hero-left">
-        <span class="hero-icon" aria-hidden="true"><Upload :size="20" /></span>
+    <header :class="cabeceraPagina">
+      <div class="flex items-center gap-3">
+        <span :class="iconoCaja" aria-hidden="true"><Upload :size="20" /></span>
         <div>
-          <div class="migas">Aprendiz ? Etapa pr?ctica</div>
-          <h1>Mis evidencias</h1>
-          <p class="hero-sub">Sube documentos o videos, consulta su estado y revisa la retroalimentaci?n del instructor.</p>
+          <p class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Aprendiz · Etapa práctica</p>
+          <h1 class="m-0 text-2xl font-bold text-slate-900">Mis evidencias</h1>
+          <p class="m-0 mt-2 text-sm text-slate-500">Sube documentos o videos, consulta su estado y revisa la retroalimentación del instructor.</p>
         </div>
       </div>
-      <span class="hero-chip"><Upload :size="13" /> {{ evidencias.length }} registros</span>
+      <span :class="chipNeutro"><Upload :size="13" class="text-emerald-600" /> {{ evidencias.length }} registros</span>
     </header>
 
-    <section class="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section :class="['mb-5 sm:p-5', tarjeta]">
       <div class="mb-4 flex items-center gap-3">
-        <span class="flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700" aria-hidden="true">
+        <span :class="iconoCaja" aria-hidden="true">
           <Upload :size="20" />
         </span>
         <div>
@@ -225,7 +239,7 @@ function fechaCorta(iso: string | null): string { return iso ? iso.slice(0, 10) 
 
         <button :class="btnPrimario" type="submit" :disabled="subiendo">
           <Upload v-if="!subiendo" :size="15" />
-          {{ subiendo ? 'Subiendo?' : 'Subir evidencia' }}
+          {{ subiendo ? 'Subiendo…' : 'Subir evidencia' }}
         </button>
       </form>
     </section>
@@ -266,8 +280,8 @@ function fechaCorta(iso: string | null): string { return iso ? iso.slice(0, 10) 
               </tr>
               <tr v-if="retroAbierta === e.id_evidencia" class="bg-slate-50/70">
                 <td colspan="7" class="px-4 py-4">
-                  <p v-if="cargandoRetro === e.id_evidencia" class="m-0 text-sm text-slate-500">Cargando retroalimentaci?n?</p>
-                  <p v-else-if="retroVisible === 'sin'" class="m-0 text-sm text-slate-500">A?n no hay retroalimentaci?n para esta evidencia.</p>
+                  <p v-if="cargandoRetro === e.id_evidencia" class="m-0 text-sm text-slate-500">Cargando retroalimentación…</p>
+                  <p v-else-if="retroVisible === 'sin'" class="m-0 text-sm text-slate-500">Aún no hay retroalimentación para esta evidencia.</p>
                   <div v-else-if="typeof retroVisible === 'object'" class="retro-box">
                     <div class="retro-head"><strong>{{ retroVisible.estado_evaluacion }}</strong><span>? {{ fechaCorta(retroVisible.fecha_revision) }}</span></div>
                     <p class="m-0 mt-1 text-sm text-slate-700">{{ retroVisible.observaciones }}</p>
@@ -283,12 +297,6 @@ function fechaCorta(iso: string | null): string { return iso ? iso.slice(0, 10) 
 </template>
 
 <style scoped>
-.hero { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid #e2e8f0; }
-.hero-left { display:flex; align-items:center; gap:.75rem; }
-.hero-icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; }
-.hero h1 { margin:.1rem 0 .2rem; font-size:1.55rem; color:#0f172a; }
-.hero-sub { margin:0; color:#64748b; font-size:.9rem; }
-.hero-chip { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .65rem; border-radius:999px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:.78rem; font-weight:600; box-shadow:0 1px 2px rgba(15,23,42,.04); }
 .dropzone { display:flex; cursor:pointer; flex-direction:column; align-items:center; justify-content:center; gap:.4rem; border-radius:12px; border:2px dashed; padding:1.8rem 1rem; text-align:center; transition:.15s; }
 .dropzone-idle { border-color:#cbd5e1; background:#f8fafc; }
 .dropzone-idle:hover { border-color:#34d399; background:#ecfdf5; }
