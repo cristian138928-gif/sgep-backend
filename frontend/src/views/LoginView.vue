@@ -53,10 +53,13 @@ async function enviar(): Promise<void> {
     :features="features"
   >
     <div class="auth-tarjeta">
+      <div class="mb-1 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Acceso seguro
+      </div>
       <img
         :src="sgepLogo"
         alt="SGEP"
-        class="mb-2 h-24 w-auto rounded-xl border border-slate-200 object-cover"
+        class="mb-2 h-20 w-auto rounded-xl border border-slate-200 object-cover"
       />
       <p class="auth-sub">Inicia sesi\u00f3n para gestionar tus evidencias</p>
 

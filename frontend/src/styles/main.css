@@ -664,13 +664,17 @@ input[type='checkbox'] {
   width: 100%;
 }
 
-/* EXPLICACIÓN: fondo limpio corporativo sin texturas decorativas */
+/* EXPLICACI�N: fondo corporativo con malla t�cnica sutil */
 .fondo-tecnico {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.35) 1px, transparent 0),
+    linear-gradient(180deg, rgba(236, 253, 245, 0.55) 0%, rgba(248, 250, 252, 0) 32%);
+  background-size: 28px 28px, 100% 100%;
 }
 
 /* ---------- Auth (login/registro/404) ---------- */
@@ -693,7 +697,28 @@ input[type='checkbox'] {
   background: #0f172a; /* slate-900 */
   border-right: 1px solid #1e293b; /* slate-800 */
 }
-.auth-marca > * { position: relative; }
+.auth-marca::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.auth-marca::after {
+  content: '';
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  right: -140px;
+  bottom: -160px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0) 70%);
+  pointer-events: none;
+}
+.auth-marca > * { position: relative; z-index: 1; }
 
 /* EXPLICACIÓN: .auth-logo se reemplazó por <LogoSGEP> (currentColor), así evita el blanco sobre tarjeta blanca */
 

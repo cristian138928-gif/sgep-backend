@@ -120,8 +120,8 @@ onMounted(async () => {
   <div class="dashboard">
     <header class="hero">
       <div>
-        <div class="migas">Coordinación · Panel ejecutivo</div>
-        <h1>Dashboard general</h1>
+        <div class="migas">Coordinaci\u00f3n \u00b7 Panel ejecutivo</div>
+        <h1 class="flex items-center gap-2"><span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.15)]"></span> Dashboard general</h1>
         <p class="hero-sub">Seguimiento en tiempo real del estado de evidencias, cumplimiento y alertas del centro.</p>
       </div>
       <div class="acciones hero-actions">
