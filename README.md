@@ -22,6 +22,8 @@ API REST para gestionar evidencias de aprendices SENA durante su etapa práctica
 .\scripts\start.ps1 -Mode local -Seed  # fuerza local (:5173) + seed demo
 ```
 
+**Despliegue/cierre (fase 5):** ver `docs/DESPLIEGUE_CIERRE.md`, `docs/MANUAL_USUARIO_CAPACITACION.md` y `.env.production.example` (`docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d`).
+
 ```bash
 # 1) Backend (migraciones se aplican al iniciar)
 uv sync

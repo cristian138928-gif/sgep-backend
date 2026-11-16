@@ -1,0 +1,16 @@
+﻿# docker-compose.prod.yml
+# Override de produccion/despliegue estable.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+services:
+  db:
+    restart: unless-stopped
+
+  api:
+    restart: unless-stopped
+    # EXPLICACION: en prod sin --reload ni bind mount de codigo
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    restart: unless-stopped

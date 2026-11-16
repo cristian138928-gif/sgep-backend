@@ -143,4 +143,4 @@ v (genera)
 - **Semanas 4-8 (Diseño):** Diagrama de clases UML, diseño de base de datos PostgreSQL y prototipos UI.
 - **Semanas 8-12 (Desarrollo):** Configuración Docker, FastAPI, ORM SQLAlchemy y endpoints REST.
 - **Semanas 11-14 (Pruebas):** Pruebas unitarias API, pruebas de integración BD y carga de PDFs.
-- **Semanas 15-16 (Despliegue y Cierre):** Despliegue en servidor, capacitación de usuarios y entrega final.
+- **Semanas 15-16 (Despliegue y Cierre):** Completado. Stack desplegable (`docker-compose.yml` + `docker-compose.prod.yml`), guía (`docs/DESPLIEGUE_CIERRE.md`) y manual/capacitación con acta (`docs/MANUAL_USUARIO_CAPACITACION.md`), repo en GitHub.
